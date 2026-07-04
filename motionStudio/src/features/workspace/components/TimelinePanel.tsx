@@ -36,6 +36,17 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const [trackWidth, setTrackWidth] = useState(0);
 
+  /* vertical scroll — keep the header labels and clip rows in lockstep */
+  const headerScrollRef = useRef<HTMLDivElement>(null);
+  const bodyScrollRef   = useRef<HTMLDivElement>(null);
+  const syncScroll = (from: 'header' | 'body') => {
+    const h = headerScrollRef.current;
+    const b = bodyScrollRef.current;
+    if (!h || !b) return;
+    if (from === 'body') h.scrollTop = b.scrollTop;
+    else b.scrollTop = h.scrollTop;
+  };
+
   useEffect(() => {
     const node = bodyRef.current;
     if (!node) return;
@@ -118,66 +129,80 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
           {/* spacer aligning with the ruler */}
           <div className="border-b border-studio-border shrink-0" style={{ height: RULER_H }} />
 
-          {/* one label row per element (= one layer) */}
-          {ordered.map((el) => (
-            <button
-              key={el.id}
-              type="button"
-              onClick={() => setSelectedElement(el.id)}
-              className={[
-                'flex items-center px-3 border-b border-studio-border shrink-0 text-left transition-colors duration-120',
-                selectedElementId === el.id
-                  ? 'bg-studio-surface text-studio-text'
-                  : 'text-studio-text-muted hover:bg-studio-surface/50',
-              ].join(' ')}
-              style={{ height: TRACK_ROW_H }}
-            >
-              <span className="text-[11px] truncate">{clipLabel(el)}</span>
-            </button>
-          ))}
+          {/* scrollable label rows (synced with clip rows) */}
+          <div
+            ref={headerScrollRef}
+            onScroll={() => syncScroll('header')}
+            className="flex-1 overflow-y-auto overflow-x-hidden"
+          >
+            {ordered.map((el) => (
+              <button
+                key={el.id}
+                type="button"
+                onClick={() => setSelectedElement(el.id)}
+                className={[
+                  'w-full flex items-center px-3 border-b border-studio-border shrink-0 text-left transition-colors duration-120',
+                  selectedElementId === el.id
+                    ? 'bg-studio-surface text-studio-text'
+                    : 'text-studio-text-muted hover:bg-studio-surface/50',
+                ].join(' ')}
+                style={{ height: TRACK_ROW_H }}
+              >
+                <span className="text-[11px] truncate">{clipLabel(el)}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Track body (right) — measured, holds ruler + clips + playhead */}
+        {/* Track body (right) — measured; ruler fixed, rows scroll, playhead spans both */}
         <div
           ref={bodyRef}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          className="flex-1 relative overflow-hidden cursor-ew-resize"
+          className="flex-1 relative flex flex-col overflow-hidden cursor-ew-resize"
           style={{ touchAction: 'none' }}
         >
           {trackWidth > 0 && (
             <>
-              <TimelineRuler scale={scale} fps={project.fps} height={RULER_H} />
+              <div className="shrink-0">
+                <TimelineRuler scale={scale} fps={project.fps} height={RULER_H} />
+              </div>
 
-              {/* one clip row per element */}
-              {ordered.length === 0 ? (
-                <div
-                  className="flex items-center justify-center text-[11px] text-studio-text-faint select-none"
-                  style={{ height: TRACK_ROW_H * 2 }}
-                >
-                  Add text to see clips here
-                </div>
-              ) : (
-                ordered.map((el) => (
+              {/* scrollable clip rows */}
+              <div
+                ref={bodyScrollRef}
+                onScroll={() => syncScroll('body')}
+                className="flex-1 overflow-y-auto overflow-x-hidden"
+              >
+                {ordered.length === 0 ? (
                   <div
-                    key={el.id}
-                    className="relative border-b border-studio-border"
-                    style={{ height: TRACK_ROW_H }}
+                    className="flex items-center justify-center text-[11px] text-studio-text-faint select-none"
+                    style={{ height: TRACK_ROW_H * 2 }}
                   >
-                    <TimelineClip
-                      el={el}
-                      scale={scale}
-                      selected={selectedElementId === el.id}
-                      totalFrames={project.durationInFrames}
-                      onSelect={() => setSelectedElement(el.id)}
-                      onUpdate={(patch) => updateElement(el.id, patch)}
-                    />
+                    Add text to see clips here
                   </div>
-                ))
-              )}
+                ) : (
+                  ordered.map((el) => (
+                    <div
+                      key={el.id}
+                      className="relative border-b border-studio-border"
+                      style={{ height: TRACK_ROW_H }}
+                    >
+                      <TimelineClip
+                        el={el}
+                        scale={scale}
+                        selected={selectedElementId === el.id}
+                        totalFrames={project.durationInFrames}
+                        onSelect={() => setSelectedElement(el.id)}
+                        onUpdate={(patch) => updateElement(el.id, patch)}
+                      />
+                    </div>
+                  ))
+                )}
+              </div>
 
-              {/* Playhead — spans ruler + tracks */}
+              {/* Playhead — spans the ruler + the rows viewport */}
               <div
                 className="absolute top-0 bottom-0 w-px bg-studio-accent z-20 pointer-events-none"
                 style={{ left: playheadX }}

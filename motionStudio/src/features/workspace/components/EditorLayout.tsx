@@ -37,7 +37,7 @@ export default function EditorLayout({ project }: EditorLayoutProps) {
       </div>
 
       {/* Timeline — bottom */}
-      <div className="h-44 shrink-0 border-t border-studio-border overflow-hidden">
+      <div className="h-56 shrink-0 border-t border-studio-border overflow-hidden">
         <TimelinePanel project={project} />
       </div>
     </div>
