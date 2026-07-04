@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import type { Project, CreateProjectInput } from './types';
 
-export type UpdateProjectInput = Partial<Pick<Project, 'name' | 'aspectRatio' | 'fps'>>;
+export type UpdateProjectInput = Partial<Pick<Project, 'name' | 'aspectRatio' | 'fps' | 'canvas'>>;
 
 interface ProjectStore {
   projects: Project[];
+  activeProjectId: string | null;
+  setActiveProjectId: (id: string | null) => void;
   createProject: (input: CreateProjectInput) => Project;
   getProject: (id: string) => Project | undefined;
   updateProject: (id: string, updates: UpdateProjectInput) => void;
@@ -12,12 +14,15 @@ interface ProjectStore {
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   projects: [],
+  activeProjectId: null,
+  setActiveProjectId: (id) => set({ activeProjectId: id }),
 
   createProject: (input) => {
     const now = Date.now();
     const project: Project = {
       id: crypto.randomUUID(),
       ...input,
+      canvas: { elements: [] },
       createdAt: now,
       updatedAt: now,
     };
