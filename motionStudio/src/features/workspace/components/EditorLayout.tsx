@@ -4,12 +4,15 @@ import AssetsPanel from './AssetsPanel';
 import CanvasPanel from './CanvasPanel';
 import PropertiesPanel from './PropertiesPanel';
 import TimelinePanel from './TimelinePanel';
+import { usePlaybackClock } from '../hooks/usePlaybackClock';
 
 interface EditorLayoutProps {
   project: Project;
 }
 
 export default function EditorLayout({ project }: EditorLayoutProps) {
+  usePlaybackClock(project.fps, project.durationInFrames);
+
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col bg-studio-bg">
       <Toolbar project={project} />
@@ -33,7 +36,7 @@ export default function EditorLayout({ project }: EditorLayoutProps) {
 
       {/* Timeline — bottom */}
       <div className="h-44 shrink-0 border-t border-studio-border overflow-hidden">
-        <TimelinePanel />
+        <TimelinePanel project={project} />
       </div>
     </div>
   );
