@@ -1,10 +1,11 @@
-import { Save, Undo2, Redo2, Download, Clapperboard, Type, Play, Pause } from 'lucide-react';
+import { Save, Undo2, Redo2, Clapperboard, Type, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { Project } from '@/engines/project';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
 import ProjectSettingsPopover from './ProjectSettingsPopover';
+import ExportDialog from './ExportDialog';
 
 interface ToolbarProps {
   project: Project;
@@ -90,14 +91,7 @@ export default function Toolbar({ project }: ToolbarProps) {
 
         <Separator orientation="vertical" className="h-4 bg-studio-border-strong" />
 
-        <Button
-          size="sm"
-          title="Export"
-          className="h-7 px-3 text-[12px] font-medium bg-studio-accent hover:bg-studio-accent-hover text-white rounded-studio-md gap-1.5"
-        >
-          <Download className="w-3.5 h-3.5" />
-          Export
-        </Button>
+        <ExportDialog project={project} />
       </div>
     </div>
   );
