@@ -5,6 +5,7 @@ import CanvasPanel from './CanvasPanel';
 import PropertiesPanel from './PropertiesPanel';
 import TimelinePanel from './TimelinePanel';
 import { usePlaybackClock } from '../hooks/usePlaybackClock';
+import { useUndoRedoShortcuts } from '../hooks/useUndoRedoShortcuts';
 
 interface EditorLayoutProps {
   project: Project;
@@ -12,6 +13,7 @@ interface EditorLayoutProps {
 
 export default function EditorLayout({ project }: EditorLayoutProps) {
   usePlaybackClock(project.fps, project.durationInFrames);
+  useUndoRedoShortcuts();
 
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col bg-studio-bg">
