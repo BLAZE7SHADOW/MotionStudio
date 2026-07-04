@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProjectStore } from '@/engines/project';
 import { useEditorStore } from '@/engines/editor';
+import { rehydrateAssets } from '@/engines/asset';
 import EditorLayout from './components/EditorLayout';
 
 export default function EditorPage() {
@@ -14,6 +15,7 @@ export default function EditorPage() {
   useEffect(() => {
     setActiveProjectId(projectId ?? null);
     reset();
+    if (projectId) void rehydrateAssets(projectId); // relink media from IndexedDB
     return () => setActiveProjectId(null);
   }, [projectId, setActiveProjectId, reset]);
 
