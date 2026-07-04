@@ -2,6 +2,7 @@ import { Save, Undo2, Redo2, Clapperboard, Type, Play, Pause } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { Project } from '@/engines/project';
+import { useProjectStore } from '@/engines/project';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
 import ProjectSettingsPopover from './ProjectSettingsPopover';
@@ -15,6 +16,10 @@ export default function Toolbar({ project }: ToolbarProps) {
   const { addText } = useCanvasEngine();
   const isPlaying    = useEditorStore((s) => s.isPlaying);
   const setIsPlaying = useEditorStore((s) => s.setIsPlaying);
+  const undo    = useProjectStore((s) => s.undo);
+  const redo    = useProjectStore((s) => s.redo);
+  const canUndo = useProjectStore((s) => s.past.length > 0);
+  const canRedo = useProjectStore((s) => s.future.length > 0);
 
   return (
     <div className="h-11 border-b border-studio-border bg-studio-panel flex items-center px-3 gap-0.5 shrink-0">
@@ -44,16 +49,20 @@ export default function Toolbar({ project }: ToolbarProps) {
       <Button
         variant="ghost"
         size="icon"
-        title="Undo"
-        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
+        title="Undo (⌘Z)"
+        onClick={undo}
+        disabled={!canUndo}
+        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm disabled:opacity-30 disabled:pointer-events-none"
       >
         <Undo2 className="w-[15px] h-[15px]" />
       </Button>
       <Button
         variant="ghost"
         size="icon"
-        title="Redo"
-        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
+        title="Redo (⌘⇧Z)"
+        onClick={redo}
+        disabled={!canRedo}
+        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm disabled:opacity-30 disabled:pointer-events-none"
       >
         <Redo2 className="w-[15px] h-[15px]" />
       </Button>
