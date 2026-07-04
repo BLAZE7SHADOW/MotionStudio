@@ -1,9 +1,10 @@
 import { AbsoluteFill, Sequence } from 'remotion';
-import type { CanvasElement } from '../../project/types';
+import type { CanvasElement, Asset } from '../../project/types';
 import ElementRenderer from './ElementRenderer';
 
 export interface MotionCompositionProps {
   elements: CanvasElement[];
+  assets: Asset[];
   background?: string;
 }
 
@@ -16,6 +17,7 @@ export interface MotionCompositionProps {
  */
 export default function MotionComposition({
   elements,
+  assets,
   background = '#000000',
 }: MotionCompositionProps) {
   return (
@@ -27,7 +29,7 @@ export default function MotionComposition({
           durationInFrames={el.durationInFrames}
           layout="none"
         >
-          <ElementRenderer el={el} />
+          <ElementRenderer el={el} assets={assets} />
         </Sequence>
       ))}
     </AbsoluteFill>
