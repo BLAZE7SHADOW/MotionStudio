@@ -54,7 +54,7 @@ export function useCanvasEngine() {
     return element;
   }
 
-  function addImage(assetId: string): CanvasElement | null {
+  function addImage(assetId: string, at?: { x: number; y: number }): CanvasElement | null {
     if (!project) return null;
     const asset = project.assets.find((a) => a.id === assetId);
     if (!asset || asset.type !== 'image') return null;
@@ -71,8 +71,8 @@ export function useCanvasEngine() {
       id:               crypto.randomUUID(),
       type:             'image',
       assetId,
-      x:                Math.round((compW - w) / 2),
-      y:                Math.round((compH - h) / 2),
+      x:                at ? Math.round(at.x - w / 2) : Math.round((compW - w) / 2),
+      y:                at ? Math.round(at.y - h / 2) : Math.round((compH - h) / 2),
       width:            w,
       height:           h,
       rotation:         0,
@@ -87,7 +87,7 @@ export function useCanvasEngine() {
     return element;
   }
 
-  function addVideo(assetId: string): CanvasElement | null {
+  function addVideo(assetId: string, at?: { x: number; y: number }): CanvasElement | null {
     if (!project) return null;
     const asset = project.assets.find((a) => a.id === assetId);
     if (!asset || asset.type !== 'video') return null;
@@ -109,8 +109,8 @@ export function useCanvasEngine() {
       id:               crypto.randomUUID(),
       type:             'video',
       assetId,
-      x:                Math.round((compW - w) / 2),
-      y:                Math.round((compH - h) / 2),
+      x:                at ? Math.round(at.x - w / 2) : Math.round((compW - w) / 2),
+      y:                at ? Math.round(at.y - h / 2) : Math.round((compH - h) / 2),
       width:            w,
       height:           h,
       rotation:         0,
