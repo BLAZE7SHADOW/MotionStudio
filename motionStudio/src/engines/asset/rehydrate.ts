@@ -17,5 +17,6 @@ export async function rehydrateAssets(projectId: string): Promise<void> {
     }),
   );
 
-  useProjectStore.getState().updateProject(projectId, { assets: refreshed });
+  // silent: relinking URLs is not a user edit and must not enter undo history
+  useProjectStore.getState().updateProject(projectId, { assets: refreshed }, { history: false });
 }
