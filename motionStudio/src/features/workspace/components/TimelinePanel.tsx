@@ -9,7 +9,7 @@ import TimelineClip from './timeline/TimelineClip';
 
 const TRACK_HEADER_W = 140;
 const RULER_H = 28;
-const TRACK_ROW_H = 36;
+const TRACK_ROW_H = 50;
 
 function clipLabel(el: CanvasElement): string {
   if (el.type === 'text') return el.content.trim() || 'Text';
@@ -171,9 +171,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                       selected={selectedElementId === el.id}
                       totalFrames={project.durationInFrames}
                       onSelect={() => setSelectedElement(el.id)}
-                      onChange={(startFrame, durationInFrames) =>
-                        updateElement(el.id, { startFrame, durationInFrames })
-                      }
+                      onUpdate={(patch) => updateElement(el.id, patch)}
                     />
                   </div>
                 ))
