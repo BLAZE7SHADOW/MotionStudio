@@ -1,7 +1,16 @@
 import { useProjectStore } from '../project/store';
 import { getCompositionDimensions } from '../project/dimensions';
-import type { CanvasElement } from './types';
+import type { CanvasElement, TextElement, ImageElement } from './types';
 import type { AddTextInput } from './types';
+
+/**
+ * A patch for any element. Because CanvasElement is a union, `Omit<union, K>`
+ * would collapse to only the *common* fields — so we intersect the per-member
+ * partials, giving one type where every field of every member is optional.
+ */
+export type ElementPatch =
+  Partial<Omit<TextElement, 'id' | 'type'>> &
+  Partial<Omit<ImageElement, 'id' | 'type'>>;
 
 export function useCanvasEngine() {
   const project       = useProjectStore((s) =>
@@ -43,7 +52,40 @@ export function useCanvasEngine() {
     return element;
   }
 
-  function updateElement(id: string, updates: Partial<Omit<CanvasElement, 'id' | 'type'>>) {
+  function addImage(assetId: string): CanvasElement | null {
+    if (!project) return null;
+    const asset = project.assets.find((a) => a.id === assetId);
+    if (!asset || asset.type !== 'image') return null;
+
+    /* fit the image within ~60% of the composition, preserving aspect ratio */
+    const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
+    const natW = asset.width  ?? compW;
+    const natH = asset.height ?? compH;
+    const fit = Math.min((compW * 0.6) / natW, (compH * 0.6) / natH);
+    const w = Math.round(natW * fit);
+    const h = Math.round(natH * fit);
+
+    const element: ImageElement = {
+      id:               crypto.randomUUID(),
+      type:             'image',
+      assetId,
+      x:                Math.round((compW - w) / 2),
+      y:                Math.round((compH - h) / 2),
+      width:            w,
+      height:           h,
+      rotation:         0,
+      opacity:          1,
+      zIndex:           elements.length,
+      startFrame:       0,
+      durationInFrames: project.durationInFrames,
+      objectFit:        'cover',
+    };
+
+    updateProject(project.id, { canvas: { elements: [...elements, element] } });
+    return element;
+  }
+
+  function updateElement(id: string, updates: ElementPatch) {
     if (!project) return;
     updateProject(project.id, {
       canvas: {
@@ -73,5 +115,5 @@ export function useCanvasEngine() {
     updateProject(project.id, { canvas: { elements: next } });
   }
 
-  return { elements, addText, updateElement, removeElement, reorderElement };
+  return { elements, addText, addImage, updateElement, removeElement, reorderElement };
 }

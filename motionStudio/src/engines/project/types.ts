@@ -68,7 +68,13 @@ export type TextElement = BaseElement & {
   color: string;
 };
 
-export type CanvasElement = TextElement;
+export type ImageElement = BaseElement & {
+  type: 'image';
+  assetId: string;
+  objectFit?: 'cover' | 'contain';
+};
+
+export type CanvasElement = TextElement | ImageElement;
 
 /* ── Project ── */
 
