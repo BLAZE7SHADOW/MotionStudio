@@ -74,7 +74,13 @@ export type ImageElement = BaseElement & {
   objectFit?: 'cover' | 'contain';
 };
 
-export type CanvasElement = TextElement | ImageElement;
+export type VideoElement = BaseElement & {
+  type: 'video';
+  assetId: string;
+  objectFit?: 'cover' | 'contain';
+};
+
+export type CanvasElement = TextElement | ImageElement | VideoElement;
 
 /* ── Project ── */
 

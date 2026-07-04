@@ -1,6 +1,6 @@
 import { useProjectStore } from '../project/store';
 import { getCompositionDimensions } from '../project/dimensions';
-import type { CanvasElement, TextElement, ImageElement } from './types';
+import type { CanvasElement, TextElement, ImageElement, VideoElement } from './types';
 import type { AddTextInput } from './types';
 
 /**
@@ -10,7 +10,8 @@ import type { AddTextInput } from './types';
  */
 export type ElementPatch =
   Partial<Omit<TextElement, 'id' | 'type'>> &
-  Partial<Omit<ImageElement, 'id' | 'type'>>;
+  Partial<Omit<ImageElement, 'id' | 'type'>> &
+  Partial<Omit<VideoElement, 'id' | 'type'>>;
 
 export function useCanvasEngine() {
   const project       = useProjectStore((s) =>
@@ -85,6 +86,44 @@ export function useCanvasEngine() {
     return element;
   }
 
+  function addVideo(assetId: string): CanvasElement | null {
+    if (!project) return null;
+    const asset = project.assets.find((a) => a.id === assetId);
+    if (!asset || asset.type !== 'video') return null;
+
+    const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
+    const natW = asset.width  ?? compW;
+    const natH = asset.height ?? compH;
+    const fit = Math.min((compW * 0.8) / natW, (compH * 0.8) / natH);
+    const w = Math.round(natW * fit);
+    const h = Math.round(natH * fit);
+
+    /* the clip can't be longer than the source video */
+    const sourceFrames = asset.durationInSeconds
+      ? Math.round(asset.durationInSeconds * project.fps)
+      : project.durationInFrames;
+    const durationInFrames = Math.min(project.durationInFrames, sourceFrames);
+
+    const element: VideoElement = {
+      id:               crypto.randomUUID(),
+      type:             'video',
+      assetId,
+      x:                Math.round((compW - w) / 2),
+      y:                Math.round((compH - h) / 2),
+      width:            w,
+      height:           h,
+      rotation:         0,
+      opacity:          1,
+      zIndex:           elements.length,
+      startFrame:       0,
+      durationInFrames,
+      objectFit:        'cover',
+    };
+
+    updateProject(project.id, { canvas: { elements: [...elements, element] } });
+    return element;
+  }
+
   function updateElement(id: string, updates: ElementPatch) {
     if (!project) return;
     updateProject(project.id, {
@@ -115,5 +154,5 @@ export function useCanvasEngine() {
     updateProject(project.id, { canvas: { elements: next } });
   }
 
-  return { elements, addText, addImage, updateElement, removeElement, reorderElement };
+  return { elements, addText, addImage, addVideo, updateElement, removeElement, reorderElement };
 }
