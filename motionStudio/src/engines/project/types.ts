@@ -1,5 +1,26 @@
 export type AspectRatio = '16:9' | '9:16' | '1:1';
 
+/* ── Animation ── */
+
+export type AnimationProperty = 'opacity' | 'x' | 'y' | 'scale' | 'rotate';
+export type AnimationEasing = 'linear' | 'ease' | 'spring';
+
+/**
+ * One animated property. Values are relative to the element's base pose:
+ *  - opacity, scale → factors (multiplied onto the base)
+ *  - x, y, rotate   → offsets (added to the base)
+ * Timed relative to the CLIP's start: the window is
+ * [startOffset, startOffset + duration] in frames.
+ */
+export interface Animation {
+  property: AnimationProperty;
+  from: number;
+  to: number;
+  startOffset: number;
+  duration: number;
+  easing: AnimationEasing;
+}
+
 /* ── Canvas element types ── */
 
 export type BaseElement = {
@@ -16,6 +37,8 @@ export type BaseElement = {
   /* temporal — Remotion <Sequence> model */
   startFrame: number;
   durationInFrames: number;
+  /* motion — evaluated per frame relative to the clip start */
+  animations?: Animation[];
 };
 
 export type TextElement = BaseElement & {
