@@ -2,9 +2,11 @@ import { MousePointer, Plus, X } from 'lucide-react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
-import type { TextElement } from '@/engines/canvas';
+import type { TextElement, AudioElement, BaseElement, ElementPatch } from '@/engines/canvas';
 import type { Animation, AnimationProperty, AnimationEasing } from '@/engines/project';
 import { Input } from '@/components/ui/input';
+
+type Update = (patch: ElementPatch) => void;
 
 const PROPERTY_LABELS: Record<AnimationProperty, string> = {
   opacity: 'Opacity',
@@ -17,13 +19,7 @@ const PROPERTY_LABELS: Record<AnimationProperty, string> = {
 const EASINGS: AnimationEasing[] = ['linear', 'ease', 'spring'];
 
 /* ── shared row: label + input ── */
-function PropRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function PropRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2">
       <span className="text-[11px] text-studio-text-faint w-16 shrink-0">{label}</span>
@@ -34,23 +30,16 @@ function PropRow({
 
 /* ── compact number input ── */
 function NumInput({
-  value,
-  onChange,
-  unit,
+  value, onChange, unit,
 }: {
-  value: number;
-  onChange: (v: number) => void;
-  unit?: string;
+  value: number; onChange: (v: number) => void; unit?: string;
 }) {
   return (
     <div className="relative flex-1">
       <Input
         type="number"
         value={value}
-        onChange={(e) => {
-          const v = parseFloat(e.target.value);
-          if (!isNaN(v)) onChange(v);
-        }}
+        onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) onChange(v); }}
         className="h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm pr-6 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
       {unit && (
@@ -73,19 +62,11 @@ function Section({ title }: { title: string }) {
   );
 }
 
-/* ── compact labelled number (for animation cards) ── */
+/* ── compact labelled number (animation cards) ── */
 function MiniNum({
-  label,
-  value,
-  onChange,
-  unit,
-  step,
+  label, value, onChange, unit, step,
 }: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  unit?: string;
-  step?: number;
+  label: string; value: number; onChange: (v: number) => void; unit?: string; step?: number;
 }) {
   return (
     <div className="flex items-center gap-1.5">
@@ -95,10 +76,7 @@ function MiniNum({
           type="number"
           step={step}
           value={value}
-          onChange={(e) => {
-            const v = parseFloat(e.target.value);
-            if (!isNaN(v)) onChange(v);
-          }}
+          onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) onChange(v); }}
           className="h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm pr-5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
         {unit && (
@@ -111,32 +89,23 @@ function MiniNum({
   );
 }
 
-/* ── one animation card — see, edit, remove a single animation ── */
+/* ── one animation card ── */
 function AnimationRow({
-  anim,
-  onChange,
-  onRemove,
+  anim, onChange, onRemove,
 }: {
-  anim: Animation;
-  onChange: (patch: Partial<Animation>) => void;
-  onRemove: () => void;
+  anim: Animation; onChange: (patch: Partial<Animation>) => void; onRemove: () => void;
 }) {
   return (
     <div className="rounded-studio-md border border-studio-border bg-studio-surface/40 p-2.5 flex flex-col gap-2">
-      {/* header: property + easing + remove */}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-medium text-studio-text">
-          {PROPERTY_LABELS[anim.property]}
-        </span>
+        <span className="text-[11px] font-medium text-studio-text">{PROPERTY_LABELS[anim.property]}</span>
         <div className="flex items-center gap-1.5">
           <select
             value={anim.easing}
             onChange={(e) => onChange({ easing: e.target.value as AnimationEasing })}
             className="h-6 text-[10px] bg-studio-surface border border-studio-border rounded-studio-xs text-studio-text-muted px-1.5 focus:outline-none focus:border-studio-accent-border"
           >
-            {EASINGS.map((e) => (
-              <option key={e} value={e}>{e}</option>
-            ))}
+            {EASINGS.map((e) => <option key={e} value={e}>{e}</option>)}
           </select>
           <button
             type="button"
@@ -148,8 +117,6 @@ function AnimationRow({
           </button>
         </div>
       </div>
-
-      {/* values */}
       <div className="grid grid-cols-2 gap-2">
         <MiniNum label="From" value={anim.from} onChange={(v) => onChange({ from: v })} step={0.1} />
         <MiniNum label="To"   value={anim.to}   onChange={(v) => onChange({ to: v })}   step={0.1} />
@@ -160,17 +127,115 @@ function AnimationRow({
   );
 }
 
-/* ── text element properties ── */
-function TextProperties({
-  el,
-  update,
-}: {
-  el: TextElement;
-  update: (updates: Partial<Omit<TextElement, 'id' | 'type'>>) => void;
-}) {
+/* ── shared: transform (any visual element) ── */
+function TransformSection({ el, update }: { el: BaseElement; update: Update }) {
   return (
     <>
-      {/* Text section */}
+      <Section title="Transform" />
+      <div className="flex flex-col gap-3 px-4 py-3">
+        <div className="flex gap-2">
+          <PropRow label="X"><NumInput value={Math.round(el.x)} onChange={(v) => update({ x: v })} /></PropRow>
+          <PropRow label="Y"><NumInput value={Math.round(el.y)} onChange={(v) => update({ y: v })} /></PropRow>
+        </div>
+        <div className="flex gap-2">
+          <PropRow label="W"><NumInput value={Math.round(el.width)} onChange={(v) => update({ width: v })} /></PropRow>
+          <PropRow label="H"><NumInput value={Math.round(el.height)} onChange={(v) => update({ height: v })} /></PropRow>
+        </div>
+        <PropRow label="Rotation">
+          <NumInput value={Math.round(el.rotation)} onChange={(v) => update({ rotation: v })} unit="°" />
+        </PropRow>
+        <PropRow label="Opacity">
+          <NumInput
+            value={Math.round(el.opacity * 100)}
+            onChange={(v) => update({ opacity: Math.min(1, Math.max(0, v / 100)) })}
+            unit="%"
+          />
+        </PropRow>
+      </div>
+    </>
+  );
+}
+
+/* ── shared: animation stack (any element) ── */
+function AnimationSection({ el, update }: { el: BaseElement; update: Update }) {
+  const anims = el.animations ?? [];
+  return (
+    <>
+      <Section title="Animation" />
+      <div className="flex flex-col gap-2.5 px-4 py-3">
+        {anims.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {anims.map((anim, i) => (
+              <AnimationRow
+                key={i}
+                anim={anim}
+                onChange={(patch) =>
+                  update({ animations: anims.map((a, idx) => (idx === i ? { ...a, ...patch } : a)) })
+                }
+                onRemove={() => update({ animations: anims.filter((_, idx) => idx !== i) })}
+              />
+            ))}
+          </div>
+        )}
+
+        {(['enter', 'exit'] as const).map((kind) => (
+          <div key={kind} className="flex flex-col gap-1.5">
+            <span className="text-[10px] text-studio-text-faint uppercase tracking-wider">
+              {kind === 'enter' ? 'Enter' : 'Exit'}
+            </span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {ANIMATION_PRESETS.filter((p) => p.kind === kind).map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => update({ animations: [...anims, ...preset.build(el.durationInFrames)] })}
+                  className="flex items-center justify-center gap-1.5 h-8 px-2 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
+                >
+                  <Plus className="w-3 h-3" />
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <select
+          value=""
+          onChange={(e) => {
+            const prop = e.target.value as AnimationProperty;
+            if (!prop) return;
+            update({ animations: [...anims, defaultAnimationFor(prop)] });
+          }}
+          className="h-8 text-[11px] bg-studio-surface border border-studio-border rounded-studio-md text-studio-text-muted px-2 focus:outline-none focus:border-studio-accent-border"
+        >
+          <option value="" disabled>＋ Add property…</option>
+          {(Object.keys(PROPERTY_LABELS) as AnimationProperty[]).map((p) => (
+            <option key={p} value={p}>{PROPERTY_LABELS[p]}</option>
+          ))}
+        </select>
+
+        {anims.length > 0 && (
+          <button
+            type="button"
+            onClick={() => update({ animations: undefined })}
+            className="h-7 rounded-studio-md text-[11px] font-medium text-studio-text-faint hover:text-studio-text border border-studio-border hover:border-studio-border-strong transition-colors duration-120"
+          >
+            Clear all
+          </button>
+        )}
+
+        <p className="text-[10px] text-studio-text-faint leading-relaxed">
+          Set Start / Dur on each card to sequence effects. Press play to preview.
+        </p>
+      </div>
+    </>
+  );
+}
+
+/* ── text: type-specific + shared sections ── */
+function TextProperties({ el, update }: { el: TextElement; update: Update }) {
+  return (
+    <>
       <Section title="Text" />
       <div className="flex flex-col gap-3 px-4 py-3">
         <div className="flex flex-col gap-1.5">
@@ -182,11 +247,9 @@ function TextProperties({
             className="w-full resize-none rounded-studio-sm bg-studio-surface border border-studio-border text-[12px] text-studio-text px-2.5 py-2 placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent-border focus:ring-1 focus:ring-studio-accent transition-colors"
           />
         </div>
-
         <PropRow label="Font size">
           <NumInput value={el.fontSize} onChange={(v) => update({ fontSize: v })} unit="px" />
         </PropRow>
-
         <PropRow label="Color">
           <div className="flex items-center gap-2 flex-1">
             <div
@@ -209,124 +272,37 @@ function TextProperties({
         </PropRow>
       </div>
 
-      {/* Transform section */}
-      <Section title="Transform" />
+      <TransformSection el={el} update={update} />
+      <AnimationSection el={el} update={update} />
+    </>
+  );
+}
+
+/* ── image / video: shared sections only ── */
+function MediaProperties({ el, update }: { el: BaseElement; update: Update }) {
+  return (
+    <>
+      <TransformSection el={el} update={update} />
+      <AnimationSection el={el} update={update} />
+    </>
+  );
+}
+
+/* ── audio: no canvas presence, just sound ── */
+function AudioProperties({ el, update }: { el: AudioElement; update: Update }) {
+  return (
+    <>
+      <Section title="Sound" />
       <div className="flex flex-col gap-3 px-4 py-3">
-        <div className="flex gap-2">
-          <PropRow label="X">
-            <NumInput value={Math.round(el.x)} onChange={(v) => update({ x: v })} />
-          </PropRow>
-          <PropRow label="Y">
-            <NumInput value={Math.round(el.y)} onChange={(v) => update({ y: v })} />
-          </PropRow>
-        </div>
-
-        <div className="flex gap-2">
-          <PropRow label="W">
-            <NumInput value={Math.round(el.width)} onChange={(v) => update({ width: v })} />
-          </PropRow>
-          <PropRow label="H">
-            <NumInput value={Math.round(el.height)} onChange={(v) => update({ height: v })} />
-          </PropRow>
-        </div>
-
-        <PropRow label="Rotation">
-          <NumInput value={Math.round(el.rotation)} onChange={(v) => update({ rotation: v })} unit="°" />
-        </PropRow>
-
-        <PropRow label="Opacity">
+        <PropRow label="Volume">
           <NumInput
-            value={Math.round(el.opacity * 100)}
-            onChange={(v) => update({ opacity: Math.min(1, Math.max(0, v / 100)) })}
+            value={Math.round((el.volume ?? 1) * 100)}
+            onChange={(v) => update({ volume: Math.min(1, Math.max(0, v / 100)) })}
             unit="%"
           />
         </PropRow>
-      </div>
-
-      {/* Animation section */}
-      <Section title="Animation" />
-      <div className="flex flex-col gap-2.5 px-4 py-3">
-        {/* applied animations — each editable & removable */}
-        {(el.animations ?? []).length > 0 && (
-          <div className="flex flex-col gap-2">
-            {(el.animations ?? []).map((anim, i) => (
-              <AnimationRow
-                key={i}
-                anim={anim}
-                onChange={(patch) =>
-                  update({
-                    animations: (el.animations ?? []).map((a, idx) =>
-                      idx === i ? { ...a, ...patch } : a,
-                    ),
-                  })
-                }
-                onRemove={() =>
-                  update({
-                    animations: (el.animations ?? []).filter((_, idx) => idx !== i),
-                  })
-                }
-              />
-            ))}
-          </div>
-        )}
-
-        {/* add presets — grouped, appended to the stack */}
-        {(['enter', 'exit'] as const).map((kind) => (
-          <div key={kind} className="flex flex-col gap-1.5">
-            <span className="text-[10px] text-studio-text-faint uppercase tracking-wider">
-              {kind === 'enter' ? 'Enter' : 'Exit'}
-            </span>
-            <div className="grid grid-cols-2 gap-1.5">
-              {ANIMATION_PRESETS.filter((p) => p.kind === kind).map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() =>
-                    update({
-                      animations: [
-                        ...(el.animations ?? []),
-                        ...preset.build(el.durationInFrames),
-                      ],
-                    })
-                  }
-                  className="flex items-center justify-center gap-1.5 h-8 px-2 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
-                >
-                  <Plus className="w-3 h-3" />
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        {/* add a single bare property */}
-        <select
-          value=""
-          onChange={(e) => {
-            const prop = e.target.value as AnimationProperty;
-            if (!prop) return;
-            update({ animations: [...(el.animations ?? []), defaultAnimationFor(prop)] });
-          }}
-          className="h-8 text-[11px] bg-studio-surface border border-studio-border rounded-studio-md text-studio-text-muted px-2 focus:outline-none focus:border-studio-accent-border"
-        >
-          <option value="" disabled>＋ Add property…</option>
-          {(Object.keys(PROPERTY_LABELS) as AnimationProperty[]).map((p) => (
-            <option key={p} value={p}>{PROPERTY_LABELS[p]}</option>
-          ))}
-        </select>
-
-        {(el.animations ?? []).length > 0 && (
-          <button
-            type="button"
-            onClick={() => update({ animations: undefined })}
-            className="h-7 rounded-studio-md text-[11px] font-medium text-studio-text-faint hover:text-studio-text border border-studio-border hover:border-studio-border-strong transition-colors duration-120"
-          >
-            Clear all
-          </button>
-        )}
-
         <p className="text-[10px] text-studio-text-faint leading-relaxed">
-          Set Start / Dur on each card to sequence effects. Press play to preview.
+          Trim and position this clip on the timeline.
         </p>
       </div>
     </>
@@ -335,14 +311,13 @@ function TextProperties({
 
 /* ── main component ── */
 export default function PropertiesPanel() {
-  const selectedElementId  = useEditorStore((s) => s.selectedElementId);
+  const selectedElementId = useEditorStore((s) => s.selectedElementId);
   const { elements, updateElement } = useCanvasEngine();
 
   const selected = elements.find((el) => el.id === selectedElementId) ?? null;
 
   return (
     <div className="flex flex-col h-full bg-studio-panel overflow-hidden">
-      {/* Header */}
       <div className="px-4 h-9 flex items-center border-b border-studio-border shrink-0">
         <span className="text-[11px] font-semibold text-studio-text-faint uppercase tracking-widest">
           Properties
@@ -359,11 +334,13 @@ export default function PropertiesPanel() {
       ) : (
         <div className="flex-1 overflow-y-auto">
           {selected.type === 'text' && (
-            <TextProperties
-              key={selected.id}
-              el={selected}
-              update={(updates) => updateElement(selected.id, updates)}
-            />
+            <TextProperties key={selected.id} el={selected} update={(u) => updateElement(selected.id, u)} />
+          )}
+          {(selected.type === 'image' || selected.type === 'video') && (
+            <MediaProperties key={selected.id} el={selected} update={(u) => updateElement(selected.id, u)} />
+          )}
+          {selected.type === 'audio' && (
+            <AudioProperties key={selected.id} el={selected} update={(u) => updateElement(selected.id, u)} />
           )}
         </div>
       )}
