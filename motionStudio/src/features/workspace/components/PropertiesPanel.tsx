@@ -1,9 +1,20 @@
-import { MousePointer, Sparkles } from 'lucide-react';
+import { MousePointer, Plus, X } from 'lucide-react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { ANIMATION_PRESETS } from '@/engines/animation';
 import type { TextElement } from '@/engines/canvas';
+import type { Animation, AnimationProperty, AnimationEasing } from '@/engines/project';
 import { Input } from '@/components/ui/input';
+
+const PROPERTY_LABELS: Record<AnimationProperty, string> = {
+  opacity: 'Opacity',
+  x: 'Position X',
+  y: 'Position Y',
+  scale: 'Scale',
+  rotate: 'Rotate',
+};
+
+const EASINGS: AnimationEasing[] = ['linear', 'ease', 'spring'];
 
 /* ── shared row: label + input ── */
 function PropRow({
@@ -58,6 +69,93 @@ function Section({ title }: { title: string }) {
       <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">
         {title}
       </span>
+    </div>
+  );
+}
+
+/* ── compact labelled number (for animation cards) ── */
+function MiniNum({
+  label,
+  value,
+  onChange,
+  unit,
+  step,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  unit?: string;
+  step?: number;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-[10px] text-studio-text-faint w-8 shrink-0">{label}</span>
+      <div className="relative flex-1">
+        <Input
+          type="number"
+          step={step}
+          value={value}
+          onChange={(e) => {
+            const v = parseFloat(e.target.value);
+            if (!isNaN(v)) onChange(v);
+          }}
+          className="h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm pr-5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        />
+        {unit && (
+          <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-studio-text-faint pointer-events-none">
+            {unit}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── one animation card — see, edit, remove a single animation ── */
+function AnimationRow({
+  anim,
+  onChange,
+  onRemove,
+}: {
+  anim: Animation;
+  onChange: (patch: Partial<Animation>) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="rounded-studio-md border border-studio-border bg-studio-surface/40 p-2.5 flex flex-col gap-2">
+      {/* header: property + easing + remove */}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-medium text-studio-text">
+          {PROPERTY_LABELS[anim.property]}
+        </span>
+        <div className="flex items-center gap-1.5">
+          <select
+            value={anim.easing}
+            onChange={(e) => onChange({ easing: e.target.value as AnimationEasing })}
+            className="h-6 text-[10px] bg-studio-surface border border-studio-border rounded-studio-xs text-studio-text-muted px-1.5 focus:outline-none focus:border-studio-accent-border"
+          >
+            {EASINGS.map((e) => (
+              <option key={e} value={e}>{e}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={onRemove}
+            title="Remove animation"
+            className="w-6 h-6 flex items-center justify-center rounded-studio-xs text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+
+      {/* values */}
+      <div className="grid grid-cols-2 gap-2">
+        <MiniNum label="From" value={anim.from} onChange={(v) => onChange({ from: v })} step={0.1} />
+        <MiniNum label="To"   value={anim.to}   onChange={(v) => onChange({ to: v })}   step={0.1} />
+        <MiniNum label="Start" value={anim.startOffset} onChange={(v) => onChange({ startOffset: Math.max(0, Math.round(v)) })} unit="f" />
+        <MiniNum label="Dur"   value={anim.duration}    onChange={(v) => onChange({ duration: Math.max(1, Math.round(v)) })}    unit="f" />
+      </div>
     </div>
   );
 }
@@ -148,32 +246,59 @@ function TextProperties({
       {/* Animation section */}
       <Section title="Animation" />
       <div className="flex flex-col gap-2.5 px-4 py-3">
+        {/* applied animations — each editable & removable */}
+        {(el.animations ?? []).length > 0 && (
+          <div className="flex flex-col gap-2">
+            {(el.animations ?? []).map((anim, i) => (
+              <AnimationRow
+                key={i}
+                anim={anim}
+                onChange={(patch) =>
+                  update({
+                    animations: (el.animations ?? []).map((a, idx) =>
+                      idx === i ? { ...a, ...patch } : a,
+                    ),
+                  })
+                }
+                onRemove={() =>
+                  update({
+                    animations: (el.animations ?? []).filter((_, idx) => idx !== i),
+                  })
+                }
+              />
+            ))}
+          </div>
+        )}
+
+        {/* add presets — append to the stack */}
         <div className="grid grid-cols-2 gap-1.5">
           {ANIMATION_PRESETS.map((preset) => (
             <button
               key={preset.id}
               type="button"
-              onClick={() => update({ animations: preset.build() })}
+              onClick={() =>
+                update({ animations: [...(el.animations ?? []), ...preset.build()] })
+              }
               className="flex items-center justify-center gap-1.5 h-8 px-2 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
             >
-              <Sparkles className="w-3 h-3" />
+              <Plus className="w-3 h-3" />
               {preset.label}
             </button>
           ))}
         </div>
 
-        {el.animations && el.animations.length > 0 && (
+        {(el.animations ?? []).length > 0 && (
           <button
             type="button"
             onClick={() => update({ animations: undefined })}
             className="h-7 rounded-studio-md text-[11px] font-medium text-studio-text-faint hover:text-studio-text border border-studio-border hover:border-studio-border-strong transition-colors duration-120"
           >
-            Remove animation
+            Clear all
           </button>
         )}
 
         <p className="text-[10px] text-studio-text-faint leading-relaxed">
-          Press play or deselect and scrub to preview.
+          Set Start / Dur on each card to sequence effects. Press play to preview.
         </p>
       </div>
     </>
