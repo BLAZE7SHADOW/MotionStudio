@@ -3,9 +3,9 @@ import Moveable from 'react-moveable';
 import { useProjectStore, getCompositionDimensions } from '@/engines/project';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
-import { textElementStyle } from '@/engines/rendering';
+import { textElementStyle, imageElementStyle } from '@/engines/rendering';
 import type { AnimationContext } from '@/engines/rendering';
-import type { TextElement } from '@/engines/canvas';
+import type { TextElement, ImageElement } from '@/engines/canvas';
 
 const DOT_GRID: React.CSSProperties = {
   backgroundImage: 'radial-gradient(circle, oklch(1 0 0 / 10%) 1px, transparent 1px)',
@@ -93,6 +93,36 @@ function TextNodeEditing({
         outlineOffset: 2,
       }}
     />
+  );
+}
+
+/* ── image node (selectable, draggable) — editor only ── */
+function ImageNode({
+  el,
+  url,
+  scale,
+  animCtx,
+  onSelect,
+}: {
+  el: ImageElement;
+  url: string;
+  scale: number;
+  animCtx?: AnimationContext;
+  onSelect: () => void;
+}) {
+  return (
+    <div
+      data-element-id={el.id}
+      onClick={(e) => { e.stopPropagation(); onSelect(); }}
+      style={{ ...imageElementStyle(el, scale, animCtx), cursor: 'pointer' }}
+    >
+      <img
+        src={url}
+        alt=""
+        draggable={false}
+        style={{ width: '100%', height: '100%', objectFit: el.objectFit ?? 'cover', pointerEvents: 'none' }}
+      />
+    </div>
   );
 }
 
@@ -219,40 +249,56 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
               )}
 
               {visibleElements.map((el) => {
-                if (el.type !== 'text') return null;
+                // selected element renders static (base pose) so moveable stays
+                // clean; everything else animates at the current frame
+                const isSelected = selectedElementId === el.id;
+                const animCtx = isSelected
+                  ? undefined
+                  : { localFrame: currentFrame - el.startFrame, fps: project.fps };
 
-                if (editingElementId === el.id) {
+                if (el.type === 'text') {
+                  if (editingElementId === el.id) {
+                    return (
+                      <TextNodeEditing
+                        key={el.id}
+                        el={el}
+                        scale={scale}
+                        onInput={(content) => updateElement(el.id, { content })}
+                        onDone={() => setEditingElementId(null)}
+                      />
+                    );
+                  }
                   return (
-                    <TextNodeEditing
+                    <TextNode
                       key={el.id}
                       el={el}
                       scale={scale}
-                      onInput={(content) => updateElement(el.id, { content })}
-                      onDone={() => setEditingElementId(null)}
+                      animCtx={animCtx}
+                      onSelect={() => setSelectedElement(el.id)}
+                      onEditStart={() => {
+                        setSelectedElement(el.id);
+                        setEditingElementId(el.id);
+                      }}
                     />
                   );
                 }
 
-                // selected element renders static (base pose) so moveable stays
-                // clean; everything else animates at the current frame
-                const isSelected = selectedElementId === el.id;
-                return (
-                  <TextNode
-                    key={el.id}
-                    el={el}
-                    scale={scale}
-                    animCtx={
-                      isSelected
-                        ? undefined
-                        : { localFrame: currentFrame - el.startFrame, fps: project.fps }
-                    }
-                    onSelect={() => setSelectedElement(el.id)}
-                    onEditStart={() => {
-                      setSelectedElement(el.id);
-                      setEditingElementId(el.id);
-                    }}
-                  />
-                );
+                if (el.type === 'image') {
+                  const url = project.assets.find((a) => a.id === el.assetId)?.url;
+                  if (!url) return null;
+                  return (
+                    <ImageNode
+                      key={el.id}
+                      el={el}
+                      url={url}
+                      scale={scale}
+                      animCtx={animCtx}
+                      onSelect={() => setSelectedElement(el.id)}
+                    />
+                  );
+                }
+
+                return null;
               })}
 
               {/* Moveable — display space; commits divide by scale */}

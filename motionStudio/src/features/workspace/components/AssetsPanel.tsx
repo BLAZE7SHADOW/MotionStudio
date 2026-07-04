@@ -3,6 +3,8 @@ import { Image, Video, Music, Upload, Search, FolderOpen, CloudUpload, X, Play }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { useAssetEngine } from '@/engines/asset';
+import { useCanvasEngine } from '@/engines/canvas';
+import { useEditorStore } from '@/engines/editor';
 import type { Asset, AssetType } from '@/engines/asset';
 
 type TabKey = 'images' | 'videos' | 'audio' | 'upload';
@@ -51,9 +53,21 @@ function EmptyAssetState({
 }
 
 /* ── one asset thumbnail ── */
-function AssetCard({ asset, onRemove }: { asset: Asset; onRemove: () => void }) {
+function AssetCard({
+  asset,
+  onAdd,
+  onRemove,
+}: {
+  asset: Asset;
+  onAdd: () => void;
+  onRemove: () => void;
+}) {
   return (
-    <div className="group relative aspect-video rounded-studio-md overflow-hidden border border-studio-border bg-studio-surface">
+    <div
+      onClick={onAdd}
+      title="Add to canvas"
+      className="group relative aspect-video rounded-studio-md overflow-hidden border border-studio-border bg-studio-surface cursor-pointer hover:border-studio-border-strong transition-colors duration-120"
+    >
       {asset.type === 'image' && (
         <img src={asset.url} alt={asset.name} className="w-full h-full object-cover" />
       )}
@@ -81,7 +95,7 @@ function AssetCard({ asset, onRemove }: { asset: Asset; onRemove: () => void }) 
       {/* remove */}
       <button
         type="button"
-        onClick={onRemove}
+        onClick={(e) => { e.stopPropagation(); onRemove(); }}
         title="Remove asset"
         className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-studio-xs bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-opacity duration-120"
       >
@@ -96,18 +110,20 @@ function AssetGrid({
   assets,
   tab,
   onBrowse,
+  onAdd,
   onRemove,
 }: {
   assets: Asset[];
   tab: keyof typeof EMPTY_STATES;
   onBrowse: () => void;
+  onAdd: (asset: Asset) => void;
   onRemove: (id: string) => void;
 }) {
   if (assets.length === 0) return <EmptyAssetState tab={tab} onBrowse={onBrowse} />;
   return (
     <div className="grid grid-cols-2 gap-2 px-3 pb-3">
       {assets.map((a) => (
-        <AssetCard key={a.id} asset={a} onRemove={() => onRemove(a.id)} />
+        <AssetCard key={a.id} asset={a} onAdd={() => onAdd(a)} onRemove={() => onRemove(a.id)} />
       ))}
     </div>
   );
@@ -192,9 +208,19 @@ function UploadTab({
 /* ── main component ── */
 export default function AssetsPanel() {
   const { assets, uploadFiles, removeAsset } = useAssetEngine();
+  const { addImage } = useCanvasEngine();
+  const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<TabKey>('images');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  /* place an asset onto the canvas (image for now; video/audio next steps) */
+  function handleAdd(asset: Asset) {
+    if (asset.type === 'image') {
+      const el = addImage(asset.id);
+      if (el) setSelectedElement(el.id);
+    }
+  }
 
   const q = search.trim().toLowerCase();
   const byType = (type: AssetType) =>
@@ -277,15 +303,15 @@ export default function AssetsPanel() {
 
         {/* Content */}
         <TabsContent value="images" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-y-auto">
-          <AssetGrid assets={byType('image')} tab="images" onBrowse={() => openPicker(TAB_TYPE.images.accept)} onRemove={removeAsset} />
+          <AssetGrid assets={byType('image')} tab="images" onBrowse={() => openPicker(TAB_TYPE.images.accept)} onAdd={handleAdd} onRemove={removeAsset} />
         </TabsContent>
 
         <TabsContent value="videos" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-y-auto">
-          <AssetGrid assets={byType('video')} tab="videos" onBrowse={() => openPicker(TAB_TYPE.videos.accept)} onRemove={removeAsset} />
+          <AssetGrid assets={byType('video')} tab="videos" onBrowse={() => openPicker(TAB_TYPE.videos.accept)} onAdd={handleAdd} onRemove={removeAsset} />
         </TabsContent>
 
         <TabsContent value="audio" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-y-auto">
-          <AssetGrid assets={byType('audio')} tab="audio" onBrowse={() => openPicker(TAB_TYPE.audio.accept)} onRemove={removeAsset} />
+          <AssetGrid assets={byType('audio')} tab="audio" onBrowse={() => openPicker(TAB_TYPE.audio.accept)} onAdd={handleAdd} onRemove={removeAsset} />
         </TabsContent>
 
         <TabsContent value="upload" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-y-auto">
