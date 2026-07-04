@@ -4,6 +4,7 @@ import { useProjectStore, getCompositionDimensions } from '@/engines/project';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
 import { textElementStyle } from '@/engines/rendering';
+import type { AnimationContext } from '@/engines/rendering';
 import type { TextElement } from '@/engines/canvas';
 
 const DOT_GRID: React.CSSProperties = {
@@ -22,11 +23,13 @@ interface CanvasPanelProps {
 function TextNode({
   el,
   scale,
+  animCtx,
   onSelect,
   onEditStart,
 }: {
   el: TextElement;
   scale: number;
+  animCtx?: AnimationContext;
   onSelect: () => void;
   onEditStart: () => void;
 }) {
@@ -36,7 +39,7 @@ function TextNode({
       onClick={(e)       => { e.stopPropagation(); onSelect(); }}
       onDoubleClick={(e) => { e.stopPropagation(); onEditStart(); }}
       style={{
-        ...textElementStyle(el, scale),
+        ...textElementStyle(el, scale, animCtx),
         cursor:     'pointer',
         userSelect: 'none',
       }}
@@ -230,11 +233,19 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
                   );
                 }
 
+                // selected element renders static (base pose) so moveable stays
+                // clean; everything else animates at the current frame
+                const isSelected = selectedElementId === el.id;
                 return (
                   <TextNode
                     key={el.id}
                     el={el}
                     scale={scale}
+                    animCtx={
+                      isSelected
+                        ? undefined
+                        : { localFrame: currentFrame - el.startFrame, fps: project.fps }
+                    }
                     onSelect={() => setSelectedElement(el.id)}
                     onEditStart={() => {
                       setSelectedElement(el.id);

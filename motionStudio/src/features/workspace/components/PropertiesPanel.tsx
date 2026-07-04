@@ -1,6 +1,7 @@
-import { MousePointer } from 'lucide-react';
+import { MousePointer, Sparkles } from 'lucide-react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
+import { ANIMATION_PRESETS } from '@/engines/animation';
 import type { TextElement } from '@/engines/canvas';
 import { Input } from '@/components/ui/input';
 
@@ -142,6 +143,38 @@ function TextProperties({
             unit="%"
           />
         </PropRow>
+      </div>
+
+      {/* Animation section */}
+      <Section title="Animation" />
+      <div className="flex flex-col gap-2.5 px-4 py-3">
+        <div className="grid grid-cols-2 gap-1.5">
+          {ANIMATION_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => update({ animations: preset.build() })}
+              className="flex items-center justify-center gap-1.5 h-8 px-2 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
+            >
+              <Sparkles className="w-3 h-3" />
+              {preset.label}
+            </button>
+          ))}
+        </div>
+
+        {el.animations && el.animations.length > 0 && (
+          <button
+            type="button"
+            onClick={() => update({ animations: undefined })}
+            className="h-7 rounded-studio-md text-[11px] font-medium text-studio-text-faint hover:text-studio-text border border-studio-border hover:border-studio-border-strong transition-colors duration-120"
+          >
+            Remove animation
+          </button>
+        )}
+
+        <p className="text-[10px] text-studio-text-faint leading-relaxed">
+          Press play or deselect and scrub to preview.
+        </p>
       </div>
     </>
   );
