@@ -19,4 +19,4 @@ export function getCompositionDimensions(aspectRatio: AspectRatio): CompositionD
 }
 
 /** Default composition length in seconds for a new project. */
-export const DEFAULT_DURATION_SECONDS = 5;
+export const DEFAULT_DURATION_SECONDS = 10;

@@ -27,17 +27,20 @@ const ASPECT_OPTIONS: { value: AspectRatio; label: string; sub: string }[] = [
 ];
 
 const FPS_OPTIONS = [24, 30, 60] as const;
+const DURATION_OPTIONS = [5, 10, 15, 30] as const; // seconds
 
 export default function ProjectSettingsPopover({ project }: ProjectSettingsPopoverProps) {
   const updateProject = useProjectStore((s) => s.updateProject);
 
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>(project.aspectRatio);
   const [fps, setFps] = useState(project.fps);
+  const [seconds, setSeconds] = useState(Math.round(project.durationInFrames / project.fps));
 
   useEffect(() => {
     setAspectRatio(project.aspectRatio);
     setFps(project.fps);
-  }, [project.id, project.aspectRatio, project.fps]);
+    setSeconds(Math.round(project.durationInFrames / project.fps));
+  }, [project.id, project.aspectRatio, project.fps, project.durationInFrames]);
 
   function handleAspectRatioChange(value: AspectRatio) {
     setAspectRatio(value);
@@ -46,7 +49,14 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
 
   function handleFpsChange(value: number) {
     setFps(value);
-    updateProject(project.id, { fps: value });
+    // keep the timeline the same length in seconds when fps changes
+    const secs = project.durationInFrames / project.fps;
+    updateProject(project.id, { fps: value, durationInFrames: Math.round(secs * value) });
+  }
+
+  function handleDurationChange(secs: number) {
+    setSeconds(secs);
+    updateProject(project.id, { durationInFrames: Math.round(secs * fps) });
   }
 
   return (
@@ -59,6 +69,8 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
           <span className="font-mono">{project.aspectRatio}</span>
           <span className="text-studio-text-faint">·</span>
           <span className="font-mono">{project.fps} fps</span>
+          <span className="text-studio-text-faint">·</span>
+          <span className="font-mono">{Math.round(project.durationInFrames / project.fps)}s</span>
           <Settings2 className="w-3 h-3 ml-0.5 text-studio-text-faint" />
         </button>
       </PopoverTrigger>
@@ -102,7 +114,7 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
             </Select>
           </div>
 
-          {/* FPS */}
+          {/* Frame Rate */}
           <div className="flex flex-col gap-2">
             <Label className="text-[11px] font-medium text-studio-text-muted uppercase tracking-wider">
               Frame Rate
@@ -125,6 +137,30 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
               ))}
             </div>
             <p className="text-[11px] text-studio-text-faint">fps</p>
+          </div>
+
+          {/* Duration */}
+          <div className="flex flex-col gap-2">
+            <Label className="text-[11px] font-medium text-studio-text-muted uppercase tracking-wider">
+              Duration
+            </Label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {DURATION_OPTIONS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => handleDurationChange(s)}
+                  className={[
+                    'h-8 text-[12px] font-medium rounded-studio-md border transition-colors duration-120',
+                    seconds === s
+                      ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent'
+                      : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',
+                  ].join(' ')}
+                >
+                  {s}s
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </PopoverContent>
