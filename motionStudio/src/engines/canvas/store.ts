@@ -170,17 +170,31 @@ export function useCanvasEngine() {
     });
   }
 
-  function reorderElement(id: string, direction: 'up' | 'down') {
+  /**
+   * Restack an element by rewriting zIndex. Stacking is driven by zIndex
+   * (ascending = back → front), so we sort by it, move the target within that
+   * order, then reassign contiguous zIndex to everyone.
+   */
+  function reorderLayer(id: string, direction: 'front' | 'back' | 'forward' | 'backward') {
     if (!project) return;
-    const idx = elements.findIndex((el) => el.id === id);
-    if (idx === -1) return;
-    const next = [...elements];
-    if (direction === 'up' && idx < next.length - 1)
-      [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-    if (direction === 'down' && idx > 0)
-      [next[idx], next[idx - 1]] = [next[idx - 1], next[idx]];
+    const stack = [...elements].sort((a, b) => a.zIndex - b.zIndex);
+    const i = stack.findIndex((el) => el.id === id);
+    if (i === -1) return;
+
+    let j = i;
+    if (direction === 'forward')  j = Math.min(stack.length - 1, i + 1);
+    if (direction === 'backward') j = Math.max(0, i - 1);
+    if (direction === 'front')    j = stack.length - 1;
+    if (direction === 'back')     j = 0;
+    if (j === i) return; // already at the edge
+
+    const [moved] = stack.splice(i, 1);
+    stack.splice(j, 0, moved);
+
+    const orderById = new Map(stack.map((el, idx) => [el.id, idx]));
+    const next = elements.map((el) => ({ ...el, zIndex: orderById.get(el.id) ?? el.zIndex }));
     updateProject(project.id, { canvas: { elements: next } });
   }
 
-  return { elements, addText, addImage, addVideo, addAudio, updateElement, removeElement, reorderElement };
+  return { elements, addText, addImage, addVideo, addAudio, updateElement, removeElement, reorderLayer };
 }
