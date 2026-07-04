@@ -1,8 +1,9 @@
-import { Save, Undo2, Redo2, Download, Clapperboard, Type } from 'lucide-react';
+import { Save, Undo2, Redo2, Download, Clapperboard, Type, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { Project } from '@/engines/project';
 import { useCanvasEngine } from '@/engines/canvas';
+import { useEditorStore } from '@/engines/editor';
 import ProjectSettingsPopover from './ProjectSettingsPopover';
 
 interface ToolbarProps {
@@ -11,6 +12,8 @@ interface ToolbarProps {
 
 export default function Toolbar({ project }: ToolbarProps) {
   const { addText } = useCanvasEngine();
+  const isPlaying    = useEditorStore((s) => s.isPlaying);
+  const setIsPlaying = useEditorStore((s) => s.setIsPlaying);
 
   return (
     <div className="h-11 border-b border-studio-border bg-studio-panel flex items-center px-3 gap-0.5 shrink-0">
@@ -72,8 +75,21 @@ export default function Toolbar({ project }: ToolbarProps) {
       {/* Project settings — live aspect ratio + fps indicator */}
       <ProjectSettingsPopover project={project} />
 
-      {/* Right side */}
-      <div className="ml-auto">
+      {/* Preview toggle */}
+      <div className="ml-auto flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          title={isPlaying ? 'Stop preview' : 'Play preview'}
+          onClick={() => setIsPlaying(!isPlaying)}
+          className="h-7 px-3 text-[12px] font-medium text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-md gap-1.5"
+        >
+          {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+          {isPlaying ? 'Stop' : 'Preview'}
+        </Button>
+
+        <Separator orientation="vertical" className="h-4 bg-studio-border-strong" />
+
         <Button
           size="sm"
           title="Export"

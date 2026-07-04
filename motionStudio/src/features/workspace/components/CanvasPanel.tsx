@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import Moveable from 'react-moveable';
-import { useProjectStore } from '@/engines/project';
+import { Player } from '@remotion/player';
+import { useProjectStore, getCompositionDimensions } from '@/engines/project';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
+import { MotionComposition, textElementStyle } from '@/engines/rendering';
 import type { TextElement } from '@/engines/canvas';
 
 const DOT_GRID: React.CSSProperties = {
@@ -10,23 +12,22 @@ const DOT_GRID: React.CSSProperties = {
   backgroundSize: '20px 20px',
 };
 
+const PAD = 48;
+const ACCENT = 'oklch(0.627 0.265 298.232)';
+
 interface CanvasPanelProps {
   projectId: string;
 }
 
-const ASPECT_DIMS: Record<string, { w: number; h: number }> = {
-  '16:9': { w: 16, h: 9 },
-  '9:16': { w: 9,  h: 16 },
-  '1:1':  { w: 1,  h: 1 },
-};
-
-/* ── static text node (selectable, draggable) ── */
+/* ── static text node (selectable, draggable) — editor only ── */
 function TextNode({
   el,
+  scale,
   onSelect,
   onEditStart,
 }: {
   el: TextElement;
+  scale: number;
   onSelect: () => void;
   onEditStart: () => void;
 }) {
@@ -36,22 +37,9 @@ function TextNode({
       onClick={(e)       => { e.stopPropagation(); onSelect(); }}
       onDoubleClick={(e) => { e.stopPropagation(); onEditStart(); }}
       style={{
-        position:   'absolute',
-        left:       el.x,
-        top:        el.y,
-        width:      el.width,
-        height:     el.height,
-        transform:  `rotate(${el.rotation}deg)`,
-        opacity:    el.opacity,
-        zIndex:     el.zIndex,
-        fontSize:   el.fontSize,
-        fontFamily: el.fontFamily,
-        color:      el.color,
+        ...textElementStyle(el, scale),
         cursor:     'pointer',
         userSelect: 'none',
-        lineHeight: 1.2,
-        whiteSpace: 'pre-wrap',
-        wordBreak:  'break-word',
       }}
     >
       {el.content}
@@ -59,20 +47,20 @@ function TextNode({
   );
 }
 
-/* ── editable text node (contenteditable, cursor visible) ── */
+/* ── editable text node (contenteditable) — editor only ── */
 function TextNodeEditing({
   el,
+  scale,
   onInput,
   onDone,
 }: {
   el: TextElement;
+  scale: number;
   onInput: (content: string) => void;
   onDone: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  /* set content via ref on mount only — never via children
-     so React never touches the DOM and cursor never resets */
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
@@ -96,23 +84,10 @@ function TextNodeEditing({
       onKeyDown={(e) => { if (e.key === 'Escape') e.currentTarget.blur(); }}
       onClick={(e)   => e.stopPropagation()}
       style={{
-        position:   'absolute',
-        left:       el.x,
-        top:        el.y,
-        width:      el.width,
-        minHeight:  el.height,
-        transform:  `rotate(${el.rotation}deg)`,
-        opacity:    el.opacity,
-        zIndex:     el.zIndex,
-        fontSize:   el.fontSize,
-        fontFamily: el.fontFamily,
-        color:      el.color,
-        cursor:     'text',
-        userSelect: 'text',
-        lineHeight: 1.2,
-        whiteSpace: 'pre-wrap',
-        wordBreak:  'break-word',
-        outline:    '2px solid oklch(0.627 0.265 298.232)',
+        ...textElementStyle(el, scale),
+        cursor:        'text',
+        userSelect:    'text',
+        outline:       `2px solid ${ACCENT}`,
         outlineOffset: 2,
       }}
     />
@@ -124,34 +99,54 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
   const { elements, updateElement, removeElement } = useCanvasEngine();
   const selectedElementId  = useEditorStore((s) => s.selectedElementId);
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
+  const isPlaying          = useEditorStore((s) => s.isPlaying);
 
-  const zoom = useEditorStore((s) => s.zoom);
-
-  const containerRef   = useRef<HTMLDivElement>(null);
+  const areaRef        = useRef<HTMLDivElement>(null);
+  const stageRef       = useRef<HTMLDivElement>(null);
+  const [area, setArea]                         = useState({ w: 0, h: 0 });
   const [moveableTarget,   setMoveableTarget]   = useState<HTMLElement | null>(null);
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
 
+  /* ── measure available area → scale factor ── */
+  useEffect(() => {
+    const node = areaRef.current;
+    if (!node) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setArea({ w: entry.contentRect.width, h: entry.contentRect.height });
+    });
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, []);
+
   /* ── find selected DOM element for moveable ── */
   useEffect(() => {
-    if (!selectedElementId || editingElementId || !containerRef.current) {
+    if (!selectedElementId || editingElementId || isPlaying || !stageRef.current) {
       setMoveableTarget(null);
       return;
     }
-    const el = containerRef.current.querySelector(
+    const el = stageRef.current.querySelector(
       `[data-element-id="${selectedElementId}"]`
     ) as HTMLElement | null;
     setMoveableTarget(el);
-  }, [selectedElementId, editingElementId, elements]);
+  }, [selectedElementId, editingElementId, isPlaying, elements]);
 
   /* ── clear editing when selection changes ── */
   useEffect(() => {
     setEditingElementId(null);
   }, [selectedElementId]);
 
+  /* ── clear selection/editing when entering preview ── */
+  useEffect(() => {
+    if (isPlaying) {
+      setEditingElementId(null);
+      setSelectedElement(null);
+    }
+  }, [isPlaying, setSelectedElement]);
+
   /* ── keyboard: Delete / Escape ── */
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (editingElementId) return;
+      if (editingElementId || isPlaying) return;
 
       const tag = (document.activeElement as HTMLElement)?.tagName;
       const isTyping = tag === 'INPUT' || tag === 'TEXTAREA';
@@ -160,135 +155,173 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
         removeElement(selectedElementId);
         setSelectedElement(null);
       }
-      if (e.key === 'Escape') {
-        setSelectedElement(null);
-      }
+      if (e.key === 'Escape') setSelectedElement(null);
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selectedElementId, editingElementId, removeElement, setSelectedElement]);
+  }, [selectedElementId, editingElementId, isPlaying, removeElement, setSelectedElement]);
 
   if (!project) return null;
 
-  const dims = ASPECT_DIMS[project.aspectRatio];
-  const pad  = 48;
+  const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
 
-  function handleEditDone() {
-    setEditingElementId(null);
-  }
+  const availW = Math.max(0, area.w - PAD * 2);
+  const availH = Math.max(0, area.h - PAD * 2);
+  const scale  = availW > 0 && availH > 0 ? Math.min(availW / compW, availH / compH) : 0;
+  const displayW = compW * scale;
+  const displayH = compH * scale;
+  const ready = scale > 0;
 
   return (
     <div
+      ref={areaRef}
       className="flex-1 flex flex-col items-center justify-center overflow-hidden bg-studio-bg gap-3"
       style={DOT_GRID}
     >
-      {/* Canvas */}
-      <div
-        ref={containerRef}
-        onClick={() => {
-          setEditingElementId(null);
-          setSelectedElement(null);
-        }}
-        className="relative"
-        style={{
-          aspectRatio:     `${dims.w} / ${dims.h}`,
-          maxWidth:        `calc(100% - ${pad * 2}px)`,
-          maxHeight:       `calc(100% - ${pad * 2}px)`,
-          width:  dims.w >= dims.h ? '100%' : 'auto',
-          height: dims.w <  dims.h ? '100%' : 'auto',
-          backgroundColor: '#000000',
-          boxShadow: [
-            '0 0 0 1px oklch(1 0 0 / 8%)',
-            '0 30px 80px oklch(0 0 0 / 90%)',
-            '0 8px 24px oklch(0 0 0 / 60%)',
-          ].join(', '),
-          borderRadius: 2,
-        }}
-      >
-        {elements.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-[12px] text-white/15 font-mono select-none tracking-widest">
-              {project.aspectRatio} · {project.fps} fps
+      {ready && (
+        <>
+          {/* ── PREVIEW: Remotion Player ── */}
+          {isPlaying ? (
+            <div
+              style={{
+                width: displayW,
+                height: displayH,
+                boxShadow: [
+                  '0 0 0 1px oklch(1 0 0 / 8%)',
+                  '0 30px 80px oklch(0 0 0 / 90%)',
+                  '0 8px 24px oklch(0 0 0 / 60%)',
+                ].join(', '),
+                borderRadius: 2,
+                overflow: 'hidden',
+              }}
+            >
+              <Player
+                component={MotionComposition}
+                inputProps={{ elements }}
+                durationInFrames={project.durationInFrames}
+                fps={project.fps}
+                compositionWidth={compW}
+                compositionHeight={compH}
+                style={{ width: displayW, height: displayH }}
+                controls
+                autoPlay
+                loop
+              />
+            </div>
+          ) : (
+            /* ── EDIT: interactive stage ── */
+            <div
+              ref={stageRef}
+              onClick={() => {
+                setEditingElementId(null);
+                setSelectedElement(null);
+              }}
+              className="relative"
+              style={{
+                width: displayW,
+                height: displayH,
+                backgroundColor: '#000000',
+                boxShadow: [
+                  '0 0 0 1px oklch(1 0 0 / 8%)',
+                  '0 30px 80px oklch(0 0 0 / 90%)',
+                  '0 8px 24px oklch(0 0 0 / 60%)',
+                ].join(', '),
+                borderRadius: 2,
+                overflow: 'hidden',
+              }}
+            >
+              {elements.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span className="text-[12px] text-white/15 font-mono select-none tracking-widest">
+                    {project.aspectRatio} · {project.fps} fps
+                  </span>
+                </div>
+              )}
+
+              {elements.map((el) => {
+                if (el.type !== 'text') return null;
+
+                if (editingElementId === el.id) {
+                  return (
+                    <TextNodeEditing
+                      key={el.id}
+                      el={el}
+                      scale={scale}
+                      onInput={(content) => updateElement(el.id, { content })}
+                      onDone={() => setEditingElementId(null)}
+                    />
+                  );
+                }
+
+                return (
+                  <TextNode
+                    key={el.id}
+                    el={el}
+                    scale={scale}
+                    onSelect={() => setSelectedElement(el.id)}
+                    onEditStart={() => {
+                      setSelectedElement(el.id);
+                      setEditingElementId(el.id);
+                    }}
+                  />
+                );
+              })}
+
+              {/* Moveable — display space; commits divide by scale */}
+              {moveableTarget && selectedElementId && !editingElementId && (
+                <Moveable
+                  target={moveableTarget}
+                  container={stageRef.current}
+                  draggable
+                  resizable
+                  rotatable
+                  keepRatio={false}
+                  throttleDrag={0}
+                  throttleResize={0}
+                  throttleRotate={0}
+                  onDrag={({ target, left, top }) => {
+                    target.style.left = `${left}px`;
+                    target.style.top  = `${top}px`;
+                  }}
+                  onDragEnd={({ lastEvent }) => {
+                    if (lastEvent) updateElement(selectedElementId, {
+                      x: lastEvent.left / scale,
+                      y: lastEvent.top / scale,
+                    });
+                  }}
+                  onResize={({ target, width, height, drag }) => {
+                    target.style.width  = `${width}px`;
+                    target.style.height = `${height}px`;
+                    target.style.left   = `${drag.left}px`;
+                    target.style.top    = `${drag.top}px`;
+                  }}
+                  onResizeEnd={({ lastEvent }) => {
+                    if (lastEvent) updateElement(selectedElementId, {
+                      width:  lastEvent.width  / scale,
+                      height: lastEvent.height / scale,
+                      x:      lastEvent.drag.left / scale,
+                      y:      lastEvent.drag.top  / scale,
+                    });
+                  }}
+                  onRotate={({ target, rotate }) => {
+                    target.style.transform = `rotate(${rotate}deg)`;
+                  }}
+                  onRotateEnd={({ lastEvent }) => {
+                    if (lastEvent) updateElement(selectedElementId, { rotation: lastEvent.rotate });
+                  }}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Zoom indicator */}
+          <div className="flex items-center gap-1.5 px-2.5 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm pointer-events-none select-none">
+            <span className="text-[11px] font-medium text-studio-text-faint tabular-nums">
+              {Math.round(scale * 100)}%
             </span>
           </div>
-        )}
-
-        {elements.map((el) => {
-          if (el.type !== 'text') return null;
-
-          if (editingElementId === el.id) {
-            return (
-              <TextNodeEditing
-                key={el.id}
-                el={el}
-                onInput={(content) => updateElement(el.id, { content })}
-                onDone={handleEditDone}
-              />
-            );
-          }
-
-          return (
-            <TextNode
-              key={el.id}
-              el={el}
-              onSelect={() => setSelectedElement(el.id)}
-              onEditStart={() => {
-                setSelectedElement(el.id);
-                setEditingElementId(el.id);
-              }}
-            />
-          );
-        })}
-
-        {/* Moveable — hidden while editing */}
-        {moveableTarget && selectedElementId && !editingElementId && (
-          <Moveable
-            target={moveableTarget}
-            container={containerRef.current}
-            draggable
-            resizable
-            rotatable
-            keepRatio={false}
-            throttleDrag={0}
-            throttleResize={0}
-            throttleRotate={0}
-            onDrag={({ target, left, top }) => {
-              target.style.left = `${left}px`;
-              target.style.top  = `${top}px`;
-            }}
-            onDragEnd={({ lastEvent }) => {
-              if (lastEvent) updateElement(selectedElementId, { x: lastEvent.left, y: lastEvent.top });
-            }}
-            onResize={({ target, width, height, drag }) => {
-              target.style.width  = `${width}px`;
-              target.style.height = `${height}px`;
-              target.style.left   = `${drag.left}px`;
-              target.style.top    = `${drag.top}px`;
-            }}
-            onResizeEnd={({ lastEvent }) => {
-              if (lastEvent) updateElement(selectedElementId, {
-                width:  lastEvent.width,
-                height: lastEvent.height,
-                x:      lastEvent.drag.left,
-                y:      lastEvent.drag.top,
-              });
-            }}
-            onRotate={({ target, rotate }) => {
-              target.style.transform = `rotate(${rotate}deg)`;
-            }}
-            onRotateEnd={({ lastEvent }) => {
-              if (lastEvent) updateElement(selectedElementId, { rotation: lastEvent.rotate });
-            }}
-          />
-        )}
-      </div>
-
-      {/* Zoom indicator */}
-      <div className="flex items-center gap-1.5 px-2.5 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm pointer-events-none select-none">
-        <span className="text-[11px] font-medium text-studio-text-faint tabular-nums">
-          {Math.round(zoom * 100)}%
-        </span>
-      </div>
+        </>
+      )}
     </div>
   );
 }
