@@ -182,6 +182,41 @@ function VideoNode({
   );
 }
 
+/* ── audio node — no visual, just a hidden element synced to the playhead ── */
+function AudioNode({
+  url,
+  isPlaying,
+  localFrame,
+  fps,
+  volume,
+}: {
+  url: string;
+  isPlaying: boolean;
+  localFrame: number;
+  fps: number;
+  volume: number;
+}) {
+  const ref = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    const a = ref.current;
+    if (!a) return;
+    a.volume = Math.min(1, Math.max(0, volume));
+    const t = Math.max(0, localFrame / fps);
+    if (isPlaying) {
+      if (a.paused) {
+        if (Math.abs(a.currentTime - t) > 0.2) a.currentTime = t;
+        a.play().catch(() => {});
+      }
+    } else {
+      a.pause();
+      if (Math.abs(a.currentTime - t) > 0.05) a.currentTime = t;
+    }
+  }, [isPlaying, localFrame, fps, volume]);
+
+  return <audio ref={ref} src={url} preload="auto" style={{ display: 'none' }} />;
+}
+
 export default function CanvasPanel({ projectId }: CanvasPanelProps) {
   const project            = useProjectStore((s) => s.getProject(projectId));
   const { elements, updateElement, removeElement } = useCanvasEngine();
@@ -368,6 +403,21 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
                       localFrame={currentFrame - el.startFrame}
                       fps={project.fps}
                       onSelect={() => setSelectedElement(el.id)}
+                    />
+                  );
+                }
+
+                if (el.type === 'audio') {
+                  const url = project.assets.find((a) => a.id === el.assetId)?.url;
+                  if (!url) return null;
+                  return (
+                    <AudioNode
+                      key={el.id}
+                      url={url}
+                      isPlaying={isPlaying}
+                      localFrame={currentFrame - el.startFrame}
+                      fps={project.fps}
+                      volume={el.volume ?? 1}
                     />
                   );
                 }
