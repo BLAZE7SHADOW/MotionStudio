@@ -2,6 +2,7 @@ import type { CanvasElement, Asset } from '../../project/types';
 import TextRenderer from './renderers/TextRenderer';
 import ImageRenderer from './renderers/ImageRenderer';
 import VideoRenderer from './renderers/VideoRenderer';
+import AudioRenderer from './renderers/AudioRenderer';
 
 /**
  * Dispatches an element to its type-specific renderer. Image elements resolve
@@ -24,6 +25,10 @@ export default function ElementRenderer({
     case 'video': {
       const asset = assets.find((a) => a.id === el.assetId);
       return asset ? <VideoRenderer el={el} url={asset.url} /> : null;
+    }
+    case 'audio': {
+      const asset = assets.find((a) => a.id === el.assetId);
+      return asset ? <AudioRenderer el={el} url={asset.url} /> : null;
     }
     default:
       return null;
