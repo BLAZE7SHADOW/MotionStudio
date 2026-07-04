@@ -1,6 +1,7 @@
 import { useProjectStore } from '../project/store';
 import type { Asset } from '../project/types';
 import { assetTypeFromFile, probeAsset } from './probe';
+import { putBlob, deleteBlob } from './blobStore';
 
 /**
  * Asset Engine — service layer over the project's asset library.
@@ -22,9 +23,11 @@ export function useAssetEngine() {
     for (const file of files) {
       const type = assetTypeFromFile(file);
       if (!type) continue; // skip unsupported files
+      const id = crypto.randomUUID();
       const url = URL.createObjectURL(file);
       const meta = await probeAsset(type, url);
-      created.push({ id: crypto.randomUUID(), type, name: file.name, url, ...meta });
+      await putBlob(id, file); // persist the bytes for future sessions
+      created.push({ id, type, name: file.name, url, ...meta });
     }
     if (created.length === 0) return [];
 
@@ -37,6 +40,7 @@ export function useAssetEngine() {
   function removeAsset(id: string) {
     if (!project) return;
     updateProject(project.id, { assets: assets.filter((a) => a.id !== id) });
+    void deleteBlob(id); // drop the persisted bytes too
   }
 
   function getAsset(id: string): Asset | undefined {
