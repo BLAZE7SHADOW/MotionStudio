@@ -7,12 +7,15 @@ import EditorLayout from './components/EditorLayout';
 export default function EditorPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const project = useProjectStore((s) => s.getProject(projectId ?? ''));
-  const reset = useEditorStore((s) => s.reset);
+  const project           = useProjectStore((s) => s.getProject(projectId ?? ''));
+  const setActiveProjectId = useProjectStore((s) => s.setActiveProjectId);
+  const reset             = useEditorStore((s) => s.reset);
 
   useEffect(() => {
+    setActiveProjectId(projectId ?? null);
     reset();
-  }, [projectId, reset]);
+    return () => setActiveProjectId(null);
+  }, [projectId, setActiveProjectId, reset]);
 
   if (!project) {
     return (
