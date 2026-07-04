@@ -1,7 +1,7 @@
 import { MousePointer, Plus, X } from 'lucide-react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
-import { ANIMATION_PRESETS } from '@/engines/animation';
+import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
 import type { TextElement } from '@/engines/canvas';
 import type { Animation, AnimationProperty, AnimationEasing } from '@/engines/project';
 import { Input } from '@/components/ui/input';
@@ -270,22 +270,50 @@ function TextProperties({
           </div>
         )}
 
-        {/* add presets — append to the stack */}
-        <div className="grid grid-cols-2 gap-1.5">
-          {ANIMATION_PRESETS.map((preset) => (
-            <button
-              key={preset.id}
-              type="button"
-              onClick={() =>
-                update({ animations: [...(el.animations ?? []), ...preset.build()] })
-              }
-              className="flex items-center justify-center gap-1.5 h-8 px-2 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
-            >
-              <Plus className="w-3 h-3" />
-              {preset.label}
-            </button>
+        {/* add presets — grouped, appended to the stack */}
+        {(['enter', 'exit'] as const).map((kind) => (
+          <div key={kind} className="flex flex-col gap-1.5">
+            <span className="text-[10px] text-studio-text-faint uppercase tracking-wider">
+              {kind === 'enter' ? 'Enter' : 'Exit'}
+            </span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {ANIMATION_PRESETS.filter((p) => p.kind === kind).map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() =>
+                    update({
+                      animations: [
+                        ...(el.animations ?? []),
+                        ...preset.build(el.durationInFrames),
+                      ],
+                    })
+                  }
+                  className="flex items-center justify-center gap-1.5 h-8 px-2 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
+                >
+                  <Plus className="w-3 h-3" />
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* add a single bare property */}
+        <select
+          value=""
+          onChange={(e) => {
+            const prop = e.target.value as AnimationProperty;
+            if (!prop) return;
+            update({ animations: [...(el.animations ?? []), defaultAnimationFor(prop)] });
+          }}
+          className="h-8 text-[11px] bg-studio-surface border border-studio-border rounded-studio-md text-studio-text-muted px-2 focus:outline-none focus:border-studio-accent-border"
+        >
+          <option value="" disabled>＋ Add property…</option>
+          {(Object.keys(PROPERTY_LABELS) as AnimationProperty[]).map((p) => (
+            <option key={p} value={p}>{PROPERTY_LABELS[p]}</option>
           ))}
-        </div>
+        </select>
 
         {(el.animations ?? []).length > 0 && (
           <button
