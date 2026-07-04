@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import Moveable from 'react-moveable';
-import { Player } from '@remotion/player';
 import { useProjectStore, getCompositionDimensions } from '@/engines/project';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
-import { MotionComposition, textElementStyle } from '@/engines/rendering';
+import { textElementStyle } from '@/engines/rendering';
 import type { TextElement } from '@/engines/canvas';
 
 const DOT_GRID: React.CSSProperties = {
@@ -100,6 +99,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
   const selectedElementId  = useEditorStore((s) => s.selectedElementId);
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
   const isPlaying          = useEditorStore((s) => s.isPlaying);
+  const currentFrame       = useEditorStore((s) => s.currentFrame);
 
   const areaRef        = useRef<HTMLDivElement>(null);
   const stageRef       = useRef<HTMLDivElement>(null);
@@ -128,7 +128,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
       `[data-element-id="${selectedElementId}"]`
     ) as HTMLElement | null;
     setMoveableTarget(el);
-  }, [selectedElementId, editingElementId, isPlaying, elements]);
+  }, [selectedElementId, editingElementId, isPlaying, elements, currentFrame]);
 
   /* ── clear editing when selection changes ── */
   useEffect(() => {
@@ -172,6 +172,11 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
   const displayH = compH * scale;
   const ready = scale > 0;
 
+  /* elements alive at the current frame — half-open [start, start+duration) */
+  const visibleElements = elements.filter(
+    (el) => currentFrame >= el.startFrame && currentFrame < el.startFrame + el.durationInFrames
+  );
+
   return (
     <div
       ref={areaRef}
@@ -180,56 +185,28 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     >
       {ready && (
         <>
-          {/* ── PREVIEW: Remotion Player ── */}
-          {isPlaying ? (
-            <div
-              style={{
-                width: displayW,
-                height: displayH,
-                boxShadow: [
-                  '0 0 0 1px oklch(1 0 0 / 8%)',
-                  '0 30px 80px oklch(0 0 0 / 90%)',
-                  '0 8px 24px oklch(0 0 0 / 60%)',
-                ].join(', '),
-                borderRadius: 2,
-                overflow: 'hidden',
-              }}
-            >
-              <Player
-                component={MotionComposition}
-                inputProps={{ elements }}
-                durationInFrames={project.durationInFrames}
-                fps={project.fps}
-                compositionWidth={compW}
-                compositionHeight={compH}
-                style={{ width: displayW, height: displayH }}
-                controls
-                autoPlay
-                loop
-              />
-            </div>
-          ) : (
-            /* ── EDIT: interactive stage ── */
-            <div
-              ref={stageRef}
-              onClick={() => {
-                setEditingElementId(null);
-                setSelectedElement(null);
-              }}
-              className="relative"
-              style={{
-                width: displayW,
-                height: displayH,
-                backgroundColor: '#000000',
-                boxShadow: [
-                  '0 0 0 1px oklch(1 0 0 / 8%)',
-                  '0 30px 80px oklch(0 0 0 / 90%)',
-                  '0 8px 24px oklch(0 0 0 / 60%)',
-                ].join(', '),
-                borderRadius: 2,
-                overflow: 'hidden',
-              }}
-            >
+          {/* Stage — the composition, scaled to fit; reflects currentFrame */}
+          <div
+            ref={stageRef}
+            onClick={() => {
+              if (isPlaying) return;
+              setEditingElementId(null);
+              setSelectedElement(null);
+            }}
+            className="relative"
+            style={{
+              width: displayW,
+              height: displayH,
+              backgroundColor: '#000000',
+              boxShadow: [
+                '0 0 0 1px oklch(1 0 0 / 8%)',
+                '0 30px 80px oklch(0 0 0 / 90%)',
+                '0 8px 24px oklch(0 0 0 / 60%)',
+              ].join(', '),
+              borderRadius: 2,
+              overflow: 'hidden',
+            }}
+          >
               {elements.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <span className="text-[12px] text-white/15 font-mono select-none tracking-widest">
@@ -238,7 +215,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
                 </div>
               )}
 
-              {elements.map((el) => {
+              {visibleElements.map((el) => {
                 if (el.type !== 'text') return null;
 
                 if (editingElementId === el.id) {
@@ -268,7 +245,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
               })}
 
               {/* Moveable — display space; commits divide by scale */}
-              {moveableTarget && selectedElementId && !editingElementId && (
+              {moveableTarget && selectedElementId && !editingElementId && !isPlaying && (
                 <Moveable
                   target={moveableTarget}
                   container={stageRef.current}
@@ -311,8 +288,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
                   }}
                 />
               )}
-            </div>
-          )}
+          </div>
 
           {/* Zoom indicator */}
           <div className="flex items-center gap-1.5 px-2.5 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm pointer-events-none select-none">
