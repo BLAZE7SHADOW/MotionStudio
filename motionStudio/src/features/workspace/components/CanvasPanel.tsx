@@ -5,7 +5,7 @@ import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
 import { textElementStyle, imageElementStyle } from '@/engines/rendering';
 import type { AnimationContext } from '@/engines/rendering';
-import type { TextElement, ImageElement } from '@/engines/canvas';
+import type { TextElement, ImageElement, VideoElement } from '@/engines/canvas';
 
 const DOT_GRID: React.CSSProperties = {
   backgroundImage: 'radial-gradient(circle, oklch(1 0 0 / 10%) 1px, transparent 1px)',
@@ -119,6 +119,62 @@ function ImageNode({
       <img
         src={url}
         alt=""
+        draggable={false}
+        style={{ width: '100%', height: '100%', objectFit: el.objectFit ?? 'cover', pointerEvents: 'none' }}
+      />
+    </div>
+  );
+}
+
+/* ── video node — mirrors the playhead: scrub seeks, play plays ── */
+function VideoNode({
+  el,
+  url,
+  scale,
+  animCtx,
+  isPlaying,
+  localFrame,
+  fps,
+  onSelect,
+}: {
+  el: VideoElement;
+  url: string;
+  scale: number;
+  animCtx?: AnimationContext;
+  isPlaying: boolean;
+  localFrame: number;
+  fps: number;
+  onSelect: () => void;
+}) {
+  const ref = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    const t = Math.max(0, localFrame / fps);
+    if (isPlaying) {
+      // let it play natively for smoothness; only seek if we drifted
+      if (v.paused) {
+        if (Math.abs(v.currentTime - t) > 0.2) v.currentTime = t;
+        v.play().catch(() => {});
+      }
+    } else {
+      v.pause();
+      if (Math.abs(v.currentTime - t) > 0.03) v.currentTime = t; // scrub → exact frame
+    }
+  }, [isPlaying, localFrame, fps]);
+
+  return (
+    <div
+      data-element-id={el.id}
+      onClick={(e) => { e.stopPropagation(); onSelect(); }}
+      style={{ ...imageElementStyle(el, scale, animCtx), cursor: 'pointer' }}
+    >
+      <video
+        ref={ref}
+        src={url}
+        muted
+        playsInline
         draggable={false}
         style={{ width: '100%', height: '100%', objectFit: el.objectFit ?? 'cover', pointerEvents: 'none' }}
       />
@@ -293,6 +349,24 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
                       url={url}
                       scale={scale}
                       animCtx={animCtx}
+                      onSelect={() => setSelectedElement(el.id)}
+                    />
+                  );
+                }
+
+                if (el.type === 'video') {
+                  const url = project.assets.find((a) => a.id === el.assetId)?.url;
+                  if (!url) return null;
+                  return (
+                    <VideoNode
+                      key={el.id}
+                      el={el}
+                      url={url}
+                      scale={scale}
+                      animCtx={animCtx}
+                      isPlaying={isPlaying}
+                      localFrame={currentFrame - el.startFrame}
+                      fps={project.fps}
                       onSelect={() => setSelectedElement(el.id)}
                     />
                   );

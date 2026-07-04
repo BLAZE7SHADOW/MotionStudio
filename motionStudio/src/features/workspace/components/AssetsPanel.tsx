@@ -208,18 +208,19 @@ function UploadTab({
 /* ── main component ── */
 export default function AssetsPanel() {
   const { assets, uploadFiles, removeAsset } = useAssetEngine();
-  const { addImage } = useCanvasEngine();
+  const { addImage, addVideo } = useCanvasEngine();
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<TabKey>('images');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  /* place an asset onto the canvas (image for now; video/audio next steps) */
+  /* place an asset onto the canvas (audio comes in the next step) */
   function handleAdd(asset: Asset) {
-    if (asset.type === 'image') {
-      const el = addImage(asset.id);
-      if (el) setSelectedElement(el.id);
-    }
+    const el =
+      asset.type === 'image' ? addImage(asset.id) :
+      asset.type === 'video' ? addVideo(asset.id) :
+      null;
+    if (el) setSelectedElement(el.id);
   }
 
   const q = search.trim().toLowerCase();
