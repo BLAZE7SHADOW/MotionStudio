@@ -219,7 +219,7 @@ function AudioNode({
 
 export default function CanvasPanel({ projectId }: CanvasPanelProps) {
   const project            = useProjectStore((s) => s.getProject(projectId));
-  const { elements, updateElement, removeElement } = useCanvasEngine();
+  const { elements, updateElement, removeElement, addImage, addVideo, addAudio } = useCanvasEngine();
   const selectedElementId  = useEditorStore((s) => s.selectedElementId);
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
   const isPlaying          = useEditorStore((s) => s.isPlaying);
@@ -230,6 +230,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
   const [area, setArea]                         = useState({ w: 0, h: 0 });
   const [moveableTarget,   setMoveableTarget]   = useState<HTMLElement | null>(null);
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
+  const [dragOver, setDragOver]                 = useState(false);
 
   /* ── measure available area → scale factor ── */
   useEffect(() => {
@@ -301,6 +302,26 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     (el) => currentFrame >= el.startFrame && currentFrame < el.startFrame + el.durationInFrames
   );
 
+  /* drop an asset from the panel → place it where it lands (in composition space) */
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const assetId = e.dataTransfer.getData('application/x-motionstudio-asset');
+    if (!assetId || !stageRef.current || !project) return;
+    const asset = project.assets.find((a) => a.id === assetId);
+    if (!asset) return;
+
+    const rect = stageRef.current.getBoundingClientRect();
+    const at = { x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale };
+
+    const el =
+      asset.type === 'image' ? addImage(assetId, at) :
+      asset.type === 'video' ? addVideo(assetId, at) :
+      asset.type === 'audio' ? addAudio(assetId) :
+      null;
+    if (el) setSelectedElement(el.id);
+  }
+
   return (
     <div
       ref={areaRef}
@@ -317,6 +338,9 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
               setEditingElementId(null);
               setSelectedElement(null);
             }}
+            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
             className="relative"
             style={{
               width: displayW,
@@ -331,6 +355,18 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
               overflow: 'hidden',
             }}
           >
+              {/* drop-target highlight */}
+              {dragOver && (
+                <div
+                  className="absolute inset-0 z-30 pointer-events-none"
+                  style={{
+                    outline: `2px solid ${ACCENT}`,
+                    outlineOffset: -2,
+                    backgroundColor: 'oklch(0.627 0.265 298.232 / 10%)',
+                  }}
+                />
+              )}
+
               {elements.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <span className="text-[12px] text-white/15 font-mono select-none tracking-widest">

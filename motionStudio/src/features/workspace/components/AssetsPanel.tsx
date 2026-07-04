@@ -65,7 +65,12 @@ function AssetCard({
   return (
     <div
       onClick={onAdd}
-      title="Add to canvas"
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('application/x-motionstudio-asset', asset.id);
+        e.dataTransfer.effectAllowed = 'copy';
+      }}
+      title="Click or drag onto the canvas"
       className="group relative aspect-video rounded-studio-md overflow-hidden border border-studio-border bg-studio-surface cursor-pointer hover:border-studio-border-strong transition-colors duration-120"
     >
       {asset.type === 'image' && (
