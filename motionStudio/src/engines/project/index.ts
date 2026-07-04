@@ -4,5 +4,6 @@ export type { CompositionDimensions } from './dimensions';
 export type {
   Project, AspectRatio, CreateProjectInput, CanvasElement, TextElement, BaseElement,
   Animation, AnimationProperty, AnimationEasing,
+  Asset, AssetType,
 } from './types';
 export type { UpdateProjectInput } from './store';

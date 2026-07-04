@@ -1,5 +1,24 @@
 export type AspectRatio = '16:9' | '9:16' | '1:1';
 
+/* ── Assets ── */
+
+export type AssetType = 'image' | 'video' | 'audio';
+
+/**
+ * Source media in the project's library. An Asset is referenced by elements
+ * (via assetId) — one asset can back many elements. `url` is an object URL for
+ * uploaded files (session-scoped until we add persistence).
+ */
+export interface Asset {
+  id: string;
+  type: AssetType;
+  name: string;
+  url: string;
+  width?: number;               // natural pixel size (image / video)
+  height?: number;
+  durationInSeconds?: number;   // media length (video / audio)
+}
+
 /* ── Animation ── */
 
 export type AnimationProperty = 'opacity' | 'x' | 'y' | 'scale' | 'rotate';
@@ -61,6 +80,7 @@ export interface Project {
   durationInFrames: number;
   createdAt: number;
   updatedAt: number;
+  assets: Asset[];
   canvas: {
     elements: CanvasElement[];
   };
