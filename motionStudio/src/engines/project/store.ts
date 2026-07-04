@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import type { Project, CreateProjectInput } from './types';
+import { DEFAULT_DURATION_SECONDS } from './dimensions';
 
-export type UpdateProjectInput = Partial<Pick<Project, 'name' | 'aspectRatio' | 'fps' | 'canvas'>>;
+export type UpdateProjectInput = Partial<Pick<Project, 'name' | 'aspectRatio' | 'fps' | 'durationInFrames' | 'canvas'>>;
 
 interface ProjectStore {
   projects: Project[];
@@ -22,6 +23,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     const project: Project = {
       id: crypto.randomUUID(),
       ...input,
+      durationInFrames: Math.round(input.fps * DEFAULT_DURATION_SECONDS),
       canvas: { elements: [] },
       createdAt: now,
       updatedAt: now,

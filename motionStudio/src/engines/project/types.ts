@@ -5,6 +5,7 @@ export type AspectRatio = '16:9' | '9:16' | '1:1';
 export type BaseElement = {
   id: string;
   type: string;
+  /* geometry — stored in composition space (e.g. 1920×1080) */
   x: number;
   y: number;
   width: number;
@@ -12,6 +13,9 @@ export type BaseElement = {
   rotation: number;
   opacity: number;
   zIndex: number;
+  /* temporal — Remotion <Sequence> model */
+  startFrame: number;
+  durationInFrames: number;
 };
 
 export type TextElement = BaseElement & {
@@ -31,6 +35,7 @@ export interface Project {
   name: string;
   aspectRatio: AspectRatio;
   fps: number;
+  durationInFrames: number;
   createdAt: number;
   updatedAt: number;
   canvas: {
