@@ -1,4 +1,5 @@
 import { useProjectStore } from '../project/store';
+import { getCompositionDimensions } from '../project/dimensions';
 import type { CanvasElement } from './types';
 import type { AddTextInput } from './types';
 
@@ -12,20 +13,27 @@ export function useCanvasEngine() {
   function addText(input: AddTextInput = {}): CanvasElement | null {
     if (!project) return null;
 
+    /* default: a centered text box in composition space */
+    const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
+    const w = input.width  ?? 1000;
+    const h = input.height ?? 160;
+
     const element: CanvasElement = {
-      id:         crypto.randomUUID(),
-      type:       'text',
-      x:          input.x          ?? 100,
-      y:          input.y          ?? 100,
-      width:      input.width      ?? 200,
-      height:     input.height     ?? 50,
-      rotation:   0,
-      opacity:    1,
-      zIndex:     elements.length,
-      content:    input.content    ?? 'Text',
-      fontSize:   input.fontSize   ?? 32,
-      fontFamily: input.fontFamily ?? 'Inter, sans-serif',
-      color:      input.color      ?? '#ffffff',
+      id:               crypto.randomUUID(),
+      type:             'text',
+      x:                input.x ?? Math.round((compW - w) / 2),
+      y:                input.y ?? Math.round((compH - h) / 2),
+      width:            w,
+      height:           h,
+      rotation:         0,
+      opacity:          1,
+      zIndex:           elements.length,
+      startFrame:       0,
+      durationInFrames: project.durationInFrames,
+      content:          input.content    ?? 'Text',
+      fontSize:         input.fontSize   ?? 96,
+      fontFamily:       input.fontFamily ?? 'Inter, sans-serif',
+      color:            input.color      ?? '#ffffff',
     };
 
     updateProject(project.id, {
