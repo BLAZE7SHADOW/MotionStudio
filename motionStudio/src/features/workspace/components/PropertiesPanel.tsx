@@ -1,4 +1,4 @@
-import { MousePointer, Plus, X } from 'lucide-react';
+import { MousePointer, Plus, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown } from 'lucide-react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
@@ -156,6 +156,36 @@ function TransformSection({ el, update }: { el: BaseElement; update: Update }) {
   );
 }
 
+/* ── shared: layer order (visual elements) ── */
+type LayerDir = 'front' | 'back' | 'forward' | 'backward';
+
+function LayerSection({ reorder }: { reorder: (dir: LayerDir) => void }) {
+  const buttons: { dir: LayerDir; label: string; icon: typeof ChevronUp }[] = [
+    { dir: 'front',    label: 'To front', icon: ChevronsUp },
+    { dir: 'forward',  label: 'Forward',  icon: ChevronUp },
+    { dir: 'backward', label: 'Backward', icon: ChevronDown },
+    { dir: 'back',     label: 'To back',  icon: ChevronsDown },
+  ];
+  return (
+    <>
+      <Section title="Layer" />
+      <div className="grid grid-cols-2 gap-1.5 px-4 py-3">
+        {buttons.map(({ dir, label, icon: Icon }) => (
+          <button
+            key={dir}
+            type="button"
+            onClick={() => reorder(dir)}
+            className="flex items-center justify-center gap-1.5 h-8 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
+          >
+            <Icon className="w-3.5 h-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
 /* ── shared: animation stack (any element) ── */
 function AnimationSection({ el, update }: { el: BaseElement; update: Update }) {
   const anims = el.animations ?? [];
@@ -233,7 +263,7 @@ function AnimationSection({ el, update }: { el: BaseElement; update: Update }) {
 }
 
 /* ── text: type-specific + shared sections ── */
-function TextProperties({ el, update }: { el: TextElement; update: Update }) {
+function TextProperties({ el, update, reorder }: { el: TextElement; update: Update; reorder: (dir: LayerDir) => void }) {
   return (
     <>
       <Section title="Text" />
@@ -273,16 +303,18 @@ function TextProperties({ el, update }: { el: TextElement; update: Update }) {
       </div>
 
       <TransformSection el={el} update={update} />
+      <LayerSection reorder={reorder} />
       <AnimationSection el={el} update={update} />
     </>
   );
 }
 
 /* ── image / video: shared sections only ── */
-function MediaProperties({ el, update }: { el: BaseElement; update: Update }) {
+function MediaProperties({ el, update, reorder }: { el: BaseElement; update: Update; reorder: (dir: LayerDir) => void }) {
   return (
     <>
       <TransformSection el={el} update={update} />
+      <LayerSection reorder={reorder} />
       <AnimationSection el={el} update={update} />
     </>
   );
@@ -312,7 +344,7 @@ function AudioProperties({ el, update }: { el: AudioElement; update: Update }) {
 /* ── main component ── */
 export default function PropertiesPanel() {
   const selectedElementId = useEditorStore((s) => s.selectedElementId);
-  const { elements, updateElement } = useCanvasEngine();
+  const { elements, updateElement, reorderLayer } = useCanvasEngine();
 
   const selected = elements.find((el) => el.id === selectedElementId) ?? null;
 
@@ -334,10 +366,20 @@ export default function PropertiesPanel() {
       ) : (
         <div className="flex-1 overflow-y-auto">
           {selected.type === 'text' && (
-            <TextProperties key={selected.id} el={selected} update={(u) => updateElement(selected.id, u)} />
+            <TextProperties
+              key={selected.id}
+              el={selected}
+              update={(u) => updateElement(selected.id, u)}
+              reorder={(dir) => reorderLayer(selected.id, dir)}
+            />
           )}
           {(selected.type === 'image' || selected.type === 'video') && (
-            <MediaProperties key={selected.id} el={selected} update={(u) => updateElement(selected.id, u)} />
+            <MediaProperties
+              key={selected.id}
+              el={selected}
+              update={(u) => updateElement(selected.id, u)}
+              reorder={(dir) => reorderLayer(selected.id, dir)}
+            />
           )}
           {selected.type === 'audio' && (
             <AudioProperties key={selected.id} el={selected} update={(u) => updateElement(selected.id, u)} />
