@@ -1,6 +1,7 @@
 import type { CanvasElement, Asset } from '../../project/types';
 import TextRenderer from './renderers/TextRenderer';
 import ImageRenderer from './renderers/ImageRenderer';
+import VideoRenderer from './renderers/VideoRenderer';
 
 /**
  * Dispatches an element to its type-specific renderer. Image elements resolve
@@ -19,6 +20,10 @@ export default function ElementRenderer({
     case 'image': {
       const asset = assets.find((a) => a.id === el.assetId);
       return asset ? <ImageRenderer el={el} url={asset.url} /> : null;
+    }
+    case 'video': {
+      const asset = assets.find((a) => a.id === el.assetId);
+      return asset ? <VideoRenderer el={el} url={asset.url} /> : null;
     }
     default:
       return null;
