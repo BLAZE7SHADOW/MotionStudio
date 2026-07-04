@@ -1,7 +1,8 @@
-import { Save, Undo2, Redo2, Download, Clapperboard } from 'lucide-react';
+import { Save, Undo2, Redo2, Download, Clapperboard, Type } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { Project } from '@/engines/project';
+import { useCanvasEngine } from '@/engines/canvas';
 import ProjectSettingsPopover from './ProjectSettingsPopover';
 
 interface ToolbarProps {
@@ -9,6 +10,8 @@ interface ToolbarProps {
 }
 
 export default function Toolbar({ project }: ToolbarProps) {
+  const { addText } = useCanvasEngine();
+
   return (
     <div className="h-11 border-b border-studio-border bg-studio-panel flex items-center px-3 gap-0.5 shrink-0">
       {/* Logo */}
@@ -49,6 +52,19 @@ export default function Toolbar({ project }: ToolbarProps) {
         className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
       >
         <Redo2 className="w-[15px] h-[15px]" />
+      </Button>
+
+      <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />
+
+      {/* Insert tools */}
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Add Text"
+        onClick={() => addText()}
+        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
+      >
+        <Type className="w-3.75 h-3.75" />
       </Button>
 
       <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />
