@@ -1,6 +1,6 @@
 import { useProjectStore } from '../project/store';
 import { getCompositionDimensions } from '../project/dimensions';
-import type { CanvasElement, TextElement, ImageElement, VideoElement } from './types';
+import type { CanvasElement, TextElement, ImageElement, VideoElement, AudioElement } from './types';
 import type { AddTextInput } from './types';
 
 /**
@@ -11,7 +11,8 @@ import type { AddTextInput } from './types';
 export type ElementPatch =
   Partial<Omit<TextElement, 'id' | 'type'>> &
   Partial<Omit<ImageElement, 'id' | 'type'>> &
-  Partial<Omit<VideoElement, 'id' | 'type'>>;
+  Partial<Omit<VideoElement, 'id' | 'type'>> &
+  Partial<Omit<AudioElement, 'id' | 'type'>>;
 
 export function useCanvasEngine() {
   const project       = useProjectStore((s) =>
@@ -124,6 +125,33 @@ export function useCanvasEngine() {
     return element;
   }
 
+  function addAudio(assetId: string): CanvasElement | null {
+    if (!project) return null;
+    const asset = project.assets.find((a) => a.id === assetId);
+    if (!asset || asset.type !== 'audio') return null;
+
+    const sourceFrames = asset.durationInSeconds
+      ? Math.round(asset.durationInSeconds * project.fps)
+      : project.durationInFrames;
+    const durationInFrames = Math.min(project.durationInFrames, sourceFrames);
+
+    /* audio has no canvas presence — spatial fields are zero */
+    const element: AudioElement = {
+      id:               crypto.randomUUID(),
+      type:             'audio',
+      assetId,
+      x: 0, y: 0, width: 0, height: 0,
+      rotation: 0, opacity: 1,
+      zIndex:           elements.length,
+      startFrame:       0,
+      durationInFrames,
+      volume:           1,
+    };
+
+    updateProject(project.id, { canvas: { elements: [...elements, element] } });
+    return element;
+  }
+
   function updateElement(id: string, updates: ElementPatch) {
     if (!project) return;
     updateProject(project.id, {
@@ -154,5 +182,5 @@ export function useCanvasEngine() {
     updateProject(project.id, { canvas: { elements: next } });
   }
 
-  return { elements, addText, addImage, addVideo, updateElement, removeElement, reorderElement };
+  return { elements, addText, addImage, addVideo, addAudio, updateElement, removeElement, reorderElement };
 }

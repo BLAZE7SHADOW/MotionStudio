@@ -80,7 +80,13 @@ export type VideoElement = BaseElement & {
   objectFit?: 'cover' | 'contain';
 };
 
-export type CanvasElement = TextElement | ImageElement | VideoElement;
+export type AudioElement = BaseElement & {
+  type: 'audio';
+  assetId: string;
+  volume?: number; // 0–1
+};
+
+export type CanvasElement = TextElement | ImageElement | VideoElement | AudioElement;
 
 /* ── Project ── */
 
