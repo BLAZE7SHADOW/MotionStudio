@@ -55,7 +55,8 @@ That's the whole loop: **add → arrange → animate → preview → export.**
   chip → adjust in the popover. The canvas updates instantly.
 - **Autosave**: your projects **and** uploaded media are saved automatically in
   the browser and survive a page reload. (No Save button needed.)
-- **Duration**: projects are currently a fixed **5 seconds** long.
+- **Duration**: 10 seconds by default. Change it (5 / 10 / 15 / 30s) in the same
+  settings popover. Changing the frame rate keeps the length in seconds.
 
 ---
 
@@ -270,10 +271,9 @@ npm run render    # render the default composition to out/video.mp4
 
 ## 15. Current limitations
 
-- Project length is fixed at **5 seconds**.
+- Project length is chosen from presets (5 / 10 / 15 / 30s); no custom value yet.
 - **Scene grouping** (moving several elements as one unit) isn't built yet — use
   timeline positioning to sequence.
-- The timeline doesn't scroll vertically, so a large number of layers can overflow.
 - Export is **terminal-based** (no one-click in-app download), and uploaded media
   needs real URLs in `props.json` as noted above.
 - Editor preview audio/video may be muted depending on the browser; the export is
