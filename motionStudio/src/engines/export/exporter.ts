@@ -1,17 +1,21 @@
-import { Muxer, ArrayBufferTarget } from 'mp4-muxer';
+import { Output, Mp4OutputFormat, BufferTarget, CanvasSource, AudioBufferSource } from 'mediabunny';
 import { getCompositionDimensions } from '../project/dimensions';
 import type { Project } from '../project/types';
 import { drawFrame } from './canvasFrame';
 import type { DrawSources } from './canvasFrame';
+import { mixAudioTrack } from './audioMix';
 
 /**
- * Frame-perfect client-side export (WebCodecs + mp4-muxer).
+ * Frame-perfect client-side export (WebCodecs via Mediabunny).
  *
- * Unlike a real-time recording, this renders OFFLINE: every frame is computed
- * deterministically (frame 0, 1, 2, …), videos are seeked to the exact source
- * time, and each frame is handed to the browser's hardware VideoEncoder. No
- * dropped frames, no real-time constraint — quality is limited only by the
- * bitrate you choose. Output is a standard MP4 (H.264).
+ * Renders OFFLINE: every frame is computed deterministically, source videos
+ * are seeked to the exact time, and frames are handed to the browser's
+ * hardware encoder. Audio is mixed sample-exact offline (see audioMix.ts) and
+ * encoded into the same MP4. No dropped frames, no real-time constraint.
+ *
+ * Mediabunny (successor of mp4-muxer, and the muxer used by Remotion's own
+ * web-renderer) owns the encoder configuration, muxing and backpressure —
+ * `source.add()` resolves only when the encoder is ready for more.
  */
 
 export interface ExportOptions {
@@ -25,6 +29,7 @@ export interface ExportOptions {
 export interface ExportResult {
   blob: Blob;
   extension: 'mp4';
+  hasAudio: boolean;
 }
 
 /** WebCodecs availability (Chrome / Edge / recent Safari) */
@@ -34,20 +39,18 @@ export function isExportSupported(): boolean {
 
 const sleep = (ms = 0) => new Promise((r) => setTimeout(r, ms));
 
-/** H.264 codec strings, best profile first; pick the first the browser accepts */
-const AVC_CANDIDATES = ['avc1.640028', 'avc1.4d0028', 'avc1.42E01E'];
-
-async function pickCodec(width: number, height: number, bitrate: number, fps: number) {
-  for (const codec of AVC_CANDIDATES) {
-    const { supported } = await VideoEncoder.isConfigSupported({
-      codec, width, height, bitrate, framerate: fps,
-    });
-    if (supported) return codec;
-  }
-  throw new Error('No supported H.264 encoder configuration found');
+/** prefer AAC (plays everywhere in MP4), fall back to Opus */
+async function pickAudioCodec(sampleRate: number): Promise<'aac' | 'opus' | null> {
+  if (typeof AudioEncoder === 'undefined') return null;
+  const base = { sampleRate, numberOfChannels: 2, bitrate: 192_000 };
+  const aac = await AudioEncoder.isConfigSupported({ codec: 'mp4a.40.2', ...base }).catch(() => null);
+  if (aac?.supported) return 'aac';
+  const opus = await AudioEncoder.isConfigSupported({ codec: 'opus', ...base }).catch(() => null);
+  if (opus?.supported) return 'opus';
+  return null;
 }
 
-/** load every asset the composition uses into drawable elements */
+/** load every asset the composition actually uses into drawable elements */
 async function prepareSources(project: Project): Promise<DrawSources> {
   const images = new Map<string, HTMLImageElement>();
   const videos = new Map<string, HTMLVideoElement>();
@@ -126,61 +129,66 @@ export async function exportComposition(
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas 2D not supported');
 
-  // fonts + media must be ready before the first frame is drawn
+  // fonts, media and the audio mix must be ready before encoding starts
   await document.fonts.ready;
   const sources = await prepareSources(project);
+  const audioBuffer = await mixAudioTrack(project);
+  const audioCodec = audioBuffer ? await pickAudioCodec(audioBuffer.sampleRate) : null;
 
-  const codec = await pickCodec(width, height, opts.videoBitsPerSecond, fps);
-
-  const muxer = new Muxer({
-    target: new ArrayBufferTarget(),
-    video: { codec: 'avc', width, height },
-    fastStart: 'in-memory',
+  const output = new Output({
+    format: new Mp4OutputFormat(),
+    target: new BufferTarget(),
   });
 
-  let encodeError: Error | null = null;
-  const encoder = new VideoEncoder({
-    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-    error: (e) => { encodeError = e as Error; },
-  });
-  encoder.configure({
-    codec,
-    width,
-    height,
+  const videoSource = new CanvasSource(canvas, {
+    codec: 'avc',
     bitrate: opts.videoBitsPerSecond,
-    framerate: fps,
   });
+  output.addVideoTrack(videoSource, { frameRate: fps });
 
-  const microsPerFrame = 1_000_000 / fps;
-  const keyframeEvery = fps * 2; // a keyframe every 2 seconds
+  let audioSource: AudioBufferSource | null = null;
+  if (audioBuffer && audioCodec) {
+    try {
+      audioSource = new AudioBufferSource({ codec: audioCodec, bitrate: 192_000 });
+      output.addAudioTrack(audioSource);
+    } catch {
+      audioSource = null; // audio track unsupported — export video-only rather than fail
+    }
+  }
 
+  await output.start();
+
+  const frameDur = 1 / fps;
   for (let frame = 0; frame < totalFrames; frame++) {
-    if (encodeError) throw encodeError;
-
     await syncVideosExact(sources, project, frame);
     drawFrame(ctx, project.canvas.elements, frame, fps, scale, sources, width, height);
 
-    const videoFrame = new VideoFrame(canvas, {
-      timestamp: Math.round(frame * microsPerFrame),
-      duration: Math.round(microsPerFrame),
+    // awaiting add() IS the backpressure: it resolves when the encoder is ready
+    await videoSource.add(frame * frameDur, frameDur, {
+      keyFrame: frame % (fps * 2) === 0, // a keyframe every 2 seconds
     });
-    encoder.encode(videoFrame, { keyFrame: frame % keyframeEvery === 0 });
-    videoFrame.close();
 
-    // backpressure: don't let the encode queue run away
-    while (encoder.encodeQueueSize > 4) await sleep(0);
-    // let the progress UI paint
-    if (frame % 15 === 0) await sleep(0);
-
+    if (frame % 15 === 0) await sleep(0); // let the progress UI paint
     opts.onProgress?.(frame + 1, totalFrames);
   }
+  videoSource.close();
 
-  await encoder.flush();
-  muxer.finalize();
+  if (audioSource && audioBuffer) {
+    await audioSource.add(audioBuffer); // the whole mixed track, from t = 0
+    audioSource.close();
+  }
+
+  await output.finalize();
   sources.videos.forEach((v) => v.pause());
 
-  const blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
-  return { blob, extension: 'mp4' };
+  const buffer = output.target.buffer;
+  if (!buffer) throw new Error('Export produced no data');
+
+  return {
+    blob: new Blob([buffer], { type: 'video/mp4' }),
+    extension: 'mp4',
+    hasAudio: audioSource !== null,
+  };
 }
 
 /** trigger a browser download for the finished file */
