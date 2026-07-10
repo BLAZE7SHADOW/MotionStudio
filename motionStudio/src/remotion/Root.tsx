@@ -1,5 +1,9 @@
 import { Composition } from 'remotion';
+import { loadFont } from '@remotion/google-fonts/Inter';
 import { MotionComposition } from '../engines/rendering';
+
+// make Inter available inside Remotion's headless browser (matches the editor)
+loadFont();
 import { getCompositionDimensions } from '../engines/project';
 import type { CanvasElement, Asset, AspectRatio } from '../engines/project';
 
