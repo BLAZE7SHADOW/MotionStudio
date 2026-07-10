@@ -156,8 +156,8 @@ export default function ExportDialog({ project }: { project: Project }) {
           )}
 
           <p className="text-[10px] text-studio-text-faint leading-relaxed">
-            Renders every frame exactly, then encodes — video only (audio coming later).
-            Uploaded media is included.
+            Renders every frame exactly, then encodes — audio included (music, sound
+            effects and video soundtracks are mixed in). Uploaded media works.
           </p>
         </div>
       </DialogContent>
