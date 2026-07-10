@@ -12,9 +12,9 @@ A **browser-based, programmatic video editor** built on [Remotion](https://remot
 Place text / image / video / audio on a canvas, arrange them on a frame-accurate
 timeline, animate them, and export to MP4 / WebM / GIF / MOV. No backend.
 
-- ~3,800 lines of TypeScript, 7 engines, 60 logically-grouped commits.
+- ~3,800 lines of TypeScript, 7 engines, 60+ logically-grouped commits.
 - React 19 · TypeScript (strict) · Vite · Tailwind v4 · Zustand · React Router v7 ·
-  Remotion (+ @remotion/player, CLI) · react-moveable · shadcn/ui · IndexedDB · localStorage.
+  Remotion (CLI) · Mediabunny (WebCodecs muxer) · react-moveable · shadcn/ui · IndexedDB · localStorage.
 
 ---
 
@@ -144,12 +144,22 @@ immutably, snapshots **share unchanged sub-objects** (cheap — no deep copies).
 edits within ~500ms **coalesce** into one step, so a whole drag or typing burst = one
 undo. **Why it was nearly free:** every edit already flows through `updateProject`.
 
-### Export — Remotion CLI (ADR-002)
-Remotion renders in **Node** (headless Chrome + FFmpeg), not the browser. A
-`registerRoot` entry exposes the composition; `calculateMetadata` derives per-project
-size/fps/duration from props; the in-app Export dialog produces the `npx remotion
-render … --props … --codec …` command and a `props.json`. Formats via `--codec`
-(h264/vp8/gif/prores).
+### Export — WebCodecs + Mediabunny (in-browser, frame-perfect)
+Remotion's CLI path (Node / headless Chrome) is still available for power users, but
+the primary export is fully in-browser:
+
+1. **Frame loop** — an off-screen canvas renders each frame with `drawFrame()`,
+   seeking source videos to the exact time via the `seeked` event (not real-time).
+2. **Audio mix** — `OfflineAudioContext` decodes every audible element's bytes,
+   schedules them at their exact start times with per-clip gain, and renders the
+   whole mix faster than real time.
+3. **Mediabunny** (`CanvasSource` + `AudioBufferSource`) owns WebCodecs encoder
+   configuration, muxing, and backpressure — `source.add()` awaits the encoder
+   ready signal, so the loop never outruns the hardware encoder.
+4. Output: a single MP4 (H.264 video + AAC audio) downloaded via a `blob:` URL.
+
+`isExportSupported()` gates on `typeof VideoEncoder !== 'undefined'` (Chrome/Edge).
+Safari falls back to a "not supported" message.
 
 ---
 
@@ -205,13 +215,13 @@ no error. A reminder that "no crash" ≠ "correct."
 
 ## 7. Trade-offs & limitations (honest)
 
-- **Export is terminal-based** (no one-click in-app render) — a true in-browser render
-  needs a backend/Lambda; Remotion can't render in a tab.
-- **Uploaded media in export** needs real URLs in `props.json` (`blob:` is browser-only).
-- **Editor audio/video preview** is muted / browser-autoplay-dependent; the export is
-  authoritative for sound and timing.
+- **Export requires Chrome or Edge** — WebCodecs (`VideoEncoder`) isn't available in
+  Safari yet. The Remotion CLI path still works cross-platform.
+- **Editor audio/video preview** is muted / browser-autoplay-dependent; the export
+  is authoritative for sound and timing.
 - **No scene grouping yet** — sequencing is done by positioning clips on the timeline.
-- **Fonts** fall back to system sans-serif in the Node render (not bundled yet).
+- **Cloud render tier not yet built** — a Lambda-backed render path (for longer
+  compositions or server-side encode) is the next planned phase.
 
 ---
 

@@ -215,32 +215,30 @@ the same. (Undo history resets when you reload; your saved data does not.)
 
 ## 12. Exporting a video
 
-MotionStudio renders through Remotion, which runs in **Node.js** (not the
-browser). The **Export** dialog bridges your project to the render command.
+Click **Export** in the top toolbar — a dialog opens entirely inside the browser.
+No terminal, no server, no Node.js required.
 
-**Steps** (Export button → dialog):
-1. Pick a **format**: MP4 (H.264), WebM (VP8), GIF, or MOV (ProRes).
-2. Click **1 · Download props.json** — this saves your project's data.
-3. Copy the shown command and run it in a terminal from the app folder:
-   ```bash
-   npx remotion render src/remotion/index.ts MotionStudio out/video.mp4 \
-     --props=./props.json --codec=h264
-   ```
-   Change `--codec` for other formats (`vp8`, `gif`, `prores`).
+**Steps:**
+1. Pick a **Resolution**: Full 1080p / 75% 810p / 50% 540p.
+2. Pick a **Quality** (encoder bitrate): Max 40 Mbps / High 20 / Medium 10 / Low 5.
+3. Click **Export & download** — a progress bar fills while every frame is rendered
+   offline, then the finished MP4 downloads automatically.
 
-**Or from the terminal directly:**
+**What happens under the hood:**
+- Every frame is rendered to an off-screen canvas in exact order — nothing is
+  dropped or rushed.
+- Source videos are seeked frame-by-frame to guarantee accuracy.
+- All audio tracks (music, sound effects, video soundtracks) are mixed sample-exact
+  using `OfflineAudioContext` and encoded into the same MP4.
+- The browser's hardware encoder (WebCodecs / H.264) handles compression.
+
+**Requirements:** Chrome or Edge (WebCodecs). Safari is not supported yet.
+
+**Or from the terminal (advanced):**
 ```bash
-npm run studio    # open Remotion Studio to preview the composition
+npm run studio    # open Remotion Studio to preview / CLI-render
 npm run render    # render the default composition to out/video.mp4
 ```
-
-**Two things to know:**
-- **Uploaded media** is stored as in-browser `blob:` URLs the renderer can't read.
-  Before rendering a project that uses your own images/video/audio, edit
-  `props.json` and replace each `assets[].url` with a real file path or http URL.
-  Text and animations render as-is with no changes.
-- **Fonts**: the renderer falls back to a system sans-serif (custom fonts aren't
-  bundled yet).
 
 ---
 
@@ -265,7 +263,7 @@ npm run render    # render the default composition to out/video.mp4
 4. Upload a background image → **drag** it onto the canvas → **Properties → Layer
    → To back** so it sits behind the text.
 5. Press **⏮** then **▶** to preview.
-6. **Export** → MP4 → download props.json → run the command.
+6. **Export** → pick resolution + quality → **Export & download** → the MP4 saves automatically.
 
 ---
 
@@ -274,10 +272,9 @@ npm run render    # render the default composition to out/video.mp4
 - Project length is chosen from presets (5 / 10 / 15 / 30s); no custom value yet.
 - **Scene grouping** (moving several elements as one unit) isn't built yet — use
   timeline positioning to sequence.
-- Export is **terminal-based** (no one-click in-app download), and uploaded media
-  needs real URLs in `props.json` as noted above.
-- Editor preview audio/video may be muted depending on the browser; the export is
-  authoritative.
+- Export requires **Chrome or Edge** (WebCodecs); Safari is not yet supported.
+- Editor preview audio/video may be muted depending on the browser; the export
+  always has correct sound and timing.
 
 ---
 
