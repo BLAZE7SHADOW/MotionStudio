@@ -1,4 +1,4 @@
-import { Save, Undo2, Redo2, Clapperboard, Type, Play, Pause } from 'lucide-react';
+import { Undo2, Redo2, Clapperboard, Type, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { Project } from '@/engines/project';
@@ -30,18 +30,6 @@ export default function Toolbar({ project }: ToolbarProps) {
         </div>
         <span className="text-[13px] font-semibold text-studio-text">MotionStudio</span>
       </div>
-
-      <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />
-
-      {/* File actions */}
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Save"
-        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
-      >
-        <Save className="w-[15px] h-[15px]" />
-      </Button>
 
       <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />
 

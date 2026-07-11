@@ -58,8 +58,22 @@ export function useCanvasEngine() {
     if (!project) return null;
     const asset = project.assets.find((a) => a.id === assetId);
     if (!asset || asset.type !== 'image') return null;
-
+   // aspect ratio preserving fit (also called contain)
     /* fit the image within ~60% of the composition, preserving aspect ratio */
+
+/**
+ * Scale the image to fit inside 60% of the composition while preserving
+ * its original aspect ratio (no stretching or cropping).
+ *
+ * Steps:
+ * 1. Get the composition (canvas) dimensions.
+ * 2. Get the image's natural width and height.
+ * 3. Calculate the maximum allowed size (60% of canvas).
+ * 4. Compute the width and height scale factors.
+ * 5. Pick the smaller scale so both dimensions fit.
+ * 6. Apply the same scale to width and height to preserve aspect ratio.
+ */
+
     const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
     const natW = asset.width  ?? compW;
     const natH = asset.height ?? compH;

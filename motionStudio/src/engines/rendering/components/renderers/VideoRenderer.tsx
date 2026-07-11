@@ -19,3 +19,13 @@ export default function VideoRenderer({ el, url }: { el: VideoElement; url: stri
     </div>
   );
 }
+
+
+  // Why <OffthreadVideo> and not <video>? This is one of the most important Remotion decisions. A DOM <video> plays in real time.
+  // During a render, Remotion captures frames faster than real time — the video element can't keep up and you'd get the wrong
+  // frame. <OffthreadVideo> uses a Rust binary running in a separate thread to extract the exact frame at the composition's
+  // current time. Frame-perfect.
+
+  // The tradeoff: <OffthreadVideo> only works in Node (CLI render). In the browser editor, we swap to a plain <video> that we
+  // manually seek. That's why the export (CLI path) uses this renderer but our in-browser export uses canvasFrame.ts with manual
+  // seek + drawFrame.

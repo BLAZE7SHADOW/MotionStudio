@@ -101,3 +101,8 @@ export const useProjectStore = create<ProjectStore>()(
     },
   ),
 );
+
+
+// "Good implementation. The undo/redo model is clean, coalescing is a nice touch, and 
+// history isn't persisted, which is appropriate. As the project grows, consider moving 
+// history to the project level instead of storing snapshots of the entire projects array."
