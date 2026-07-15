@@ -10,6 +10,7 @@ import type { Project } from '@/engines/project';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/apiClient';
 import type { QuotaResult } from '@/lib/apiClient';
+import { track } from '@/lib/analytics';
 
 const RESOLUTIONS = [
   { id: 'full', label: 'Full', scale: 1 },
@@ -67,6 +68,8 @@ export default function ExportDialog({ project }: { project: Project }) {
     const quality = QUALITIES.find((q) => q.id === qualityId) ?? QUALITIES[0];
     setBrowserError(null);
     setProgress(0);
+    track.exportBrowserStarted({ resolution: resolution.id, quality: quality.id, bps: quality.bps });
+    const startedAt = Date.now();
     try {
       const { blob, extension } = await exportComposition(project, {
         resolutionScale: resolution.scale,
@@ -74,8 +77,11 @@ export default function ExportDialog({ project }: { project: Project }) {
         onProgress: (frame, total) => setProgress(Math.round((frame / total) * 100)),
       });
       downloadBlob(blob, `${project.name || 'video'}.${extension}`);
+      track.exportBrowserCompleted(Date.now() - startedAt);
     } catch (e) {
-      setBrowserError(e instanceof Error ? e.message : 'Export failed');
+      const msg = e instanceof Error ? e.message : 'Export failed';
+      setBrowserError(msg);
+      track.exportBrowserFailed(msg);
     } finally {
       setProgress(null);
     }
@@ -86,6 +92,7 @@ export default function ExportDialog({ project }: { project: Project }) {
     setCloudError(null);
     setCloudStatus('rendering');
     setDownloadUrl(null);
+    track.exportCloudStarted();
 
     const inputProps = {
       elements: project.canvas.elements,
@@ -99,16 +106,18 @@ export default function ExportDialog({ project }: { project: Project }) {
       const result = await api.startRender(token, inputProps);
       setDownloadUrl(result.url);
       setCloudStatus('done');
-      // refresh quota after render
+      track.exportCloudCompleted();
       api.getQuota(token).then(setQuota).catch(() => null);
     } catch (e) {
-      setCloudError(e instanceof Error ? e.message : 'Render failed');
+      const msg = e instanceof Error ? e.message : 'Render failed';
+      setCloudError(msg);
       setCloudStatus('error');
+      track.exportCloudFailed(msg);
     }
   }
 
   return (
-    <Dialog>
+    <Dialog onOpenChange={(open) => { if (open) track.exportDialogOpened(); }}>
       <DialogTrigger asChild>
         <Button
           size="sm"
@@ -133,7 +142,7 @@ export default function ExportDialog({ project }: { project: Project }) {
             <button
               key={t}
               type="button"
-              onClick={() => setTab(t)}
+              onClick={() => { setTab(t); track.exportTabChanged(t); }}
               className={[
                 'flex items-center gap-1.5 py-2.5 px-3 text-[11px] font-medium border-b-2 transition-colors -mb-px',
                 tab === t
@@ -323,6 +332,7 @@ export default function ExportDialog({ project }: { project: Project }) {
                     <a
                       href={downloadUrl}
                       download="motionstudio-export.mp4"
+                      onClick={track.exportCloudDownloadClicked}
                       className="flex items-center justify-center gap-1.5 h-9 text-[12px] font-medium bg-green-600 hover:bg-green-700 text-white rounded-studio-md"
                     >
                       <Download className="w-3.5 h-3.5" />

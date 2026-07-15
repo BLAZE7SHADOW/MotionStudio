@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { useProjectStore } from '@/engines/project';
 import type { AspectRatio } from '@/engines/project';
+import { track } from '@/lib/analytics';
 
 interface CreateProjectModalProps {
   open: boolean;
@@ -44,6 +45,7 @@ export default function CreateProjectModal({ open, onClose }: CreateProjectModal
   function handleCreate() {
     if (!canSubmit) return;
     const project = createProject({ name: name.trim(), aspectRatio, fps });
+    track.projectCreated({ aspect_ratio: aspectRatio, fps });
     handleClose();
     navigate(`/editor/${project.id}`);
   }

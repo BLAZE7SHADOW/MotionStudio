@@ -8,6 +8,7 @@ import { useEditorStore } from '@/engines/editor';
 import ProjectSettingsPopover from './ProjectSettingsPopover';
 import ExportDialog from './ExportDialog';
 import UserMenu from '@/components/UserMenu';
+import { track } from '@/lib/analytics';
 
 interface ToolbarProps {
   project: Project;
@@ -39,7 +40,7 @@ export default function Toolbar({ project }: ToolbarProps) {
         variant="ghost"
         size="icon"
         title="Undo (⌘Z)"
-        onClick={undo}
+        onClick={() => { track.editorUndo(); undo(); }}
         disabled={!canUndo}
         className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm disabled:opacity-30 disabled:pointer-events-none"
       >
@@ -49,7 +50,7 @@ export default function Toolbar({ project }: ToolbarProps) {
         variant="ghost"
         size="icon"
         title="Redo (⌘⇧Z)"
-        onClick={redo}
+        onClick={() => { track.editorRedo(); redo(); }}
         disabled={!canRedo}
         className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm disabled:opacity-30 disabled:pointer-events-none"
       >
@@ -63,7 +64,7 @@ export default function Toolbar({ project }: ToolbarProps) {
         variant="ghost"
         size="icon"
         title="Add Text"
-        onClick={() => addText()}
+        onClick={() => { track.editorTextAdded(); addText(); }}
         className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
       >
         <Type className="w-3.75 h-3.75" />
@@ -80,7 +81,7 @@ export default function Toolbar({ project }: ToolbarProps) {
           variant="ghost"
           size="sm"
           title={isPlaying ? 'Stop preview' : 'Play preview'}
-          onClick={() => setIsPlaying(!isPlaying)}
+          onClick={() => { track.editorPreviewToggled(!isPlaying); setIsPlaying(!isPlaying); }}
           className="h-7 px-3 text-[12px] font-medium text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-md gap-1.5"
         >
           {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}

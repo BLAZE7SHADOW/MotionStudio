@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { LogIn, User2, Loader2, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import posthog from 'posthog-js';
+import { track } from '@/lib/analytics';
 
 type Mode = 'signin' | 'signup';
 
@@ -32,18 +34,22 @@ export default function AuthPanel() {
     setMode(next);
     setError(null);
     setConfirming(false);
+    posthog.capture('auth_mode_switched', { to: next });
   }
 
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setBusy(true);
+    track.authEmailSubmitted(mode);
     try {
       if (mode === 'signup') {
         await signUpWithEmail(email, password);
-        setConfirming(true); // email confirmation required
+        track.authSignupConfirmationSent(email);
+        setConfirming(true);
       } else {
         await signInWithEmail(email, password);
+        track.authCompleted('email');
         navigate('/dashboard');
       }
     } catch (err) {
@@ -56,8 +62,10 @@ export default function AuthPanel() {
   async function handleGuest() {
     setError(null);
     setBusy(true);
+    track.authGuestClicked();
     try {
       await signInAsGuest();
+      track.authCompleted('guest');
       navigate('/dashboard');
     } catch (err) {
       setError(humanizeError((err as Error).message));
@@ -157,7 +165,7 @@ export default function AuthPanel() {
       {/* Google */}
       <Button
         type="button"
-        onClick={signInWithGoogle}
+        onClick={() => { track.authGoogleClicked(); signInWithGoogle(); }}
         disabled={busy}
         className="h-10 text-[13px] font-medium bg-studio-surface hover:bg-studio-surface-hover border border-studio-border-strong text-studio-text rounded-studio-md gap-2 disabled:opacity-60"
       >

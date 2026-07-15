@@ -1,6 +1,7 @@
 import { LogOut, LogIn } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/hooks/useAuth';
+import { track } from '@/lib/analytics';
 
 export default function UserMenu() {
   const { user, isAnonymous, loading, signInWithGoogle, signOut } = useAuth();
@@ -43,7 +44,7 @@ export default function UserMenu() {
         {isAnonymous && (
           <button
             type="button"
-            onClick={signInWithGoogle}
+            onClick={() => { track.authUpgradeClicked(); signInWithGoogle(); }}
             className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-studio-accent hover:bg-studio-accent-subtle rounded-studio-sm transition-colors"
           >
             <LogIn className="w-3.5 h-3.5" />
@@ -54,7 +55,7 @@ export default function UserMenu() {
         {/* Sign out */}
         <button
           type="button"
-          onClick={signOut}
+          onClick={() => { track.authSignoutClicked(); signOut(); }}
           className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm transition-colors"
         >
           <LogOut className="w-3.5 h-3.5" />
