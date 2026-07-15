@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import LandingPage from './features/landing/LandingPage';
 import DashboardPage from './features/dashboard/DashboardPage';
 import EditorPage from './features/workspace/EditorPage';
@@ -63,6 +65,8 @@ export default function App() {
     <>
       <AuthBridge />
       <RouterProvider router={router} />
+      <Analytics />
+      <SpeedInsights />
     </>
   );
 }
