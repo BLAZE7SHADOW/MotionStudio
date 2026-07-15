@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd motionStudio && npm install && npm run build",
+  "outputDirectory": "motionStudio/dist",
+  "installCommand": "npm install --prefix api",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

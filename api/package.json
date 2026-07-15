@@ -1,0 +1,13 @@
+{
+  "name": "motionstudio-api",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@remotion/lambda-client": "4.0.488",
+    "@supabase/supabase-js": "^2.110.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@vercel/node": "^5.8.23"
+  }
+}
