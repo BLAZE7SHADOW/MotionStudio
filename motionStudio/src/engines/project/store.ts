@@ -17,6 +17,8 @@ interface ProjectStore {
   updateProject: (id: string, updates: UpdateProjectInput, opts?: { history?: boolean }) => void;
   undo: () => void;
   redo: () => void;
+  /** Wipe all projects + history. Called on account switch to prevent data bleed. */
+  clearAll: () => void;
 }
 
 const HISTORY_LIMIT = 50;
@@ -93,6 +95,13 @@ export const useProjectStore = create<ProjectStore>()(
             future: state.future.slice(1),
           };
         }),
+
+      clearAll: () => {
+        lastEditAt = 0;
+        set({ projects: [], activeProjectId: null, past: [], future: [] });
+        // also clear IndexedDB so the empty state is persisted immediately
+        useProjectStore.persist.clearStorage();
+      },
     }),
     {
       name: 'motionstudio-projects',

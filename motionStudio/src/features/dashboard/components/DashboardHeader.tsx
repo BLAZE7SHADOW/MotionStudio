@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Plus, Clapperboard } from 'lucide-react';
+import UserMenu from '@/components/UserMenu';
 
 interface DashboardHeaderProps {
   onNewProject: () => void;
@@ -17,14 +18,18 @@ export default function DashboardHeader({ onNewProject }: DashboardHeaderProps) 
         </span>
       </div>
 
-      <Button
-        size="sm"
-        className="gap-1.5 bg-studio-accent hover:bg-studio-accent-hover text-white rounded-studio-md h-8 px-3 text-[13px]"
-        onClick={onNewProject}
-      >
-        <Plus className="w-3.5 h-3.5" />
-        New Project
-      </Button>
+      <div className="flex items-center gap-3">
+        <Button
+          size="sm"
+          className="gap-1.5 bg-studio-accent hover:bg-studio-accent-hover text-white rounded-studio-md h-8 px-3 text-[13px]"
+          onClick={onNewProject}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          New Project
+        </Button>
+
+        <UserMenu />
+      </div>
     </header>
   );
 }

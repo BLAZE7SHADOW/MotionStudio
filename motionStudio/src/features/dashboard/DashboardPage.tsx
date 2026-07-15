@@ -1,13 +1,31 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { useProjectStore } from '@/engines/project';
+import { useAuth } from '@/hooks/useAuth';
 import DashboardHeader from './components/DashboardHeader';
 import ProjectGrid from './components/ProjectGrid';
 import EmptyState from './components/EmptyState';
 import CreateProjectModal from './components/CreateProjectModal';
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const projects = useProjectStore((s) => s.projects);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // auth guard — not logged in → back to landing
+  useEffect(() => {
+    if (!loading && !user) navigate('/', { replace: true });
+  }, [loading, user, navigate]);
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen bg-studio-bg flex items-center justify-center">
+        <Loader2 className="w-5 h-5 animate-spin text-studio-text-muted" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-studio-bg">

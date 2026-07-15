@@ -7,6 +7,7 @@ import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
 import ProjectSettingsPopover from './ProjectSettingsPopover';
 import ExportDialog from './ExportDialog';
+import UserMenu from '@/components/UserMenu';
 
 interface ToolbarProps {
   project: Project;
@@ -89,6 +90,10 @@ export default function Toolbar({ project }: ToolbarProps) {
         <Separator orientation="vertical" className="h-4 bg-studio-border-strong" />
 
         <ExportDialog project={project} />
+
+        <Separator orientation="vertical" className="h-4 bg-studio-border-strong" />
+
+        <UserMenu />
       </div>
     </div>
   );
