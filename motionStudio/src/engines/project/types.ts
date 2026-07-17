@@ -63,12 +63,28 @@ export type BaseElement = {
   animations?: Animation[];
 };
 
+export const TEXT_EFFECTS = [
+  'soft-blur-in', 'blur-out-up', 'focus-blur-resolve',
+  'tracking-in', 'per-character-rise', 'bottom-up-letters', 'top-down-letters',
+  'spring-scale-in', 'micro-scale-fade', 'scale-down-fade',
+  'staggered-fade-up', 'mask-reveal-up', 'line-by-line-slide',
+  'kinetic-center-build', 'short-slide-right', 'short-slide-down',
+  'shimmer-sweep', 'inline-highlight', 'marker-highlight',
+  'typewriter', 'matrix-decode', 'rgb-glitch-text',
+] as const;
+
+export type TextEffect = typeof TEXT_EFFECTS[number];
+
 export type TextElement = BaseElement & {
   type: 'text';
   content: string;
   fontSize: number;
   fontFamily: string;
   color: string;
+  textEffect?: TextEffect;
+  textEffectSpeed?: number;
+  /** Word/phrase to highlight — used by inline-highlight and marker-highlight effects */
+  textEffectHighlight?: string;
 };
 
 export type ImageElement = BaseElement & {

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import Moveable from 'react-moveable';
+import { Player } from '@remotion/player';
+import type { PlayerRef } from '@remotion/player';
 import { useProjectStore, getCompositionDimensions } from '@/engines/project';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
-import { textElementStyle, imageElementStyle } from '@/engines/rendering';
-import type { AnimationContext } from '@/engines/rendering';
-import type { TextElement, ImageElement, VideoElement } from '@/engines/canvas';
+import { textElementStyle, elementBoxStyle, MotionComposition } from '@/engines/rendering';
+import type { TextElement } from '@/engines/canvas';
 
 const DOT_GRID: React.CSSProperties = {
   backgroundImage: 'radial-gradient(circle, oklch(1 0 0 / 10%) 1px, transparent 1px)',
@@ -19,37 +20,7 @@ interface CanvasPanelProps {
   projectId: string;
 }
 
-/* ── static text node (selectable, draggable) — editor only ── */
-function TextNode({
-  el,
-  scale,
-  animCtx,
-  onSelect,
-  onEditStart,
-}: {
-  el: TextElement;
-  scale: number;
-  animCtx?: AnimationContext;
-  onSelect: () => void;
-  onEditStart: () => void;
-}) {
-  return (
-    <div
-      data-element-id={el.id}
-      onClick={(e)       => { e.stopPropagation(); onSelect(); }}
-      onDoubleClick={(e) => { e.stopPropagation(); onEditStart(); }}
-      style={{
-        ...textElementStyle(el, scale, animCtx),
-        cursor:     'pointer',
-        userSelect: 'none',
-      }}
-    >
-      {el.content}
-    </div>
-  );
-}
-
-/* ── editable text node (contenteditable) — editor only ── */
+/* ── editable text node (contenteditable) — shown as overlay during inline edit ── */
 function TextNodeEditing({
   el,
   scale,
@@ -96,127 +67,6 @@ function TextNodeEditing({
   );
 }
 
-/* ── image node (selectable, draggable) — editor only ── */
-function ImageNode({
-  el,
-  url,
-  scale,
-  animCtx,
-  onSelect,
-}: {
-  el: ImageElement;
-  url: string;
-  scale: number;
-  animCtx?: AnimationContext;
-  onSelect: () => void;
-}) {
-  return (
-    <div
-      data-element-id={el.id}
-      onClick={(e) => { e.stopPropagation(); onSelect(); }}
-      style={{ ...imageElementStyle(el, scale, animCtx), cursor: 'pointer' }}
-    >
-      <img
-        src={url}
-        alt=""
-        draggable={false}
-        style={{ width: '100%', height: '100%', objectFit: el.objectFit ?? 'cover', pointerEvents: 'none' }}
-      />
-    </div>
-  );
-}
-
-/* ── video node — mirrors the playhead: scrub seeks, play plays ── */
-function VideoNode({
-  el,
-  url,
-  scale,
-  animCtx,
-  isPlaying,
-  localFrame,
-  fps,
-  onSelect,
-}: {
-  el: VideoElement;
-  url: string;
-  scale: number;
-  animCtx?: AnimationContext;
-  isPlaying: boolean;
-  localFrame: number;
-  fps: number;
-  onSelect: () => void;
-}) {
-  const ref = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const v = ref.current;
-    if (!v) return;
-    const t = Math.max(0, localFrame / fps);
-    if (isPlaying) {
-      // let it play natively for smoothness; only seek if we drifted
-      if (v.paused) {
-        if (Math.abs(v.currentTime - t) > 0.2) v.currentTime = t;
-        v.play().catch(() => {});
-      }
-    } else {
-      v.pause();
-      if (Math.abs(v.currentTime - t) > 0.03) v.currentTime = t; // scrub → exact frame
-    }
-  }, [isPlaying, localFrame, fps]);
-
-  return (
-    <div
-      data-element-id={el.id}
-      onClick={(e) => { e.stopPropagation(); onSelect(); }}
-      style={{ ...imageElementStyle(el, scale, animCtx), cursor: 'pointer' }}
-    >
-      <video
-        ref={ref}
-        src={url}
-        muted
-        playsInline
-        draggable={false}
-        style={{ width: '100%', height: '100%', objectFit: el.objectFit ?? 'cover', pointerEvents: 'none' }}
-      />
-    </div>
-  );
-}
-
-/* ── audio node — no visual, just a hidden element synced to the playhead ── */
-function AudioNode({
-  url,
-  isPlaying,
-  localFrame,
-  fps,
-  volume,
-}: {
-  url: string;
-  isPlaying: boolean;
-  localFrame: number;
-  fps: number;
-  volume: number;
-}) {
-  const ref = useRef<HTMLAudioElement>(null);
-
-  useEffect(() => {
-    const a = ref.current;
-    if (!a) return;
-    a.volume = Math.min(1, Math.max(0, volume));
-    const t = Math.max(0, localFrame / fps);
-    if (isPlaying) {
-      if (a.paused) {
-        if (Math.abs(a.currentTime - t) > 0.2) a.currentTime = t;
-        a.play().catch(() => {});
-      }
-    } else {
-      a.pause();
-      if (Math.abs(a.currentTime - t) > 0.05) a.currentTime = t;
-    }
-  }, [isPlaying, localFrame, fps, volume]);
-
-  return <audio ref={ref} src={url} preload="auto" style={{ display: 'none' }} />;
-}
-
 export default function CanvasPanel({ projectId }: CanvasPanelProps) {
   const project            = useProjectStore((s) => s.getProject(projectId));
   const { elements, updateElement, removeElement, addImage, addVideo, addAudio } = useCanvasEngine();
@@ -227,6 +77,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
 
   const areaRef        = useRef<HTMLDivElement>(null);
   const stageRef       = useRef<HTMLDivElement>(null);
+  const playerRef      = useRef<PlayerRef>(null);
   const [area, setArea]                         = useState({ w: 0, h: 0 });
   const [moveableTarget,   setMoveableTarget]   = useState<HTMLElement | null>(null);
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
@@ -242,6 +93,11 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     ro.observe(node);
     return () => ro.disconnect();
   }, []);
+
+  /* ── sync Remotion Player to the editor's current frame ── */
+  useEffect(() => {
+    playerRef.current?.seekTo(currentFrame);
+  }, [currentFrame]);
 
   /* ── find selected DOM element for moveable ── */
   useEffect(() => {
@@ -297,7 +153,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
   const displayH = compH * scale;
   const ready = scale > 0;
 
-  /* elements alive at the current frame — half-open [start, start+duration) */
+  /* elements alive at the current frame — for the interaction overlay */
   const visibleElements = elements.filter(
     (el) => currentFrame >= el.startFrame && currentFrame < el.startFrame + el.durationInFrames
   );
@@ -330,7 +186,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     >
       {ready && (
         <>
-          {/* Stage — the composition, scaled to fit; reflects currentFrame */}
+          {/* Stage */}
           <div
             ref={stageRef}
             onClick={() => {
@@ -355,156 +211,121 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
               overflow: 'hidden',
             }}
           >
-              {/* drop-target highlight */}
-              {dragOver && (
+            {/* Player — drives all visual output through the same pipeline as export */}
+            <Player
+              ref={playerRef}
+              component={MotionComposition}
+              inputProps={{ elements, assets: project.assets }}
+              durationInFrames={Math.max(1, project.durationInFrames)}
+              fps={project.fps}
+              compositionWidth={compW}
+              compositionHeight={compH}
+              style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+              controls={false}
+              loop={false}
+              clickToPlay={false}
+              doubleClickToFullscreen={false}
+              allowFullscreen={false}
+            />
+
+            {/* Drop-target highlight */}
+            {dragOver && (
+              <div
+                className="absolute inset-0 z-30 pointer-events-none"
+                style={{
+                  outline: `2px solid ${ACCENT}`,
+                  outlineOffset: -2,
+                  backgroundColor: 'oklch(0.627 0.265 298.232 / 10%)',
+                }}
+              />
+            )}
+
+            {elements.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="text-[12px] text-white/15 font-mono select-none tracking-widest">
+                  {project.aspectRatio} · {project.fps} fps
+                </span>
+              </div>
+            )}
+
+            {/* Interaction overlay — transparent hit targets per visible element */}
+            {!isPlaying && visibleElements.map((el) => {
+              if (editingElementId === el.id && el.type === 'text') {
+                return (
+                  <TextNodeEditing
+                    key={el.id}
+                    el={el}
+                    scale={scale}
+                    onInput={(content) => updateElement(el.id, { content })}
+                    onDone={() => setEditingElementId(null)}
+                  />
+                );
+              }
+              return (
                 <div
-                  className="absolute inset-0 z-30 pointer-events-none"
+                  key={el.id}
+                  data-element-id={el.id}
                   style={{
-                    outline: `2px solid ${ACCENT}`,
-                    outlineOffset: -2,
-                    backgroundColor: 'oklch(0.627 0.265 298.232 / 10%)',
+                    ...elementBoxStyle(el, scale),
+                    backgroundColor: 'transparent',
+                    cursor: 'pointer',
+                  }}
+                  onClick={(e) => { e.stopPropagation(); setSelectedElement(el.id); }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    if (el.type === 'text') {
+                      setSelectedElement(el.id);
+                      setEditingElementId(el.id);
+                    }
                   }}
                 />
-              )}
+              );
+            })}
 
-              {elements.length === 0 && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span className="text-[12px] text-white/15 font-mono select-none tracking-widest">
-                    {project.aspectRatio} · {project.fps} fps
-                  </span>
-                </div>
-              )}
-
-              {visibleElements.map((el) => {
-                // selected element renders static (base pose) so moveable stays
-                // clean; everything else animates at the current frame
-                const isSelected = selectedElementId === el.id;
-                const animCtx = isSelected
-                  ? undefined
-                  : { localFrame: currentFrame - el.startFrame, fps: project.fps };
-
-                if (el.type === 'text') {
-                  if (editingElementId === el.id) {
-                    return (
-                      <TextNodeEditing
-                        key={el.id}
-                        el={el}
-                        scale={scale}
-                        onInput={(content) => updateElement(el.id, { content })}
-                        onDone={() => setEditingElementId(null)}
-                      />
-                    );
-                  }
-                  return (
-                    <TextNode
-                      key={el.id}
-                      el={el}
-                      scale={scale}
-                      animCtx={animCtx}
-                      onSelect={() => setSelectedElement(el.id)}
-                      onEditStart={() => {
-                        setSelectedElement(el.id);
-                        setEditingElementId(el.id);
-                      }}
-                    />
-                  );
-                }
-
-                if (el.type === 'image') {
-                  const url = project.assets.find((a) => a.id === el.assetId)?.url;
-                  if (!url) return null;
-                  return (
-                    <ImageNode
-                      key={el.id}
-                      el={el}
-                      url={url}
-                      scale={scale}
-                      animCtx={animCtx}
-                      onSelect={() => setSelectedElement(el.id)}
-                    />
-                  );
-                }
-
-                if (el.type === 'video') {
-                  const url = project.assets.find((a) => a.id === el.assetId)?.url;
-                  if (!url) return null;
-                  return (
-                    <VideoNode
-                      key={el.id}
-                      el={el}
-                      url={url}
-                      scale={scale}
-                      animCtx={animCtx}
-                      isPlaying={isPlaying}
-                      localFrame={currentFrame - el.startFrame}
-                      fps={project.fps}
-                      onSelect={() => setSelectedElement(el.id)}
-                    />
-                  );
-                }
-
-                if (el.type === 'audio') {
-                  const url = project.assets.find((a) => a.id === el.assetId)?.url;
-                  if (!url) return null;
-                  return (
-                    <AudioNode
-                      key={el.id}
-                      url={url}
-                      isPlaying={isPlaying}
-                      localFrame={currentFrame - el.startFrame}
-                      fps={project.fps}
-                      volume={el.volume ?? 1}
-                    />
-                  );
-                }
-
-                return null;
-              })}
-
-              {/* Moveable — display space; commits divide by scale */}
-              {moveableTarget && selectedElementId && !editingElementId && !isPlaying && (
-                <Moveable
-                  target={moveableTarget}
-                  container={stageRef.current}
-                  draggable
-                  resizable
-                  rotatable
-                  keepRatio={false}
-                  throttleDrag={0}
-                  throttleResize={0}
-                  throttleRotate={0}
-                  onDrag={({ target, left, top }) => {
-                    target.style.left = `${left}px`;
-                    target.style.top  = `${top}px`;
-                  }}
-                  onDragEnd={({ lastEvent }) => {
-                    if (lastEvent) updateElement(selectedElementId, {
-                      x: lastEvent.left / scale,
-                      y: lastEvent.top / scale,
-                    });
-                  }}
-                  onResize={({ target, width, height, drag }) => {
-                    target.style.width  = `${width}px`;
-                    target.style.height = `${height}px`;
-                    target.style.left   = `${drag.left}px`;
-                    target.style.top    = `${drag.top}px`;
-                  }}
-                  onResizeEnd={({ lastEvent }) => {
-                    if (lastEvent) updateElement(selectedElementId, {
-                      width:  lastEvent.width  / scale,
-                      height: lastEvent.height / scale,
-                      x:      lastEvent.drag.left / scale,
-                      y:      lastEvent.drag.top  / scale,
-                    });
-                  }}
-                  onRotate={({ target, rotate }) => {
-                    target.style.transform = `rotate(${rotate}deg)`;
-                  }}
-                  onRotateEnd={({ lastEvent }) => {
-                    if (lastEvent) updateElement(selectedElementId, { rotation: lastEvent.rotate });
-                  }}
-                />
-              )}
+            {/* Moveable — targets the transparent overlay div for the selected element */}
+            {moveableTarget && selectedElementId && !editingElementId && !isPlaying && (
+              <Moveable
+                target={moveableTarget}
+                container={stageRef.current}
+                draggable
+                resizable
+                rotatable
+                keepRatio={false}
+                throttleDrag={0}
+                throttleResize={0}
+                throttleRotate={0}
+                onDrag={({ target, left, top }) => {
+                  target.style.left = `${left}px`;
+                  target.style.top  = `${top}px`;
+                }}
+                onDragEnd={({ lastEvent }) => {
+                  if (lastEvent) updateElement(selectedElementId, {
+                    x: lastEvent.left / scale,
+                    y: lastEvent.top / scale,
+                  });
+                }}
+                onResize={({ target, width, height, drag }) => {
+                  target.style.width  = `${width}px`;
+                  target.style.height = `${height}px`;
+                  target.style.left   = `${drag.left}px`;
+                  target.style.top    = `${drag.top}px`;
+                }}
+                onResizeEnd={({ lastEvent }) => {
+                  if (lastEvent) updateElement(selectedElementId, {
+                    width:  lastEvent.width  / scale,
+                    height: lastEvent.height / scale,
+                    x:      lastEvent.drag.left / scale,
+                    y:      lastEvent.drag.top  / scale,
+                  });
+                }}
+                onRotate={({ target, rotate }) => {
+                  target.style.transform = `rotate(${rotate}deg)`;
+                }}
+                onRotateEnd={({ lastEvent }) => {
+                  if (lastEvent) updateElement(selectedElementId, { rotation: lastEvent.rotate });
+                }}
+              />
+            )}
           </div>
 
           {/* Zoom indicator */}

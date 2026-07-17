@@ -1,10 +1,55 @@
-import { MousePointer, Plus, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown } from 'lucide-react';
+import { MousePointer, Plus, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown, Sparkles } from 'lucide-react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
 import type { TextElement, AudioElement, BaseElement, ElementPatch } from '@/engines/canvas';
-import type { Animation, AnimationProperty, AnimationEasing } from '@/engines/project';
+import type { Animation, AnimationProperty, AnimationEasing, TextEffect } from '@/engines/project';
 import { Input } from '@/components/ui/input';
+
+const TEXT_EFFECT_GROUPS: { label: string; effects: { id: TextEffect; label: string }[] }[] = [
+  {
+    label: 'Premium',
+    effects: [
+      { id: 'soft-blur-in',       label: 'Soft Blur In' },
+      { id: 'focus-blur-resolve', label: 'Focus Blur Resolve' },
+      { id: 'blur-out-up',        label: 'Blur Out Up' },
+      { id: 'tracking-in',        label: 'Tracking In' },
+      { id: 'scale-down-fade',    label: 'Scale Down Fade' },
+      { id: 'micro-scale-fade',   label: 'Micro Scale Fade' },
+      { id: 'shimmer-sweep',      label: 'Shimmer Sweep' },
+    ],
+  },
+  {
+    label: 'Kinetic',
+    effects: [
+      { id: 'per-character-rise',   label: 'Per Character Rise' },
+      { id: 'bottom-up-letters',    label: 'Bottom Up Letters' },
+      { id: 'top-down-letters',     label: 'Top Down Letters' },
+      { id: 'spring-scale-in',      label: 'Spring Scale In' },
+      { id: 'kinetic-center-build', label: 'Kinetic Center Build' },
+      { id: 'short-slide-right',    label: 'Short Slide Right' },
+      { id: 'short-slide-down',     label: 'Short Slide Down' },
+    ],
+  },
+  {
+    label: 'Reveal',
+    effects: [
+      { id: 'staggered-fade-up',  label: 'Staggered Fade Up' },
+      { id: 'mask-reveal-up',     label: 'Mask Reveal Up' },
+      { id: 'line-by-line-slide', label: 'Line By Line Slide' },
+      { id: 'inline-highlight',   label: 'Inline Highlight' },
+      { id: 'marker-highlight',   label: 'Marker Highlight' },
+    ],
+  },
+  {
+    label: 'Tech / Glitch',
+    effects: [
+      { id: 'typewriter',     label: 'Typewriter' },
+      { id: 'matrix-decode',  label: 'Matrix Decode' },
+      { id: 'rgb-glitch-text', label: 'RGB Glitch' },
+    ],
+  },
+];
 
 type Update = (patch: ElementPatch) => void;
 
@@ -30,14 +75,15 @@ function PropRow({ label, children }: { label: string; children: React.ReactNode
 
 /* ── compact number input ── */
 function NumInput({
-  value, onChange, unit,
+  value, onChange, unit, step,
 }: {
-  value: number; onChange: (v: number) => void; unit?: string;
+  value: number; onChange: (v: number) => void; unit?: string; step?: number;
 }) {
   return (
     <div className="relative flex-1">
       <Input
         type="number"
+        step={step}
         value={value}
         onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) onChange(v); }}
         className="h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm pr-6 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -300,6 +346,59 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
             />
           </div>
         </PropRow>
+      </div>
+
+      {/* ── Text Effect ── */}
+      <Section title="Text Effect" />
+      <div className="flex flex-col gap-3 px-4 py-3">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <Sparkles className="w-3 h-3 text-studio-accent" />
+            <span className="text-[11px] text-studio-text-faint">Animation preset</span>
+          </div>
+          <select
+            value={el.textEffect ?? ''}
+            onChange={(e) => update({ textEffect: (e.target.value as TextEffect) || undefined })}
+            className="h-8 text-[11px] bg-studio-surface border border-studio-border rounded-studio-md text-studio-text px-2 focus:outline-none focus:border-studio-accent-border"
+          >
+            <option value="">None (use keyframes)</option>
+            {TEXT_EFFECT_GROUPS.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.effects.map((e) => (
+                  <option key={e.id} value={e.id}>{e.label}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+
+        {el.textEffect && (
+          <PropRow label="Speed">
+            <NumInput
+              value={el.textEffectSpeed ?? 1}
+              onChange={(v) => update({ textEffectSpeed: Math.max(0.1, v) })}
+              step={0.1}
+            />
+          </PropRow>
+        )}
+
+        {(el.textEffect === 'inline-highlight' || el.textEffect === 'marker-highlight') && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] text-studio-text-faint">Highlight word / phrase</span>
+            <Input
+              value={el.textEffectHighlight ?? ''}
+              placeholder="Type the word to highlight…"
+              onChange={(e) => update({ textEffectHighlight: e.target.value || undefined })}
+              className="h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm"
+            />
+          </div>
+        )}
+
+        {el.textEffect && (
+          <p className="text-[10px] text-studio-text-faint leading-relaxed">
+            Effect fills the element box — resize the element to control size and position on canvas.
+          </p>
+        )}
       </div>
 
       <TransformSection el={el} update={update} />

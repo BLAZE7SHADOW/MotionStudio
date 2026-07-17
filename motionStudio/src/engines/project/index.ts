@@ -5,5 +5,7 @@ export type {
   Project, AspectRatio, CreateProjectInput, CanvasElement, TextElement, ImageElement, VideoElement, AudioElement, BaseElement,
   Animation, AnimationProperty, AnimationEasing,
   Asset, AssetType,
+  TextEffect,
 } from './types';
+export { TEXT_EFFECTS } from './types';
 export type { UpdateProjectInput } from './store';
