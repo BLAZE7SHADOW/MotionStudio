@@ -13,7 +13,10 @@ export interface Asset {
   id: string;
   type: AssetType;
   name: string;
+  /** blob: URL — browser-only, valid for this session */
   url: string;
+  /** public https: URL in Supabase Storage — usable by Lambda on AWS */
+  storageUrl?: string;
   width?: number;               // natural pixel size (image / video)
   height?: number;
   durationInSeconds?: number;   // media length (video / audio)

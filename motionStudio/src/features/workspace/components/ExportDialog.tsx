@@ -44,6 +44,16 @@ export default function ExportDialog({ project }: { project: Project }) {
   const [cloudError, setCloudError] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
+  // How many assets referenced by elements still lack a cloud storage URL
+  const pendingAssets = (() => {
+    const usedIds = new Set(
+      project.canvas.elements
+        .filter((e): e is Extract<typeof e, { assetId: string }> => 'assetId' in e)
+        .map((e) => e.assetId),
+    );
+    return project.assets.filter((a) => usedIds.has(a.id) && !a.storageUrl).length;
+  })();
+
   const dims = getCompositionDimensions(project.aspectRatio);
   const supported = isExportSupported();
   const exporting = progress !== null;
@@ -94,9 +104,18 @@ export default function ExportDialog({ project }: { project: Project }) {
     setDownloadUrl(null);
     track.exportCloudStarted();
 
+    // Remap assets: Lambda needs public https:// URLs, not browser blob: URLs.
+    // storageUrl is set by the background upload in the asset engine.
+    // If an asset is still uploading (storageUrl missing), pass url as-is —
+    // Lambda will fail on that asset, which is better than blocking the render.
+    const assets = project.assets.map((a) => ({
+      ...a,
+      url: a.storageUrl ?? a.url,
+    }));
+
     const inputProps = {
       elements: project.canvas.elements,
-      assets: project.assets,
+      assets,
       aspectRatio: project.aspectRatio,
       fps: project.fps,
       durationInFrames: project.durationInFrames,
@@ -311,6 +330,14 @@ export default function ExportDialog({ project }: { project: Project }) {
                     >
                       Sign in with Google for 5 renders/month →
                     </button>
+                  )}
+
+                  {/* Pending asset upload warning */}
+                  {pendingAssets > 0 && cloudStatus === 'idle' && (
+                    <p className="text-[11px] text-amber-400 flex items-center gap-1.5">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Uploading {pendingAssets} asset{pendingAssets > 1 ? 's' : ''} to cloud… render will use the latest available.
+                    </p>
                   )}
 
                   {/* Render button */}
