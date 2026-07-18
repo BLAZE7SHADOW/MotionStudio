@@ -5,6 +5,38 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-18] — 18 shader backgrounds (Remocn)
+
+### Added
+- New `shader` element type: a full-bleed, frame-synced WebGL background. 18
+  Remocn shader presets under `src/components/remocn/` (mesh gradient, grain
+  gradient, warp, swirl, water, spiral, liquid metal, color panels, neuro/perlin/
+  simplex noise, voronoi, dot orbit, dithering, god rays, smoke ring, metaballs,
+  pulsing border), lazy-loaded per preset in a new `ShaderRenderer`.
+- Toolbar "Add Background" button — inserts a full-canvas shader element
+  (default: Mesh Gradient), automatically placed behind every existing layer.
+- Properties panel: grouped shader picker (Premium / Tech / Clean / Playful) +
+  speed control, alongside the existing Transform / Layer / Animation sections
+  so backgrounds can still be resized, reordered, and faded like any element.
+- New dependency: `@paper-design/shaders-react` (the underlying WebGL shaders
+  Remocn wraps). Each wrapper is frame-driven via `useCurrentFrame()` instead of
+  a wall clock, so renders stay deterministic — same requirement text effects
+  already met.
+
+### Why
+Requested as backgrounds for compositions. Decided against building transitions
+in the same pass — Remocn's transitions are built for `TransitionSeries` between
+two *scenes*, and MotionStudio has no scene-grouping concept yet (each element
+is an independent layer on one timeline). Adding scene grouping speculatively,
+before there's a real need for multi-scene sequencing, was explicitly deferred.
+
+Files: `engines/project/types.ts` (`ShaderElement`, `ShaderPreset`,
+`SHADER_PRESETS`), `engines/canvas/store.ts` (`addShader`), `engines/rendering/
+components/renderers/ShaderRenderer.tsx` (new), `engines/rendering/components/
+ElementRenderer.tsx`, `features/workspace/components/{Toolbar,PropertiesPanel}.tsx`.
+
+---
+
 ## [2026-07-18] — Fix Player-canvas regressions (scale, drag, editing, playback)
 
 ### Fixed

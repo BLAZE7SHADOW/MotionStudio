@@ -176,6 +176,26 @@ clip starts, both in the editor preview and in the export.
 
 ---
 
+## 7b. Shader backgrounds (18 presets)
+
+Toolbar → the **✦ (Add Background)** button adds a full-canvas animated background,
+placed automatically behind everything else on the canvas.
+
+Change which shader it shows in **Properties → Background**, grouped by style:
+
+- **Premium** — Mesh Gradient, Grain Gradient, Warp, Swirl, Water, Spiral, Liquid
+  Metal, Color Panels, God Rays, Smoke Ring, Pulsing Border.
+- **Tech** — Neuro Noise, Voronoi, Dot Orbit, Dithering.
+- **Clean** — Perlin Noise, Simplex Noise.
+- **Playful** — Metaballs.
+
+Like any layer, a shader background can be resized, faded, repositioned, or given
+keyframe animations from the **Animation** section — it just defaults to filling
+the whole frame. Add more than one to layer multiple backgrounds, or use **Layer**
+to send one further back / bring one forward.
+
+---
+
 ## 8. The timeline
 
 The timeline controls **time** and **layers**.

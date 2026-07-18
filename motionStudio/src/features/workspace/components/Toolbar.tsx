@@ -1,4 +1,4 @@
-import { Undo2, Redo2, Clapperboard, Type, Play, Pause } from 'lucide-react';
+import { Undo2, Redo2, Clapperboard, Type, Sparkles, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { Project } from '@/engines/project';
@@ -15,7 +15,7 @@ interface ToolbarProps {
 }
 
 export default function Toolbar({ project }: ToolbarProps) {
-  const { addText } = useCanvasEngine();
+  const { addText, addShader } = useCanvasEngine();
   const isPlaying    = useEditorStore((s) => s.isPlaying);
   const setIsPlaying = useEditorStore((s) => s.setIsPlaying);
   const undo    = useProjectStore((s) => s.undo);
@@ -68,6 +68,15 @@ export default function Toolbar({ project }: ToolbarProps) {
         className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
       >
         <Type className="w-3.75 h-3.75" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Add Background"
+        onClick={() => { track.editorShaderAdded({ shader: 'shader-mesh-gradient' }); addShader('shader-mesh-gradient'); }}
+        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
+      >
+        <Sparkles className="w-3.75 h-3.75" />
       </Button>
 
       <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />

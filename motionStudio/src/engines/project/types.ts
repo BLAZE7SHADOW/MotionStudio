@@ -105,7 +105,23 @@ export type AudioElement = BaseElement & {
   volume?: number; // 0–1
 };
 
-export type CanvasElement = TextElement | ImageElement | VideoElement | AudioElement;
+export const SHADER_PRESETS = [
+  'shader-mesh-gradient', 'shader-grain-gradient', 'shader-warp', 'shader-swirl',
+  'shader-water', 'shader-spiral', 'shader-liquid-metal', 'shader-color-panels',
+  'shader-neuro-noise', 'shader-perlin-noise', 'shader-simplex-noise', 'shader-voronoi',
+  'shader-dot-orbit', 'shader-dithering', 'shader-god-rays', 'shader-smoke-ring',
+  'shader-metaballs', 'shader-pulsing-border',
+] as const;
+
+export type ShaderPreset = typeof SHADER_PRESETS[number];
+
+export type ShaderElement = BaseElement & {
+  type: 'shader';
+  shader: ShaderPreset;
+  shaderSpeed?: number;
+};
+
+export type CanvasElement = TextElement | ImageElement | VideoElement | AudioElement | ShaderElement;
 
 /* ── Project ── */
 

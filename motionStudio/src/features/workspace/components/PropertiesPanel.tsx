@@ -2,9 +2,50 @@ import { MousePointer, Plus, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
-import type { TextElement, AudioElement, BaseElement, ElementPatch } from '@/engines/canvas';
-import type { Animation, AnimationProperty, AnimationEasing, TextEffect } from '@/engines/project';
+import type { TextElement, AudioElement, ShaderElement, BaseElement, ElementPatch } from '@/engines/canvas';
+import type { Animation, AnimationProperty, AnimationEasing, TextEffect, ShaderPreset } from '@/engines/project';
 import { Input } from '@/components/ui/input';
+
+const SHADER_GROUPS: { label: string; shaders: { id: ShaderPreset; label: string }[] }[] = [
+  {
+    label: 'Premium',
+    shaders: [
+      { id: 'shader-mesh-gradient',  label: 'Mesh Gradient' },
+      { id: 'shader-grain-gradient', label: 'Grain Gradient' },
+      { id: 'shader-warp',           label: 'Warp' },
+      { id: 'shader-swirl',          label: 'Swirl' },
+      { id: 'shader-water',          label: 'Water' },
+      { id: 'shader-spiral',         label: 'Spiral' },
+      { id: 'shader-liquid-metal',   label: 'Liquid Metal' },
+      { id: 'shader-color-panels',   label: 'Color Panels' },
+      { id: 'shader-god-rays',       label: 'God Rays' },
+      { id: 'shader-smoke-ring',     label: 'Smoke Ring' },
+      { id: 'shader-pulsing-border', label: 'Pulsing Border' },
+    ],
+  },
+  {
+    label: 'Tech',
+    shaders: [
+      { id: 'shader-neuro-noise', label: 'Neuro Noise' },
+      { id: 'shader-voronoi',     label: 'Voronoi' },
+      { id: 'shader-dot-orbit',   label: 'Dot Orbit' },
+      { id: 'shader-dithering',   label: 'Dithering' },
+    ],
+  },
+  {
+    label: 'Clean',
+    shaders: [
+      { id: 'shader-perlin-noise',  label: 'Perlin Noise' },
+      { id: 'shader-simplex-noise', label: 'Simplex Noise' },
+    ],
+  },
+  {
+    label: 'Playful',
+    shaders: [
+      { id: 'shader-metaballs', label: 'Metaballs' },
+    ],
+  },
+];
 
 const TEXT_EFFECT_GROUPS: { label: string; effects: { id: TextEffect; label: string }[] }[] = [
   {
@@ -419,6 +460,53 @@ function MediaProperties({ el, update, reorder }: { el: BaseElement; update: Upd
   );
 }
 
+/* ── shader: full-bleed animated background ── */
+function ShaderProperties({ el, update, reorder }: { el: ShaderElement; update: Update; reorder: (dir: LayerDir) => void }) {
+  return (
+    <>
+      <Section title="Shader" />
+      <div className="flex flex-col gap-3 px-4 py-3">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <Sparkles className="w-3 h-3 text-studio-accent" />
+            <span className="text-[11px] text-studio-text-faint">Background</span>
+          </div>
+          <select
+            value={el.shader}
+            onChange={(e) => update({ shader: e.target.value as ShaderPreset })}
+            className="h-8 text-[11px] bg-studio-surface border border-studio-border rounded-studio-md text-studio-text px-2 focus:outline-none focus:border-studio-accent-border"
+          >
+            {SHADER_GROUPS.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.shaders.map((s) => (
+                  <option key={s.id} value={s.id}>{s.label}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+
+        <PropRow label="Speed">
+          <NumInput
+            value={el.shaderSpeed ?? 1}
+            onChange={(v) => update({ shaderSpeed: Math.max(0.1, v) })}
+            step={0.1}
+          />
+        </PropRow>
+
+        <p className="text-[10px] text-studio-text-faint leading-relaxed">
+          Fills the element box (default: the whole canvas). Resize or reorder like
+          any other layer.
+        </p>
+      </div>
+
+      <TransformSection el={el} update={update} />
+      <LayerSection reorder={reorder} />
+      <AnimationSection el={el} update={update} />
+    </>
+  );
+}
+
 /* ── audio: no canvas presence, just sound ── */
 function AudioProperties({ el, update }: { el: AudioElement; update: Update }) {
   return (
@@ -482,6 +570,14 @@ export default function PropertiesPanel() {
           )}
           {selected.type === 'audio' && (
             <AudioProperties key={selected.id} el={selected} update={(u) => updateElement(selected.id, u)} />
+          )}
+          {selected.type === 'shader' && (
+            <ShaderProperties
+              key={selected.id}
+              el={selected}
+              update={(u) => updateElement(selected.id, u)}
+              reorder={(dir) => reorderLayer(selected.id, dir)}
+            />
           )}
         </div>
       )}

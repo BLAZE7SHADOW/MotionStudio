@@ -3,6 +3,7 @@ import TextRenderer from './renderers/TextRenderer';
 import ImageRenderer from './renderers/ImageRenderer';
 import VideoRenderer from './renderers/VideoRenderer';
 import AudioRenderer from './renderers/AudioRenderer';
+import ShaderRenderer from './renderers/ShaderRenderer';
 
 /**
  * Dispatches an element to its type-specific renderer. Image elements resolve
@@ -30,6 +31,8 @@ export default function ElementRenderer({
       const asset = assets.find((a) => a.id === el.assetId);
       return asset ? <AudioRenderer el={el} url={asset.url} /> : null;
     }
+    case 'shader':
+      return <ShaderRenderer el={el} />;
     default:
       return null;
   }

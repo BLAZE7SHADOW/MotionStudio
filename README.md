@@ -1,6 +1,6 @@
 # MotionStudio
 
-**A browser-based motion graphics editor built on [Remotion](https://remotion.dev)** — compose text, image, video, and audio on a frame-accurate timeline, animate with keyframes and 22 text effects, and export to MP4 in the browser or on the cloud.
+**A browser-based motion graphics editor built on [Remotion](https://remotion.dev)** — compose text, image, video, audio, and shader backgrounds on a frame-accurate timeline, animate with keyframes and 22 text effects, and export to MP4 in the browser or on the cloud.
 
 **Live demo → [motionstudio-six.vercel.app](https://motionstudio-six.vercel.app/)**
 
@@ -10,7 +10,7 @@
 
 MotionStudio is a full video compositor that runs in the browser. You place elements on a canvas, arrange them on a timeline, animate them per-property, and export real video. The editor preview, the in-browser export, and the AWS Lambda cloud render all run the **same React composition** — what you see while editing is exactly what renders.
 
-~5K+ lines of strict TypeScript · 7 engines · 85+ logically-grouped commits.
+~5K+ lines of strict TypeScript · 7 engines · 85+ logically-grouped commits · 5 element types.
 
 ## Features
 
@@ -18,6 +18,7 @@ MotionStudio is a full video compositor that runs in the browser. You place elem
 - **Frame-accurate timeline** — per-element clips (move/trim), scrubbing, time-based playback clock
 - **Keyframe animation** — opacity, position, scale, rotation via `interpolate`/`spring`, with presets and a draggable keyframe strip
 - **22 text effects** — Remocn animation components (per-character rise, typewriter, glitch, shimmer, highlights…), lazy-loaded per effect
+- **18 shader backgrounds** — full-bleed, frame-synced WebGL backdrops (gradients, noise, warp, particles…), lazy-loaded per preset
 - **Media** — image, video (`OffthreadVideo`), audio elements with library, probing, and thumbnails
 - **Two export paths** — in-browser WebCodecs (free, Chrome/Edge) and Remotion Lambda cloud render (any device, 1080p)
 - **Accounts & sync** — Google OAuth / email / guest; projects auto-save to Supabase and restore on any device
@@ -54,7 +55,7 @@ Deep dives: [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/adrs/](docs/adrs/) · [U
 | Styling | Tailwind v4 + shadcn/ui | Token-driven dark UI, accessible primitives |
 | Canvas interactions | react-moveable | Solved drag/resize/rotate handles |
 | Browser export | WebCodecs + Mediabunny | Frame-perfect encode + MP4 mux, no server |
-| Text effects | Remocn | Copy-paste Remotion animation components |
+| Text effects & shaders | Remocn (+ `@paper-design/shaders-react`) | Copy-paste Remotion animation components and frame-synced WebGL backgrounds |
 | Backend | Vercel Functions · Supabase · AWS (Lambda, S3) | Auth, quota, cloud render, asset storage |
 | Analytics | PostHog · Vercel Analytics | Product + performance insight |
 

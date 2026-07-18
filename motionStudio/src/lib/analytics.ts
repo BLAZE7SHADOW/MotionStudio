@@ -37,6 +37,9 @@ export const track = {
   editorTextAdded: () =>
     posthog.capture('editor_text_added'),
 
+  editorShaderAdded: (props: { shader: string }) =>
+    posthog.capture('editor_shader_added', props),
+
   editorPreviewToggled: (playing: boolean) =>
     posthog.capture('editor_preview_toggled', { playing }),
 

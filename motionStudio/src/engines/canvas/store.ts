@@ -1,6 +1,6 @@
 import { useProjectStore } from '../project/store';
 import { getCompositionDimensions } from '../project/dimensions';
-import type { CanvasElement, TextElement, ImageElement, VideoElement, AudioElement } from './types';
+import type { CanvasElement, TextElement, ImageElement, VideoElement, AudioElement, ShaderElement, ShaderPreset } from './types';
 import type { AddTextInput } from './types';
 
 /**
@@ -12,7 +12,8 @@ export type ElementPatch =
   Partial<Omit<TextElement, 'id' | 'type'>> &
   Partial<Omit<ImageElement, 'id' | 'type'>> &
   Partial<Omit<VideoElement, 'id' | 'type'>> &
-  Partial<Omit<AudioElement, 'id' | 'type'>>;
+  Partial<Omit<AudioElement, 'id' | 'type'>> &
+  Partial<Omit<ShaderElement, 'id' | 'type'>>;
 
 export function useCanvasEngine() {
   const project       = useProjectStore((s) =>
@@ -166,6 +167,28 @@ export function useCanvasEngine() {
     return element;
   }
 
+  /** add a full-bleed shader background, automatically sent behind every existing element */
+  function addShader(preset: ShaderPreset): CanvasElement | null {
+    if (!project) return null;
+    const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
+    const backZ = elements.length > 0 ? Math.min(...elements.map((el) => el.zIndex)) - 1 : 0;
+
+    const element: ShaderElement = {
+      id:               crypto.randomUUID(),
+      type:             'shader',
+      shader:           preset,
+      x: 0, y: 0, width: compW, height: compH,
+      rotation:         0,
+      opacity:          1,
+      zIndex:           backZ,
+      startFrame:       0,
+      durationInFrames: project.durationInFrames,
+    };
+
+    updateProject(project.id, { canvas: { elements: [...elements, element] } });
+    return element;
+  }
+
   function updateElement(id: string, updates: ElementPatch) {
     if (!project) return;
     updateProject(project.id, {
@@ -210,5 +233,5 @@ export function useCanvasEngine() {
     updateProject(project.id, { canvas: { elements: next } });
   }
 
-  return { elements, addText, addImage, addVideo, addAudio, updateElement, removeElement, reorderLayer };
+  return { elements, addText, addImage, addVideo, addAudio, addShader, updateElement, removeElement, reorderLayer };
 }

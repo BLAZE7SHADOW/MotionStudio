@@ -1,4 +1,4 @@
-export type { CanvasElement, TextElement, ImageElement, VideoElement, AudioElement, BaseElement } from '../project/types';
+export type { CanvasElement, TextElement, ImageElement, VideoElement, AudioElement, ShaderElement, BaseElement, ShaderPreset } from '../project/types';
 
 export type AddTextInput = {
   x?: number;
