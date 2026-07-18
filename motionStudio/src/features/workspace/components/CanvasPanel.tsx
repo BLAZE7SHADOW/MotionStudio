@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Moveable from 'react-moveable';
 import { Player } from '@remotion/player';
 import type { PlayerRef } from '@remotion/player';
@@ -194,13 +194,26 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
        entrance effects start at opacity 0, which would hide the text at frame 0
      - element being text-edited → hidden (the contenteditable overlay replaces it)
      - everything else → frame-accurate WYSIWYG (scrubbing previews effects) */
-  const playerElements = elements
-    .filter((el) => el.id !== editingElementId)
-    .map((el) =>
-      el.id === selectedElementId && !isPlaying
-        ? { ...el, animations: undefined, ...(el.type === 'text' ? { textEffect: undefined } : null) }
-        : el
-    );
+  // Memoized: without this, a brand-new array/object is built on every render —
+  // and during playback currentFrame changes every frame, so a fresh `inputProps`
+  // reference would hit the Player 30+ times/sec. Player's readiness/buffering
+  // state (and any component gating on delayRender, like the WebGL shaders) can
+  // get reset by that churn, so we only rebuild when the actual inputs change.
+  const playerElements = useMemo(
+    () =>
+      elements
+        .filter((el) => el.id !== editingElementId)
+        .map((el) =>
+          el.id === selectedElementId && !isPlaying
+            ? { ...el, animations: undefined, ...(el.type === 'text' ? { textEffect: undefined } : null) }
+            : el
+        ),
+    [elements, editingElementId, selectedElementId, isPlaying]
+  );
+  const inputProps = useMemo(
+    () => ({ elements: playerElements, assets: project?.assets ?? [] }),
+    [playerElements, project?.assets]
+  );
 
   /* drop an asset from the panel → place it where it lands (in composition space) */
   function handleDrop(e: React.DragEvent) {
@@ -259,7 +272,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
             <Player
               ref={playerRef}
               component={MotionComposition}
-              inputProps={{ elements: playerElements, assets: project.assets }}
+              inputProps={inputProps}
               durationInFrames={Math.max(1, project.durationInFrames)}
               fps={project.fps}
               compositionWidth={compW}

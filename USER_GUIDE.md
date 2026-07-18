@@ -181,7 +181,9 @@ clip starts, both in the editor preview and in the export.
 Toolbar → the **✦ (Add Background)** button adds a full-canvas animated background,
 placed automatically behind everything else on the canvas.
 
-Change which shader it shows in **Properties → Background**, grouped by style:
+A live loop preview shows above the picker so you can see each option before
+committing to it. Change which shader it shows in **Properties → Background**,
+grouped by style:
 
 - **Premium** — Mesh Gradient, Grain Gradient, Warp, Swirl, Water, Spiral, Liquid
   Metal, Color Panels, God Rays, Smoke Ring, Pulsing Border.

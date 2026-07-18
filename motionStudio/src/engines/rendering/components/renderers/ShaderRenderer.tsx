@@ -3,8 +3,9 @@ import { useCurrentFrame, useVideoConfig } from 'remotion';
 import type { ShaderElement, ShaderPreset } from '../../../project/types';
 import { imageElementStyle } from '../../style';
 
-// Lazily imported — each shader is its own bundle chunk, only loaded when used
-const Shaders = {
+// Lazily imported — each shader is its own bundle chunk, only loaded when used.
+// Exported so a live preview thumbnail (Properties panel) can reuse the same map.
+export const Shaders = {
   'shader-mesh-gradient':  lazy(() => import('@/components/remocn/shader-mesh-gradient').then(m => ({ default: m.ShaderMeshGradient }))),
   'shader-grain-gradient': lazy(() => import('@/components/remocn/shader-grain-gradient').then(m => ({ default: m.ShaderGrainGradient }))),
   'shader-warp':           lazy(() => import('@/components/remocn/shader-warp').then(m => ({ default: m.ShaderWarp }))),

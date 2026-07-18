@@ -5,6 +5,7 @@ import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
 import type { TextElement, AudioElement, ShaderElement, BaseElement, ElementPatch } from '@/engines/canvas';
 import type { Animation, AnimationProperty, AnimationEasing, TextEffect, ShaderPreset } from '@/engines/project';
 import { Input } from '@/components/ui/input';
+import ShaderPreview from './ShaderPreview';
 
 const SHADER_GROUPS: { label: string; shaders: { id: ShaderPreset; label: string }[] }[] = [
   {
@@ -466,6 +467,8 @@ function ShaderProperties({ el, update, reorder }: { el: ShaderElement; update: 
     <>
       <Section title="Shader" />
       <div className="flex flex-col gap-3 px-4 py-3">
+        <ShaderPreview preset={el.shader} />
+
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1.5 mb-0.5">
             <Sparkles className="w-3 h-3 text-studio-accent" />

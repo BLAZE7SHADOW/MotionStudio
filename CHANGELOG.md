@@ -5,6 +5,69 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-18] — Fix shaders never rendering (editor + Lambda) + add live picker preview
+
+### Fixed
+- **Shaders never appeared in the editor canvas, in dev.** Every Remocn shader
+  wrapper gates its WebGL paint behind Remotion's `delayRender()`/
+  `continueRender()`, resolved via a ref callback with no cleanup. React
+  `StrictMode` (enabled in `main.tsx`) double-mounts every component once in
+  dev; the discarded first mount's `delayRender` handle was never released,
+  and Remotion won't mark that part of the tree "ready" to paint until its
+  handle resolves — so the shader canvas sat blank indefinitely. Rewrote the
+  gating in all 18 shader components (`src/components/remocn/shader-*.tsx`)
+  as a `useEffect` whose cleanup unconditionally calls `continueRender(handle)`,
+  so a StrictMode-discarded mount can never leak one. Verified live: shaders
+  now paint immediately and animate correctly through full playback, alone
+  and layered with text/other elements.
+- **Shaders (and every change since 2026-07-12) never appeared in Cloud
+  Render output.** Remotion Lambda renders from a static site bundle
+  pre-deployed to S3 (`REMOTION_SERVE_URL`), not live code — and that bundle
+  hadn't been redeployed since 2026-07-12, six days before shaders (and
+  today's text effects and Player-canvas refactor) existed. There was no
+  redeploy step wired into the project. Fixed by redeploying the Lambda site
+  (`npx remotion lambda sites create`), which first required teaching
+  Remotion's own bundler about the `@/` → `src/` path alias it doesn't share
+  with Vite — added `remotion.config.ts`. (Note: `__dirname` is unusable
+  inside that config file — Remotion loads/transpiles it from inside its own
+  `@remotion/cli` package directory — so the alias is anchored on
+  `process.cwd()` instead, matching how this project always invokes the
+  Remotion CLI.) Same site name/bucket, so no Vercel env var changes needed.
+- **First shader use in a dev session showed several seconds of blank canvas**,
+  even while paused. Vite compiles each lazy-imported chunk on demand the
+  first time it's requested; `@paper-design/shaders-react` (shared by all 18
+  shaders) is large enough that this was noticeable. Added it to
+  `optimizeDeps.include` in `vite.config.ts` so it's pre-bundled at dev-server
+  startup instead — dev-only issue, production builds pre-bundle everything
+  regardless.
+
+### Known limitation (not fixed this pass)
+- **Shaders (and text effects) still don't appear in the free Browser export.**
+  That path is a hand-rolled 2D canvas renderer (`engines/export/canvasFrame.ts`)
+  that only knows how to draw `text`/`image`/`video` primitives — it has no
+  concept of the live React/WebGL tree a shader or Remocn text effect renders
+  through, and this predates today's work. **Cloud Render is unaffected** — it
+  runs the real `MotionComposition` tree via `renderMedia()`, now fixed above.
+  Shader/effect-heavy projects should export via Cloud Render until the
+  Browser path is extended to capture arbitrary component output.
+
+### Added
+- **Live shader preview** in the Properties panel: a small looping `<Player>`
+  showing the currently-selected preset, so picking from the 18-option dropdown
+  is no longer a guess. Reuses the same lazy-loaded shader map as the canvas
+  renderer (`ShaderRenderer.tsx` now exports it) — `ShaderPreview.tsx` (new).
+- Also fixed in passing: `<Player>`'s `inputProps` was rebuilt fresh every
+  CanvasPanel render (a new reference 30+ times/sec during playback); now
+  `useMemo`'d so it's stable unless elements/selection/assets actually change.
+
+Files: `src/components/remocn/shader-*.tsx` (all 18), `remotion.config.ts`
+(new), `vite.config.ts`, `features/workspace/components/CanvasPanel.tsx`,
+`features/workspace/components/ShaderPreview.tsx` (new),
+`engines/rendering/components/renderers/ShaderRenderer.tsx`,
+`features/workspace/components/PropertiesPanel.tsx`.
+
+---
+
 ## [2026-07-18] — 18 shader backgrounds (Remocn)
 
 ### Added

@@ -1,7 +1,7 @@
 "use client";
+import { useEffect } from "react";
 
 import { Metaballs, type MetaballsProps } from "@paper-design/shaders-react";
-import { useCallback, useState } from "react";
 import {
   continueRender,
   delayRender,
@@ -26,20 +26,24 @@ export function ShaderMetaballs({
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
 
-  const [handle] = useState(() => delayRender("shader-metaballs"));
-  const gate = useCallback(
-    (element: HTMLDivElement | null) => {
-      if (!element) return;
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => continueRender(handle)),
-      );
-    },
-    [handle],
-  );
+  useEffect(() => {
+    const handle = delayRender("shader-metaballs");
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => continueRender(handle));
+    });
+    // cleanup ALWAYS runs — including on the discarded mount of a React
+    // StrictMode double-invoke — so the handle never leaks unresolved and
+    // blocks Remotion (Player or renderMedia) from ever marking this ready.
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      continueRender(handle);
+    };
+  }, []);
 
   return (
     <div
-      ref={gate}
       className={className}
       style={{ position: "absolute", inset: 0 }}
     >
