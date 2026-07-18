@@ -1,13 +1,16 @@
 import { useRef, useState } from 'react';
-import { Image, Video, Music, Upload, Search, FolderOpen, CloudUpload, X, Play } from 'lucide-react';
+import { Image, Video, Music, Upload, Search, FolderOpen, CloudUpload, X, Play, Sparkle, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { useAssetEngine } from '@/engines/asset';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
+import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/lib/apiClient';
+import type { StockResult, StockType } from '@/lib/apiClient';
 import type { Asset, AssetType } from '@/engines/asset';
 
-type TabKey = 'images' | 'videos' | 'audio' | 'upload';
+type TabKey = 'images' | 'videos' | 'audio' | 'upload' | 'stock';
 
 /* which asset type each media tab shows, and its accept filter */
 const TAB_TYPE: Record<'images' | 'videos' | 'audio', { type: AssetType; accept: string }> = {
@@ -210,6 +213,136 @@ function UploadTab({
   );
 }
 
+/* ── stock tab: search Pexels, import a result into the asset library ── */
+function StockTab({
+  onImport,
+}: {
+  onImport: (file: File) => void;
+}) {
+  const { token } = useAuth();
+  const [query, setQuery] = useState('');
+  const [type, setType] = useState<StockType>('photo');
+  const [results, setResults] = useState<StockResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [importingId, setImportingId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function runSearch(q: string, t: StockType) {
+    if (!token) { setError('Sign in to search stock media'); return; }
+    if (!q.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { results } = await api.searchStock(token, q.trim(), t);
+      setResults(results);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleImport(r: StockResult) {
+    setImportingId(r.id);
+    try {
+      const res = await fetch(r.downloadUrl);
+      const blob = await res.blob();
+      const ext = r.type === 'video' ? 'mp4' : 'jpg';
+      const file = new File([blob], `pexels-${r.id}.${ext}`, { type: blob.type });
+      onImport(file);
+    } catch {
+      setError('Import failed — try again');
+    } finally {
+      setImportingId(null);
+    }
+  }
+
+  return (
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="flex flex-col gap-2 px-3 pt-1 pb-3 shrink-0">
+        <form
+          onSubmit={(e) => { e.preventDefault(); runSearch(query, type); }}
+          className="relative"
+        >
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-studio-text-faint pointer-events-none" />
+          <Input
+            placeholder="Search Pexels..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="h-8 pl-8 text-[12px] bg-studio-surface border-studio-border text-studio-text placeholder:text-studio-text-faint rounded-studio-md focus-visible:ring-studio-accent focus-visible:border-studio-accent-border"
+          />
+        </form>
+        <div className="grid grid-cols-2 gap-1.5">
+          {(['photo', 'video'] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => { setType(t); if (query.trim()) runSearch(query, t); }}
+              className={[
+                'h-7 rounded-studio-sm text-[11px] font-medium capitalize transition-colors duration-120',
+                type === t
+                  ? 'bg-studio-overlay text-studio-text'
+                  : 'bg-studio-surface text-studio-text-faint hover:text-studio-text-muted',
+              ].join(' ')}
+            >
+              {t}s
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-3 pb-3">
+        {loading && (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-4 h-4 text-studio-text-faint animate-spin" />
+          </div>
+        )}
+
+        {error && (
+          <p className="text-[11px] text-red-400 px-1 py-2 leading-relaxed">{error}</p>
+        )}
+
+        {!loading && !error && results.length === 0 && (
+          <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+            <div className="w-10 h-10 rounded-studio-lg bg-studio-surface flex items-center justify-center">
+              <Sparkle className="w-5 h-5 text-studio-text-faint" strokeWidth={1.5} />
+            </div>
+            <p className="text-[11px] text-studio-text-faint leading-relaxed px-2">
+              Search free stock photos and videos from Pexels
+            </p>
+          </div>
+        )}
+
+        {!loading && results.length > 0 && (
+          <div className="grid grid-cols-2 gap-2">
+            {results.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => handleImport(r)}
+                disabled={importingId !== null}
+                title={`Photo by ${r.photographer} on Pexels`}
+                className="group relative aspect-video rounded-studio-md overflow-hidden border border-studio-border bg-studio-surface disabled:opacity-60"
+              >
+                <img src={r.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-120 flex items-center justify-center">
+                  {importingId === r.id ? (
+                    <Loader2 className="w-4 h-4 text-white animate-spin" />
+                  ) : (
+                    <span className="opacity-0 group-hover:opacity-100 text-[10px] font-medium text-white transition-opacity duration-120">
+                      Add to project
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ── main component ── */
 export default function AssetsPanel() {
   const { assets, uploadFiles, removeAsset } = useAssetEngine();
@@ -246,6 +379,10 @@ export default function AssetsPanel() {
       const t = created[0].type;
       setActiveTab(t === 'image' ? 'images' : t === 'video' ? 'videos' : 'audio');
     }
+  }
+
+  async function handleStockImport(file: File) {
+    await handleFiles([file]);
   }
 
   return (
@@ -289,11 +426,12 @@ export default function AssetsPanel() {
         className="flex flex-col flex-1 min-h-0"
       >
         <div className="px-3 pt-2 pb-3 shrink-0">
-          <TabsList className="w-full grid grid-cols-4 h-14! bg-studio-surface rounded-studio-xl p-1">
+          <TabsList className="w-full grid grid-cols-5 h-14! bg-studio-surface rounded-studio-xl p-1">
             {([
               { value: 'images', label: 'Images', icon: Image },
               { value: 'videos', label: 'Videos', icon: Video },
               { value: 'audio',  label: 'Audio',  icon: Music },
+              { value: 'stock',  label: 'Stock',  icon: Sparkle },
               { value: 'upload', label: 'Upload', icon: Upload },
             ] as const).map(({ value, label, icon: Icon }) => (
               <TabsTrigger
@@ -319,6 +457,10 @@ export default function AssetsPanel() {
 
         <TabsContent value="audio" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-y-auto">
           <AssetGrid assets={byType('audio')} tab="audio" onBrowse={() => openPicker(TAB_TYPE.audio.accept)} onAdd={handleAdd} onRemove={removeAsset} />
+        </TabsContent>
+
+        <TabsContent value="stock" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-hidden">
+          <StockTab onImport={handleStockImport} />
         </TabsContent>
 
         <TabsContent value="upload" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-y-auto">

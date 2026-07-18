@@ -20,6 +20,7 @@ MotionStudio is a full video compositor that runs in the browser. You place elem
 - **22 text effects** — Remocn animation components (per-character rise, typewriter, glitch, shimmer, highlights…), lazy-loaded per effect
 - **18 shader backgrounds** — full-bleed, frame-synced WebGL backdrops (gradients, noise, warp, particles…), lazy-loaded per preset
 - **Media** — image, video (`OffthreadVideo`), audio elements with library, probing, and thumbnails
+- **Stock media** — search and import free Pexels photos/videos directly into a project (server-proxied, auth-gated)
 - **Two export paths** — in-browser WebCodecs (free, Chrome/Edge) and Remotion Lambda cloud render (any device, 1080p)
 - **Accounts & sync** — Google OAuth / email / guest; projects auto-save to Supabase and restore on any device
 - **Persistence** — project JSON in localStorage + cloud, asset bytes in IndexedDB, S3 for cloud renders
@@ -83,12 +84,12 @@ VITE_POSTHOG_KEY=          # optional
 VITE_POSTHOG_HOST=         # optional
 ```
 
-API env (Vercel project settings — only needed for cloud renders):
+API env (Vercel project settings — only needed for cloud renders / stock search):
 
 ```
 SUPABASE_URL=              SUPABASE_SERVICE_ROLE_KEY=
 REMOTION_FUNCTION_NAME=    REMOTION_SERVE_URL=    REMOTION_BUCKET_NAME=
-S3_ASSETS_BUCKET=
+S3_ASSETS_BUCKET=          PEXELS_API_KEY=
 ```
 
 The editor, timeline, animation, and browser export work fully offline/local — no backend required.

@@ -80,6 +80,12 @@ Toolbar → **T**. A text box appears centered on the canvas.
    sound clip.
 6. Remove an asset from the library with the **×** on its thumbnail (hover).
 
+### Stock photos & video (Pexels)
+Open the **Assets** panel → **Stock** tab. Search, toggle **Photos**/**Videos**,
+and click a result to import it into your project's asset library — from there
+it works exactly like an upload (click or drag onto the canvas). Requires
+being signed in.
+
 Supported: common image (png/jpg/gif/webp), video (mp4/webm/mov), and audio
 (mp3/wav/…) formats your browser understands.
 

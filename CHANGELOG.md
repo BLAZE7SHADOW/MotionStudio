@@ -5,6 +5,27 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-18] — Stock media search (Pexels)
+
+### Added
+- New **Stock** tab in the Assets panel: search free Pexels photos/videos,
+  toggle between the two, and import a result straight into the project's
+  asset library — from there it behaves exactly like an upload (click/drag
+  onto canvas, goes through the same S3 background-upload path as any other
+  asset).
+- `/api/stock-search` (new): server-side proxy to Pexels — the API key never
+  reaches the browser. Gated behind a signed-in session (same JWT check as
+  `/api/quota`/`/api/render`) so the shared key's rate limit isn't exposed to
+  anonymous abuse.
+- `api.searchStock()` added to the typed `apiClient.ts`.
+- New env var: `PEXELS_API_KEY` (server-side only, added to Vercel
+  Production/Preview/Development).
+
+Files: `api/stock-search.ts` (new), `src/lib/apiClient.ts`,
+`src/features/workspace/components/AssetsPanel.tsx`.
+
+---
+
 ## [2026-07-18] — Fix soft/blurry images and video in Browser export
 
 ### Fixed

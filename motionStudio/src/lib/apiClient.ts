@@ -10,6 +10,25 @@ export interface RenderResult {
   url: string;
 }
 
+export type StockType = 'photo' | 'video';
+
+export interface StockResult {
+  id: number;
+  type: StockType;
+  thumbnailUrl: string;
+  previewUrl: string;
+  downloadUrl: string;
+  width: number;
+  height: number;
+  photographer: string;
+}
+
+export interface StockSearchResult {
+  results: StockResult[];
+  page: number;
+  totalResults: number;
+}
+
 async function apiFetch<T>(path: string, token: string, options?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...options,
@@ -33,4 +52,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ inputProps, deviceId: getDeviceId() }),
     }),
+
+  searchStock: (token: string, query: string, type: StockType, page = 1): Promise<StockSearchResult> =>
+    apiFetch(`/api/stock-search?q=${encodeURIComponent(query)}&type=${type}&page=${page}`, token),
 };
