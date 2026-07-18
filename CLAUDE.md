@@ -2,9 +2,19 @@
 
 ## Living docs (MANDATORY — never skip)
 
-`README.md` and `CHANGELOG.md` at the repo root are the source of truth for the
-owner's resume and portfolio, and the first thing visitors read. They must always
-reflect the current state of the project.
+Four docs at the repo root must ALWAYS reflect the current state of the project
+and stay consistent with each other — never let one describe a feature another
+doesn't know about:
+
+- `README.md` — public front page + portfolio/resume source
+- `CHANGELOG.md` — detailed history + portfolio/resume source
+- `ARCHITECTURE.md` — engineering decisions deep-dive
+- `USER_GUIDE.md` — how to use every feature
+
+At the end of any change that ships a feature, fixes a bug, or alters behavior,
+check ALL FOUR and update every one the change touches — in the same commit or an
+immediately following `docs:` commit. A stale claim (e.g. "not built yet" for
+something that shipped) is a bug.
 
 1. **After every feature, fix, or refactor: append a `CHANGELOG.md` entry.**
    - Format: `## [YYYY-MM-DD] — Title` with `### Added / Changed / Fixed` bullets,
@@ -21,8 +31,11 @@ reflect the current state of the project.
    - Tone: clean, precise, professional. It is both a portfolio artifact and the
      public face of the repo.
 
-3. `ARCHITECTURE.md` is the deep-dive companion — update it when a change
-   invalidates one of its claims (stack table, architecture narrative, export story).
+3. **Update `ARCHITECTURE.md`** when a change invalidates one of its claims —
+   stack table, architecture narrative, export story, trade-offs, war stories.
+
+4. **Update `USER_GUIDE.md`** when a change alters what the user sees or does —
+   new features, changed flows, new limitations, removed restrictions.
 
 ## Conventions
 
