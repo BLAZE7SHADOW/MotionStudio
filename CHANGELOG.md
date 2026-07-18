@@ -5,6 +5,20 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-18] — One-click "Make Background" for image/video
+
+### Added
+- Properties panel → **Layout** section (image/video elements): a single
+  **Make Background** button resizes the element to the full canvas, resets
+  position/rotation to origin, and sends it behind every other layer in one
+  action — the same convention shaders already use when added via the
+  toolbar. Previously this required manually resizing, repositioning, and
+  reordering through Layer controls.
+
+Files: `features/workspace/components/PropertiesPanel.tsx`.
+
+---
+
 ## [2026-07-18] — Stock media search (Pexels)
 
 ### Added

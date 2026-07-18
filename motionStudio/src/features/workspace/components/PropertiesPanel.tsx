@@ -1,9 +1,10 @@
-import { MousePointer, Plus, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown, Sparkles } from 'lucide-react';
+import { MousePointer, Plus, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown, Sparkles, Maximize2 } from 'lucide-react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
 import type { TextElement, AudioElement, ShaderElement, BaseElement, ElementPatch } from '@/engines/canvas';
 import type { Animation, AnimationProperty, AnimationEasing, TextEffect, ShaderPreset } from '@/engines/project';
+import { useProjectStore, getCompositionDimensions } from '@/engines/project';
 import { Input } from '@/components/ui/input';
 import ShaderPreview from './ShaderPreview';
 
@@ -451,9 +452,25 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
 }
 
 /* ── image / video: shared sections only ── */
-function MediaProperties({ el, update, reorder }: { el: BaseElement; update: Update; reorder: (dir: LayerDir) => void }) {
+function MediaProperties({
+  el, update, reorder, onMakeBackground,
+}: {
+  el: BaseElement; update: Update; reorder: (dir: LayerDir) => void; onMakeBackground: () => void;
+}) {
   return (
     <>
+      <Section title="Layout" />
+      <div className="px-4 py-3">
+        <button
+          type="button"
+          onClick={onMakeBackground}
+          className="flex items-center justify-center gap-1.5 w-full h-8 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
+        >
+          <Maximize2 className="w-3.5 h-3.5" />
+          Make Background
+        </button>
+      </div>
+
       <TransformSection el={el} update={update} />
       <LayerSection reorder={reorder} />
       <AnimationSection el={el} update={update} />
@@ -535,8 +552,19 @@ function AudioProperties({ el, update }: { el: AudioElement; update: Update }) {
 export default function PropertiesPanel() {
   const selectedElementId = useEditorStore((s) => s.selectedElementId);
   const { elements, updateElement, reorderLayer } = useCanvasEngine();
+  const project = useProjectStore((s) => s.projects.find((p) => p.id === s.activeProjectId));
 
   const selected = elements.find((el) => el.id === selectedElementId) ?? null;
+
+  /* resize + reposition to fill the canvas, send behind every other layer —
+     same convention as the shader "Add Background" default */
+  function makeBackground(id: string) {
+    if (!project) return;
+    const { width, height } = getCompositionDimensions(project.aspectRatio);
+    const others = elements.filter((el) => el.id !== id);
+    const backZ = others.length > 0 ? Math.min(...others.map((el) => el.zIndex)) - 1 : 0;
+    updateElement(id, { x: 0, y: 0, width, height, rotation: 0, zIndex: backZ });
+  }
 
   return (
     <div className="flex flex-col h-full bg-studio-panel overflow-hidden">
@@ -569,6 +597,7 @@ export default function PropertiesPanel() {
               el={selected}
               update={(u) => updateElement(selected.id, u)}
               reorder={(dir) => reorderLayer(selected.id, dir)}
+              onMakeBackground={() => makeBackground(selected.id)}
             />
           )}
           {selected.type === 'audio' && (

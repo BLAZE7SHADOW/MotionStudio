@@ -116,6 +116,11 @@ Shows controls for the selected element. Sections vary by type:
 **Transform** (text / image / video) — X, Y, Width, Height, Rotation, Opacity.
 Values are in composition pixels (e.g. 1920×1080).
 
+**Layout** (image / video) — **Make Background**: one click resizes the element
+to fill the whole canvas, resets its position/rotation, and sends it behind
+every other layer. The fastest way to turn an uploaded photo or clip into a
+background.
+
 **Layer** (text / image / video) — restack depth:
 - **To front / To back** — jump to the very top / bottom
 - **Forward / Backward** — one step at a time
