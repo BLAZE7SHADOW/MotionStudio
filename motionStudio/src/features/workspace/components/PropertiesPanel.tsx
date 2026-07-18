@@ -4,7 +4,6 @@ import { useCanvasEngine } from '@/engines/canvas';
 import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
 import type { TextElement, AudioElement, ShaderElement, BaseElement, ElementPatch } from '@/engines/canvas';
 import type { Animation, AnimationProperty, AnimationEasing, TextEffect, ShaderPreset } from '@/engines/project';
-import { useProjectStore, getCompositionDimensions } from '@/engines/project';
 import { Input } from '@/components/ui/input';
 import ShaderPreview from './ShaderPreview';
 
@@ -551,20 +550,9 @@ function AudioProperties({ el, update }: { el: AudioElement; update: Update }) {
 /* ── main component ── */
 export default function PropertiesPanel() {
   const selectedElementId = useEditorStore((s) => s.selectedElementId);
-  const { elements, updateElement, reorderLayer } = useCanvasEngine();
-  const project = useProjectStore((s) => s.projects.find((p) => p.id === s.activeProjectId));
+  const { elements, updateElement, reorderLayer, makeBackground } = useCanvasEngine();
 
   const selected = elements.find((el) => el.id === selectedElementId) ?? null;
-
-  /* resize + reposition to fill the canvas, send behind every other layer —
-     same convention as the shader "Add Background" default */
-  function makeBackground(id: string) {
-    if (!project) return;
-    const { width, height } = getCompositionDimensions(project.aspectRatio);
-    const others = elements.filter((el) => el.id !== id);
-    const backZ = others.length > 0 ? Math.min(...others.map((el) => el.zIndex)) - 1 : 0;
-    updateElement(id, { x: 0, y: 0, width, height, rotation: 0, zIndex: backZ });
-  }
 
   return (
     <div className="flex flex-col h-full bg-studio-panel overflow-hidden">

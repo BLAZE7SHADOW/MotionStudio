@@ -167,11 +167,18 @@ export function useCanvasEngine() {
     return element;
   }
 
-  /** add a full-bleed shader background, automatically sent behind every existing element */
+  /**
+   * Add a full-bleed shader background, automatically sent behind every
+   * existing element. zIndex must stay >= 0 — Remotion's Player renders a
+   * solid backdrop that any negative-zIndex element ends up behind, invisibly
+   * (its own DOM stacking, not ours). Every other element shifts forward by
+   * one and the new shader takes slot 0 — the same contiguous, non-negative
+   * scheme `reorderLayer('back')` already uses.
+   */
   function addShader(preset: ShaderPreset): CanvasElement | null {
     if (!project) return null;
     const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
-    const backZ = elements.length > 0 ? Math.min(...elements.map((el) => el.zIndex)) - 1 : 0;
+    const shifted = elements.map((el) => ({ ...el, zIndex: el.zIndex + 1 }));
 
     const element: ShaderElement = {
       id:               crypto.randomUUID(),
@@ -180,13 +187,28 @@ export function useCanvasEngine() {
       x: 0, y: 0, width: compW, height: compH,
       rotation:         0,
       opacity:          1,
-      zIndex:           backZ,
+      zIndex:           0,
       startFrame:       0,
       durationInFrames: project.durationInFrames,
     };
 
-    updateProject(project.id, { canvas: { elements: [...elements, element] } });
+    updateProject(project.id, { canvas: { elements: [...shifted, element] } });
     return element;
+  }
+
+  /**
+   * Resize + reposition an existing element to fill the canvas and send it
+   * behind every other layer — same non-negative zIndex scheme as addShader.
+   */
+  function makeBackground(id: string) {
+    if (!project) return;
+    const { width, height } = getCompositionDimensions(project.aspectRatio);
+    const next = elements.map((el) =>
+      el.id === id
+        ? { ...el, x: 0, y: 0, width, height, rotation: 0, zIndex: 0 }
+        : { ...el, zIndex: el.zIndex + 1 }
+    );
+    updateProject(project.id, { canvas: { elements: next } });
   }
 
   function updateElement(id: string, updates: ElementPatch) {
@@ -233,5 +255,5 @@ export function useCanvasEngine() {
     updateProject(project.id, { canvas: { elements: next } });
   }
 
-  return { elements, addText, addImage, addVideo, addAudio, addShader, updateElement, removeElement, reorderLayer };
+  return { elements, addText, addImage, addVideo, addAudio, addShader, makeBackground, updateElement, removeElement, reorderLayer };
 }

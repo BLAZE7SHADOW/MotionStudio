@@ -5,6 +5,36 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-19] — Fix negative zIndex rendering invisibly behind Remotion's Player
+
+### Fixed
+- **A shader or "Make Background" image could vanish completely** — not just
+  sit behind other layers, but not render *at all*, even in the areas nothing
+  else covered — whenever it ended up with a negative `zIndex`. Both
+  `addShader` and `Make Background` computed their "send to back" position as
+  `Math.min(existing zIndex) - 1`, which goes negative the moment any other
+  element already exists. Confirmed via direct DOM/WebGL inspection: the
+  element's box and (for shaders) its canvas were both correctly positioned
+  and sized, but painted nothing — Remotion Player renders an internal opaque
+  backdrop that any negative-zIndex sibling ends up behind, regardless of
+  render correctness. Deleting the element on top didn't fix it either, since
+  the survivor was *also* negative.
+- Rewrote both to use the same scheme `reorderLayer('back')` already uses
+  safely: shift every other element's `zIndex` forward by one, and give the
+  new/target element slot `0`. Contiguous, always non-negative, by
+  construction. `makeBackground` moved into the canvas engine as a proper
+  verb (`useCanvasEngine().makeBackground(id)`) instead of living in
+  `PropertiesPanel.tsx`, since it now needs the same all-elements rewrite
+  `reorderLayer` does.
+- Verified live: shader → image → Make Background → delete shader now
+  correctly reveals the background immediately, no manual "bring to front"
+  needed.
+
+Files: `engines/canvas/store.ts` (`addShader`, new `makeBackground`),
+`features/workspace/components/PropertiesPanel.tsx`.
+
+---
+
 ## [2026-07-18] — One-click "Make Background" for image/video
 
 ### Added
