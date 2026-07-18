@@ -10,11 +10,14 @@ use it) and `docs/adrs/` (formal decision records).
 
 A **browser-based, programmatic video editor** built on [Remotion](https://remotion.dev).
 Place text / image / video / audio on a canvas, arrange them on a frame-accurate
-timeline, animate them, and export to MP4 / WebM / GIF / MOV. No backend.
+timeline, animate them (keyframes + 22 Remocn text effects), and export — in-browser
+via WebCodecs, or on AWS via Remotion Lambda. Backed by a small serverless layer:
+Vercel Functions (render/quota/upload API), Supabase (auth + project sync), S3.
 
-- ~3,800 lines of TypeScript, 7 engines, 60+ logically-grouped commits.
+- ~5K+ lines of TypeScript, 7 engines, 85+ logically-grouped commits.
 - React 19 · TypeScript (strict) · Vite · Tailwind v4 · Zustand · React Router v7 ·
-  Remotion (CLI) · Mediabunny (WebCodecs muxer) · react-moveable · shadcn/ui · IndexedDB · localStorage.
+  Remotion (Player + Lambda) · Mediabunny (WebCodecs muxer) · react-moveable · shadcn/ui ·
+  Remocn · Supabase · AWS (Lambda, S3) · IndexedDB · localStorage.
 
 ---
 
@@ -95,10 +98,12 @@ and every view (editor at ~50%, Remotion at 100%) just multiplies by its own sca
 This screen↔composition conversion powers canvas dragging, drop-to-canvas, and scrubbing.
 
 ### WYSIWYG via one shared renderer (ADR-002)
-The editor preview and the Remotion export call the **same** style function
-(`engines/rendering/style.ts`), differing only by the `scale` argument (editor `< 1`,
-Remotion `= 1`). **Why:** WYSIWYG isn't "we tried to match" — it's "they run identical
-code," so the preview is *mathematically* the export.
+Originally the editor and the export shared only the style function
+(`engines/rendering/style.ts`). Since the Remocn integration, the editor canvas goes
+further: it renders `MotionComposition` through a single Remotion `<Player>` (synced
+to the timeline frame), with selection/drag/resize as a transparent overlay on top.
+Preview, WebCodecs export, and Lambda now run the **identical component tree** —
+WYSIWYG isn't "we tried to match," the preview *is* the export pipeline.
 
 ### Frame-based temporal model → Remotion `<Sequence>`
 Every element carries `startFrame` + `durationInFrames`, mapped 1:1 to
