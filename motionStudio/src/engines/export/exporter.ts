@@ -128,6 +128,10 @@ export async function exportComposition(
   canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas 2D not supported');
+  // Chrome defaults imageSmoothingQuality to 'low' — every cover-fit crop and
+  // any non-1:1 scale (drawMedia in canvasFrame.ts) visibly softens without this.
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
   // fonts, media and the audio mix must be ready before encoding starts
   await document.fonts.ready;

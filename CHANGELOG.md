@@ -5,6 +5,23 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-18] — Fix soft/blurry images and video in Browser export
+
+### Fixed
+- Every frame drawn during the free Browser (WebCodecs) export used a 2D
+  canvas context with no explicit `imageSmoothingQuality`, which Chrome
+  defaults to `'low'`. Any image or video needing a cover-fit crop or scale
+  (`drawMedia` in `canvasFrame.ts` — effectively all of them) came out
+  visibly softer than necessary. Set `imageSmoothingQuality = 'high'` on the
+  export canvas. Import/upload itself was already untouched — verified no
+  resizing or re-encoding happens anywhere in the asset pipeline
+  (`probe.ts`, `storage.ts`); this only affected exported video, not what
+  the editor canvas shows (a real `<img>`/`<video>` tag, unaffected).
+
+Files: `engines/export/exporter.ts`.
+
+---
+
 ## [2026-07-18] — Fix shaders never rendering (editor + Lambda) + add live picker preview
 
 ### Fixed
