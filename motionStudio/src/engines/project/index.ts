@@ -9,3 +9,4 @@ export type {
 } from './types';
 export { TEXT_EFFECTS } from './types';
 export type { UpdateProjectInput } from './store';
+export { saveProject, loadProjects, deleteCloudProject } from './cloudSync';

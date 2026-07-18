@@ -15,6 +15,8 @@ interface ProjectStore {
   createProject: (input: CreateProjectInput) => Project;
   getProject: (id: string) => Project | undefined;
   updateProject: (id: string, updates: UpdateProjectInput, opts?: { history?: boolean }) => void;
+  /** Replace the entire projects list — used when loading from cloud. Clears history. */
+  setProjects: (projects: Project[]) => void;
   undo: () => void;
   redo: () => void;
   /** Wipe all projects + history. Called on account switch to prevent data bleed. */
@@ -71,6 +73,8 @@ export const useProjectStore = create<ProjectStore>()(
             future: newGesture ? [] : state.future,
           };
         }),
+
+      setProjects: (projects) => set({ projects, past: [], future: [] }),
 
       undo: () =>
         set((state) => {

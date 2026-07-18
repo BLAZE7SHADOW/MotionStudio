@@ -7,7 +7,7 @@ import LandingPage from './features/landing/LandingPage';
 import DashboardPage from './features/dashboard/DashboardPage';
 import EditorPage from './features/workspace/EditorPage';
 import { useAuth } from './hooks/useAuth';
-import { useProjectStore } from './engines/project';
+import { useProjectStore, saveProject, loadProjects } from './engines/project';
 
 // Fires a PostHog $pageview on every SPA route change.
 // Must live inside the router so useLocation works.
@@ -62,10 +62,48 @@ function AuthBridge() {
   return null;
 }
 
+/**
+ * Syncs the project store to Supabase for logged-in users.
+ * On login: pulls cloud projects (replaces local — cloud is the source of truth).
+ * On any project change: debounce 2s then upsert all projects.
+ */
+function CloudSync() {
+  const { user } = useAuth();
+  const projects  = useProjectStore((s) => s.projects);
+  const setProjects = useProjectStore((s) => s.setProjects);
+  // Track whether we are mid-load so we skip the immediate post-load save
+  const loadingRef = useRef(false);
+
+  // Pull from cloud when a user logs in
+  useEffect(() => {
+    if (!user) return;
+    loadingRef.current = true;
+    void loadProjects(user.id).then((cloud) => {
+      if (cloud.length > 0) setProjects(cloud);
+      loadingRef.current = false;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // Debounced auto-save — 2 s after last change, push all projects to cloud
+  useEffect(() => {
+    if (!user || loadingRef.current) return;
+    const timer = setTimeout(() => {
+      // Read from store at save-time so we always push the latest version
+      useProjectStore.getState().projects.forEach((p) => void saveProject(p, user.id));
+    }, 2000);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects, user?.id]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <>
       <AuthBridge />
+      <CloudSync />
       <RouterProvider router={router} />
       <Analytics />
       <SpeedInsights />
