@@ -73,7 +73,9 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
   const selectedElementId  = useEditorStore((s) => s.selectedElementId);
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
   const isPlaying          = useEditorStore((s) => s.isPlaying);
+  const setIsPlaying       = useEditorStore((s) => s.setIsPlaying);
   const currentFrame       = useEditorStore((s) => s.currentFrame);
+  const setCurrentFrame    = useEditorStore((s) => s.setCurrentFrame);
 
   const areaRef        = useRef<HTMLDivElement>(null);
   const stageRef       = useRef<HTMLDivElement>(null);
@@ -94,10 +96,38 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     return () => ro.disconnect();
   }, []);
 
-  /* ── sync Remotion Player to the editor's current frame ── */
+  /* ── playback: the Player IS the clock ──
+     play  → seek (restarting from 0 if the playhead is at the end) and play();
+             'frameupdate' drives the timeline playhead, 'ended' stops playback.
+             One clock — a separate rAF clock advancing currentFrame in parallel
+             would race the Player and desync the playhead from the pixels.
+     pause → freeze; scrubbing seeks the paused Player frame-exactly. */
+  const totalFrames = project?.durationInFrames ?? 1;
   useEffect(() => {
-    playerRef.current?.seekTo(currentFrame);
-  }, [currentFrame]);
+    const p = playerRef.current;
+    if (!p) return;
+    if (!isPlaying) {
+      p.pause();
+      return;
+    }
+
+    const cur = useEditorStore.getState().currentFrame;
+    p.seekTo(cur >= totalFrames - 1 ? 0 : cur);
+    p.play();
+
+    const onFrame = (e: { detail: { frame: number } }) => setCurrentFrame(e.detail.frame);
+    const onEnded = () => setIsPlaying(false);
+    p.addEventListener('frameupdate', onFrame);
+    p.addEventListener('ended', onEnded);
+    return () => {
+      p.removeEventListener('frameupdate', onFrame);
+      p.removeEventListener('ended', onEnded);
+    };
+  }, [isPlaying, totalFrames, setCurrentFrame, setIsPlaying]);
+
+  useEffect(() => {
+    if (!isPlaying) playerRef.current?.seekTo(currentFrame);
+  }, [currentFrame, isPlaying]);
 
   /* ── find selected DOM element for moveable ── */
   useEffect(() => {
@@ -158,6 +188,20 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     (el) => currentFrame >= el.startFrame && currentFrame < el.startFrame + el.durationInFrames
   );
 
+  /* what the Player renders:
+     - selected element → base pose (keyframes AND text effect stripped) so it is
+       always visible and aligned with the moveable box while you work on it —
+       entrance effects start at opacity 0, which would hide the text at frame 0
+     - element being text-edited → hidden (the contenteditable overlay replaces it)
+     - everything else → frame-accurate WYSIWYG (scrubbing previews effects) */
+  const playerElements = elements
+    .filter((el) => el.id !== editingElementId)
+    .map((el) =>
+      el.id === selectedElementId && !isPlaying
+        ? { ...el, animations: undefined, ...(el.type === 'text' ? { textEffect: undefined } : null) }
+        : el
+    );
+
   /* drop an asset from the panel → place it where it lands (in composition space) */
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
@@ -215,12 +259,14 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
             <Player
               ref={playerRef}
               component={MotionComposition}
-              inputProps={{ elements, assets: project.assets }}
+              inputProps={{ elements: playerElements, assets: project.assets }}
               durationInFrames={Math.max(1, project.durationInFrames)}
               fps={project.fps}
               compositionWidth={compW}
               compositionHeight={compH}
-              style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+              // width/height MUST be explicit: without them the Player sizes
+              // itself at full composition resolution (1920×1080) and scale=1
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
               controls={false}
               loop={false}
               clickToPlay={false}
@@ -297,32 +343,25 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
                 onDrag={({ target, left, top }) => {
                   target.style.left = `${left}px`;
                   target.style.top  = `${top}px`;
-                }}
-                onDragEnd={({ lastEvent }) => {
-                  if (lastEvent) updateElement(selectedElementId, {
-                    x: lastEvent.left / scale,
-                    y: lastEvent.top / scale,
-                  });
+                  // live-commit so the Player (the visible pixels) follows the drag;
+                  // undo coalescing folds the whole gesture into one step
+                  updateElement(selectedElementId, { x: left / scale, y: top / scale });
                 }}
                 onResize={({ target, width, height, drag }) => {
                   target.style.width  = `${width}px`;
                   target.style.height = `${height}px`;
                   target.style.left   = `${drag.left}px`;
                   target.style.top    = `${drag.top}px`;
-                }}
-                onResizeEnd={({ lastEvent }) => {
-                  if (lastEvent) updateElement(selectedElementId, {
-                    width:  lastEvent.width  / scale,
-                    height: lastEvent.height / scale,
-                    x:      lastEvent.drag.left / scale,
-                    y:      lastEvent.drag.top  / scale,
+                  updateElement(selectedElementId, {
+                    width:  width  / scale,
+                    height: height / scale,
+                    x:      drag.left / scale,
+                    y:      drag.top  / scale,
                   });
                 }}
                 onRotate={({ target, rotate }) => {
                   target.style.transform = `rotate(${rotate}deg)`;
-                }}
-                onRotateEnd={({ lastEvent }) => {
-                  if (lastEvent) updateElement(selectedElementId, { rotation: lastEvent.rotate });
+                  updateElement(selectedElementId, { rotation: rotate });
                 }}
               />
             )}

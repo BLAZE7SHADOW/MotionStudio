@@ -5,6 +5,40 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-18] — Fix Player-canvas regressions (scale, drag, editing, playback)
+
+### Fixed
+- **Canvas rendered elements giant and unclickable**: the Remotion `<Player>` style
+  had no explicit `width`/`height`, so the Player sized itself at full composition
+  resolution (1920×1080, scale = 1) and overflowed the stage — visuals no longer
+  matched the interaction overlay. Fixed with `width/height: 100%`.
+- **No live feedback while dragging/resizing/rotating**: moveable only moved the
+  invisible overlay; the visible pixels (Player) updated on release. Now each
+  gesture live-commits to the store (undo coalescing keeps it one step).
+- **Selected element showed its animated pose**, misaligning the selection box.
+  The Player now renders the selected element with animations stripped (base pose),
+  matching pre-refactor behavior.
+- **Double text while inline-editing**: the Player kept rendering the text under
+  the contenteditable. The edited element is now hidden from the Player.
+- **Text with an entrance effect vanished while building at frame 0**: entrance
+  effects start at opacity 0, so the text was invisible exactly when the user
+  was arranging it. Adopted the CapCut-style hybrid: the SELECTED element now
+  renders plain (text effect + keyframes stripped) so it is always visible while
+  being worked on; deselected elements stay frame-accurate WYSIWYG.
+- **Text effects invisible during playback (but fine while scrubbing)**: two
+  clocks raced — the editor's rAF clock (`usePlaybackClock`) advanced
+  `currentFrame` while the Player was separately seeked/played, so the Player
+  could seek to the end and freeze while the playhead swept. The Player is now
+  the ONLY playback clock: play() drives it, its `frameupdate` events move the
+  timeline playhead, `ended` stops playback, and the rAF clock is deleted.
+  Playback is smooth, audio is audible, and effects animate correctly.
+
+Files: `features/workspace/components/CanvasPanel.tsx`,
+`features/workspace/components/EditorLayout.tsx`,
+`features/workspace/hooks/usePlaybackClock.ts` (deleted).
+
+---
+
 ## [2026-07-18] — Project cloud sync (Supabase)
 
 ### Added

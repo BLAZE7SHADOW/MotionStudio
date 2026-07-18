@@ -147,8 +147,9 @@ Give animations different **Start** values to play them in order — e.g. Fade I
 Start 0, then a Scale pulse at Start 20. An **Enter** + an **Exit** on the same
 element gives a fade-in-hold-fade-out.
 
-> Tip: a selected element shows its **base pose** (no animation) so it's easy to
-> position. Press **▶** (or deselect and scrub) to see the animation play.
+> Tip: a selected element shows its **base pose** (no animations, no text effect)
+> so it stays visible and easy to position — entrance effects would otherwise hide
+> it at frame 0. Deselect and scrub, or press **▶**, to see the real animation.
 
 ---
 
