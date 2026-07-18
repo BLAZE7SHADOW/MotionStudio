@@ -9,7 +9,8 @@ a real video file. Think **Canva for programmatic video** — it's built on
 
 ## 1. Quick start (2 minutes)
 
-1. On the **Dashboard**, click **New Project**, give it a name, pick an aspect
+1. On the landing page, **sign in** (Google, email, or **Continue as guest**) —
+   then on the **Dashboard**, click **New Project**, give it a name, pick an aspect
    ratio (16:9 / 9:16 / 1:1) and a frame rate (24 / 30 / 60), then **Create**.
 2. In the editor, click the **T** button in the top toolbar → a text box appears
    on the canvas.
@@ -55,6 +56,9 @@ That's the whole loop: **add → arrange → animate → preview → export.**
   chip → adjust in the popover. The canvas updates instantly.
 - **Autosave**: your projects **and** uploaded media are saved automatically in
   the browser and survive a page reload. (No Save button needed.)
+- **Cloud sync**: when signed in, projects also save to your account a couple of
+  seconds after every edit, and load back on any device you log in from. Media
+  files stay on the device you uploaded them from (cloud renders can still use them).
 - **Duration**: 10 seconds by default. Change it (5 / 10 / 15 / 30s) in the same
   settings popover. Changing the frame rate keeps the length in seconds.
 
@@ -101,7 +105,7 @@ The percentage at the bottom of the canvas is the current zoom-to-fit scale.
 
 Shows controls for the selected element. Sections vary by type:
 
-**Text** — Content, Font size, Color.
+**Text** — Content, Font size, Color, and **Text Effect** (see §7a).
 
 **Transform** (text / image / video) — X, Y, Width, Height, Rotation, Opacity.
 Values are in composition pixels (e.g. 1920×1080).
@@ -145,6 +149,29 @@ element gives a fade-in-hold-fade-out.
 
 > Tip: a selected element shows its **base pose** (no animation) so it's easy to
 > position. Press **▶** (or deselect and scrub) to see the animation play.
+
+---
+
+## 7a. Text effects (22 presets)
+
+Text elements have a second, richer animation system: **Properties → Text Effect**.
+Pick one from the dropdown, grouped by style:
+
+- **Premium** — Soft Blur In, Blur Out Up, Focus Blur Resolve, Tracking In…
+- **Kinetic** — Per-Character Rise, Bottom-Up / Top-Down Letters, Spring Scale In,
+  Kinetic Center Build…
+- **Reveal** — Staggered Fade Up, Mask Reveal Up, Line-by-Line Slide, Shimmer Sweep,
+  Inline / Marker Highlight…
+- **Tech / Glitch** — Typewriter, Matrix Decode, RGB Glitch.
+
+Controls:
+- **Speed** — multiplies the effect's pace (1 = normal, 2 = twice as fast).
+- **Highlight word** — for the two Highlight effects only: which word/phrase in
+  your text gets the highlight treatment.
+- **None (use keyframes)** — turn the effect off and animate with §7 instead.
+
+A text effect **replaces** the element's plain rendering — it plays every time the
+clip starts, both in the editor preview and in the export.
 
 ---
 
@@ -215,24 +242,31 @@ the same. (Undo history resets when you reload; your saved data does not.)
 
 ## 12. Exporting a video
 
-Click **Export** in the top toolbar — a dialog opens entirely inside the browser.
-No terminal, no server, no Node.js required.
+Click **Export** in the top toolbar. The dialog has **two tabs** — pick the one
+that fits:
 
-**Steps:**
+### Browser tab (free, unlimited)
+Renders entirely inside your browser — no server, no terminal.
+
 1. Pick a **Resolution**: Full 1080p / 75% 810p / 50% 540p.
 2. Pick a **Quality** (encoder bitrate): Max 40 Mbps / High 20 / Medium 10 / Low 5.
 3. Click **Export & download** — a progress bar fills while every frame is rendered
    offline, then the finished MP4 downloads automatically.
 
-**What happens under the hood:**
-- Every frame is rendered to an off-screen canvas in exact order — nothing is
-  dropped or rushed.
-- Source videos are seeked frame-by-frame to guarantee accuracy.
-- All audio tracks (music, sound effects, video soundtracks) are mixed sample-exact
-  using `OfflineAudioContext` and encoded into the same MP4.
-- The browser's hardware encoder (WebCodecs / H.264) handles compression.
+Under the hood: every frame is drawn to an off-screen canvas in exact order, source
+videos are seeked frame-by-frame, all audio is mixed sample-exact
+(`OfflineAudioContext`), and the browser's hardware encoder (WebCodecs / H.264)
+compresses it. **Requires Chrome or Edge** — Safari doesn't support WebCodecs yet.
 
-**Requirements:** Chrome or Edge (WebCodecs). Safari is not supported yet.
+### Cloud Render tab (any device, quota-based)
+Renders on AWS instead of your machine — works in any browser, uses no local CPU,
+and always outputs 1080p. Click **Render in cloud**, wait for the progress to
+finish, and download the MP4 from the link.
+
+- **Guests** get **1 free cloud render** (tracked per device).
+- **Signed-in users** get a monthly quota, shown in the dialog.
+- Uploaded media is sent to cloud storage automatically in the background when you
+  import it, so cloud renders include your images / video / audio.
 
 **Or from the terminal (advanced):**
 ```bash
@@ -272,7 +306,12 @@ npm run render    # render the default composition to out/video.mp4
 - Project length is chosen from presets (5 / 10 / 15 / 30s); no custom value yet.
 - **Scene grouping** (moving several elements as one unit) isn't built yet — use
   timeline positioning to sequence.
-- Export requires **Chrome or Edge** (WebCodecs); Safari is not yet supported.
+- **Browser export** requires Chrome or Edge (WebCodecs). On Safari or other
+  browsers, use the **Cloud Render** tab instead.
+- **Cloud renders are limited** — 1 free for guests, a monthly quota when signed in.
+- **Media doesn't follow you across devices** — projects sync to your account, but
+  image/video/audio files stay on the device that uploaded them (cloud renders can
+  still use them from anywhere).
 - Editor preview audio/video may be muted depending on the browser; the export
   always has correct sound and timing.
 
