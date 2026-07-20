@@ -5,6 +5,34 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-20] — Gate dashboard/editor to desktop, make landing + auth responsive
+
+### Added
+- **`DesktopOnlyGate`** (`components/DesktopOnlyGate.tsx`) — wraps a page and
+  swaps its content for an on-brand "use a bigger screen" message below a
+  `1024px` viewport, driven by a new reusable `useMediaQuery` hook
+  (`hooks/useMediaQuery.ts`, live-updating via `matchMedia`'s `change` event).
+  Applied to `DashboardPage` and `EditorPage` — both rely on fixed-width
+  multi-panel layouts (220px asset panel + 260px properties panel + 224px
+  timeline in the editor; a card grid in the dashboard) that don't have a
+  sane small-screen fallback, so rather than a broken cramped UI they now
+  tell the user plainly to switch to a laptop/desktop or widen the window.
+
+### Changed
+- **`LandingPage` and `AuthPanel`** are now fully responsive — the two-column
+  layout (`product` / `auth`) stacks vertically below Tailwind's `lg`
+  breakpoint instead of forcing a fixed `400px` auth column and `12–20px`
+  desktop padding onto phone-width viewports. Heading size, body padding, and
+  the feature-card grid (`grid-cols-2` → `grid-cols-1` on mobile) all scale
+  down with viewport width. Sign-up/sign-in was already narrow-friendly
+  internally; the fix was entirely in the parent page's layout.
+
+Files: `components/DesktopOnlyGate.tsx` (new), `hooks/useMediaQuery.ts` (new),
+`features/dashboard/DashboardPage.tsx`, `features/workspace/EditorPage.tsx`,
+`features/landing/LandingPage.tsx`.
+
+---
+
 ## [2026-07-19] — Fix negative zIndex rendering invisibly behind Remotion's Player
 
 ### Fixed

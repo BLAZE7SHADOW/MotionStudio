@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useProjectStore } from '@/engines/project';
 import { useAuth } from '@/hooks/useAuth';
+import DesktopOnlyGate from '@/components/DesktopOnlyGate';
 import DashboardHeader from './components/DashboardHeader';
 import ProjectGrid from './components/ProjectGrid';
 import EmptyState from './components/EmptyState';
@@ -28,28 +29,33 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-studio-bg">
-      <DashboardHeader onNewProject={() => setModalOpen(true)} />
+    <DesktopOnlyGate
+      title="Your projects need a bigger screen"
+      description="The dashboard is designed for laptop and desktop displays so you can browse and manage projects comfortably."
+    >
+      <div className="min-h-screen flex flex-col bg-studio-bg">
+        <DashboardHeader onNewProject={() => setModalOpen(true)} />
 
-      <main className="flex-1 flex flex-col px-6 py-8 max-w-[1400px] mx-auto w-full">
-        {projects.length === 0 ? (
-          <EmptyState onNewProject={() => setModalOpen(true)} />
-        ) : (
-          <>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[13px] font-medium text-studio-text-muted uppercase tracking-wider">
-                Projects
-              </h2>
-              <span className="text-[12px] text-studio-text-faint">
-                {projects.length} project{projects.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-            <ProjectGrid projects={projects} />
-          </>
-        )}
-      </main>
+        <main className="flex-1 flex flex-col px-6 py-8 max-w-[1400px] mx-auto w-full">
+          {projects.length === 0 ? (
+            <EmptyState onNewProject={() => setModalOpen(true)} />
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-[13px] font-medium text-studio-text-muted uppercase tracking-wider">
+                  Projects
+                </h2>
+                <span className="text-[12px] text-studio-text-faint">
+                  {projects.length} project{projects.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <ProjectGrid projects={projects} />
+            </>
+          )}
+        </main>
 
-      <CreateProjectModal open={modalOpen} onClose={() => setModalOpen(false)} />
-    </div>
+        <CreateProjectModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      </div>
+    </DesktopOnlyGate>
   );
 }

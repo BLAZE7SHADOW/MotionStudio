@@ -267,6 +267,13 @@ no error. A reminder that "no crash" ≠ "correct."
 - **Asset bytes don't follow you across devices** — project JSON syncs via Supabase,
   but media blobs live in local IndexedDB (S3 copies exist only for Lambda's use).
 - **No scene grouping yet** — sequencing is done by positioning clips on the timeline.
+- **Dashboard and editor are desktop-only** — both rely on fixed multi-panel
+  layouts (220px+260px side panels, 224px timeline) that assume a laptop-sized
+  viewport; below `1024px` a `DesktopOnlyGate` (`components/DesktopOnlyGate.tsx`,
+  gated on `useMediaQuery('(min-width: 1024px)')`) replaces the page with a
+  "use a bigger screen" message rather than attempting a cramped layout. The
+  landing page and auth flow remain fully responsive so sign-up still works on
+  mobile.
 
 ---
 

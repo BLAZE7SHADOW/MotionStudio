@@ -56,29 +56,29 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Two-column body */}
-      <div className="flex-1 flex min-h-0">
+      {/* Two-column body — stacks on small screens, side-by-side from lg up */}
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
 
         {/* Left — product */}
-        <div className="flex-1 flex flex-col justify-center px-12 py-16 lg:px-20">
+        <div className="flex-1 flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-12 lg:py-16 xl:px-20">
 
-          <div className="mb-6 inline-flex items-center gap-2 self-start">
+          <div className="mb-5 lg:mb-6 inline-flex items-center gap-2 self-start">
             <span className="text-[11px] font-medium text-studio-accent bg-studio-accent-subtle border border-studio-accent-border px-2.5 py-1 rounded-full">
               Browser-based · No install needed
             </span>
           </div>
 
-          <h1 className="text-[42px] leading-[1.1] font-bold text-studio-text tracking-tight mb-4">
+          <h1 className="text-[30px] sm:text-[36px] lg:text-[42px] leading-[1.1] font-bold text-studio-text tracking-tight mb-4">
             Build motion graphics<br />
             <span className="text-studio-accent">in your browser.</span>
           </h1>
 
-          <p className="text-[16px] text-studio-text-muted leading-relaxed mb-12 max-w-[480px]">
+          <p className="text-[15px] lg:text-[16px] text-studio-text-muted leading-relaxed mb-8 lg:mb-12 max-w-[480px]">
             Canvas editor, spring animations, audio mixing and cloud render —
             frame-perfect output in minutes. No plugins, no subscriptions.
           </p>
 
-          <div className="grid grid-cols-2 gap-4 max-w-[560px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[560px]">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
               <div
                 key={title}
@@ -100,9 +100,10 @@ export default function LandingPage() {
 
         {/* Divider */}
         <div className="hidden lg:block w-px bg-studio-border self-stretch" />
+        <div className="lg:hidden h-px bg-studio-border" />
 
         {/* Right — auth */}
-        <div className="w-[400px] shrink-0 flex items-center justify-center px-10 py-12 overflow-y-auto">
+        <div className="w-full lg:w-[400px] shrink-0 flex items-center justify-center px-6 py-10 sm:px-10 lg:py-12 lg:overflow-y-auto">
           <AuthPanel />
         </div>
       </div>

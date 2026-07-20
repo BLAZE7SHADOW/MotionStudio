@@ -7,6 +7,15 @@ a real video file. Think **Canva for programmatic video** — it's built on
 
 ---
 
+**Requires a laptop or desktop screen (≥1024px wide).** The dashboard and
+editor use fixed multi-panel layouts (timeline, canvas, properties) that
+don't work on phones or small tablets — visiting either on a small screen
+shows a "use a bigger screen" message instead. The landing page and sign-in
+are fully usable on mobile, so you can sign up on your phone and pick up the
+editor later on a bigger screen.
+
+---
+
 ## 1. Quick start (2 minutes)
 
 1. On the landing page, **sign in** (Google, email, or **Continue as guest**) —
@@ -337,6 +346,10 @@ npm run render    # render the default composition to out/video.mp4
 
 ## 15. Current limitations
 
+- **Dashboard and editor require a laptop/desktop-sized viewport** (≥1024px
+  wide) — they're not usable on phones or small tablets, and show a
+  "use a bigger screen" message below that width. The landing page and
+  sign-in work on any screen size.
 - Project length is chosen from presets (5 / 10 / 15 / 30s); no custom value yet.
 - **Scene grouping** (moving several elements as one unit) isn't built yet — use
   timeline positioning to sequence.

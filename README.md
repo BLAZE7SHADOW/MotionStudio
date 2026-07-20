@@ -25,6 +25,7 @@ MotionStudio is a full video compositor that runs in the browser. You place elem
 - **Two export paths** — in-browser WebCodecs (free, Chrome/Edge) and Remotion Lambda cloud render (any device, 1080p)
 - **Accounts & sync** — Google OAuth / email / guest; projects auto-save to Supabase and restore on any device
 - **Persistence** — project JSON in localStorage + cloud, asset bytes in IndexedDB, S3 for cloud renders
+- **Responsive landing + auth, desktop-only editor** — sign up from any device; the dashboard and editor gate below 1024px with a "use a bigger screen" message
 
 ## Architecture
 

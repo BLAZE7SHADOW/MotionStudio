@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useProjectStore } from '@/engines/project';
 import { useEditorStore } from '@/engines/editor';
 import { rehydrateAssets } from '@/engines/asset';
+import DesktopOnlyGate from '@/components/DesktopOnlyGate';
 import EditorLayout from './components/EditorLayout';
 
 export default function EditorPage() {
@@ -19,20 +20,25 @@ export default function EditorPage() {
     return () => setActiveProjectId(null);
   }, [projectId, setActiveProjectId, reset]);
 
-  if (!project) {
-    return (
-      <div className="h-screen flex flex-col items-center justify-center gap-3 bg-studio-bg">
-        <p className="text-[13px] text-studio-text-muted">Project not found.</p>
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="text-[13px] text-studio-accent hover:text-studio-accent-hover underline underline-offset-2 transition-colors"
-        >
-          Back to Dashboard
-        </button>
-      </div>
-    );
-  }
-
-  return <EditorLayout project={project} />;
+  return (
+    <DesktopOnlyGate
+      title="The editor needs a bigger screen"
+      description="Precise timeline, canvas, and layer editing require a laptop or desktop display — it isn't built for touchscreens or small viewports."
+    >
+      {project ? (
+        <EditorLayout project={project} />
+      ) : (
+        <div className="h-screen flex flex-col items-center justify-center gap-3 bg-studio-bg">
+          <p className="text-[13px] text-studio-text-muted">Project not found.</p>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="text-[13px] text-studio-accent hover:text-studio-accent-hover underline underline-offset-2 transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      )}
+    </DesktopOnlyGate>
+  );
 }
