@@ -35,7 +35,7 @@ export function StaggeredFadeUp({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "white",
+        background: "transparent",
       }}
     >
       <span

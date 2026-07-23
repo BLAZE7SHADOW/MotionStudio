@@ -54,7 +54,7 @@ export function InlineHighlight({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "white",
+        background: "transparent",
       }}
     >
       <span

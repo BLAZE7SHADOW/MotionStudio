@@ -5,6 +5,28 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-23] — Fix Remocn text effects painting an opaque white background
+
+### Fixed
+- **7 of the 22 Remocn text effects** (`Typewriter`, `ShimmerSweep`,
+  `MarkerHighlight`, `InlineHighlight`, `StaggeredFadeUp`, `MatrixDecode`,
+  `TrackingIn`) hardcoded `background: "white"` on their full-bleed wrapper
+  `div`. Copy-pasted from Remocn's registry, where components preview on a
+  white demo page — harmless there, but on this canvas that wrapper sits
+  `position: absolute; inset: 0` over the whole composition, so any of these
+  7 effects painted an opaque white box over every layer behind it (shader
+  backgrounds, images, other text). The other 15 effects (e.g.
+  `PerCharacterRise`) already used `background: "transparent"` and were
+  unaffected — which is why the bug only showed up with some effects and not
+  others.
+- Changed all 7 to `background: "transparent"`, matching the rest.
+
+Files: `components/remocn/typewriter.tsx`, `shimmer-sweep.tsx`,
+`marker-highlight.tsx`, `inline-highlight.tsx`, `staggered-fade-up.tsx`,
+`matrix-decode.tsx`, `tracking-in.tsx`.
+
+---
+
 ## [2026-07-20] — Gate dashboard/editor to desktop, make landing + auth responsive
 
 ### Added
