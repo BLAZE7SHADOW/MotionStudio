@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Type, Sparkles } from 'lucide-react';
 import Moveable from 'react-moveable';
 import { Player } from '@remotion/player';
 import type { PlayerRef } from '@remotion/player';
@@ -7,6 +8,7 @@ import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
 import { textElementStyle, elementBoxStyle, MotionComposition } from '@/engines/rendering';
 import type { TextElement } from '@/engines/canvas';
+import { track } from '@/lib/analytics';
 
 const DOT_GRID: React.CSSProperties = {
   backgroundImage: 'radial-gradient(circle, oklch(1 0 0 / 10%) 1px, transparent 1px)',
@@ -69,7 +71,7 @@ function TextNodeEditing({
 
 export default function CanvasPanel({ projectId }: CanvasPanelProps) {
   const project            = useProjectStore((s) => s.getProject(projectId));
-  const { elements, updateElement, removeElement, addImage, addVideo, addAudio } = useCanvasEngine();
+  const { elements, updateElement, removeElement, addImage, addVideo, addAudio, addText, addShader } = useCanvasEngine();
   const selectedElementId  = useEditorStore((s) => s.selectedElementId);
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
   const isPlaying          = useEditorStore((s) => s.isPlaying);
@@ -301,9 +303,50 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
 
             {elements.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <span className="text-[12px] text-white/15 font-mono select-none tracking-widest">
-                  {project.aspectRatio} · {project.fps} fps
-                </span>
+                {/* Only this inner card captures clicks — the rest of the
+                    empty stage stays click-through so drag-and-drop onto an
+                    empty canvas keeps working. */}
+                <div className="flex flex-col items-center gap-4 pointer-events-auto">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span className="text-[11px] text-white/25 font-mono select-none tracking-widest">
+                      {project.aspectRatio} · {project.fps} fps
+                    </span>
+                    <p className="text-[13px] text-white/50 select-none">
+                      Nothing here yet — add your first element
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        track.editorTextAdded();
+                        const el = addText();
+                        if (el) setSelectedElement(el.id);
+                      }}
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-studio-md bg-white/10 border border-white/15 text-[12px] font-medium text-white/80 hover:bg-white/15 hover:text-white transition-colors duration-120"
+                    >
+                      <Type className="w-3.5 h-3.5" />
+                      Add Text
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        track.editorShaderAdded({ shader: 'shader-mesh-gradient' });
+                        const el = addShader('shader-mesh-gradient');
+                        if (el) setSelectedElement(el.id);
+                      }}
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-studio-md bg-white/10 border border-white/15 text-[12px] font-medium text-white/80 hover:bg-white/15 hover:text-white transition-colors duration-120"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Add Background
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-white/30 select-none">
+                    or drag media in from the left panel
+                  </p>
+                </div>
               </div>
             )}
 

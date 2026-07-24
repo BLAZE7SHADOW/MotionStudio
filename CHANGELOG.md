@@ -5,6 +5,32 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-24] — Empty-canvas onboarding
+
+### Added
+- **A brand-new project's canvas now shows an actionable prompt instead of
+  passive `16:9 · 30 fps` text.** Previously all the "how do I add
+  something" affordances lived in the top toolbar, which a first-time user
+  has no particular reason to look at first — the canvas itself, the biggest
+  and most central thing on screen, said nothing. Now it shows "Nothing here
+  yet — add your first element" with **Add Text** / **Add Background**
+  buttons (same actions as the toolbar, same auto-select behavior from the
+  usability pass earlier today) plus a hint about dragging media in from the
+  Assets panel. Disappears the moment the canvas has any element.
+  Implemented in `CanvasPanel.tsx` since it already owns the empty-canvas
+  render path and has direct access to the canvas engine.
+
+### Fixed
+- The new buttons initially added an element but never selected it — the
+  click bubbled up to the stage's own `onClick`, which deselects on any
+  click outside an element, immediately undoing the selection the button
+  had just set. Added `e.stopPropagation()`, same pattern already used by
+  `AssetCard`'s remove button for the identical reason.
+
+Files: `features/workspace/components/CanvasPanel.tsx`.
+
+---
+
 ## [2026-07-24] — Bigger Stock media thumbnails, fix broken local vercel dev routing
 
 ### Fixed
