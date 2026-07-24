@@ -1,53 +1,78 @@
 import { useEffect, useRef, useState } from 'react';
-import { ImageIcon, Film } from 'lucide-react';
+import { ImageIcon } from 'lucide-react';
 
 interface TourStep {
   title: string;
   desc: string;
   tag: string;
-  mediaLabel: string;
+  mediaPath: string;
   mediaKind: 'image' | 'video';
 }
 
-// Placeholder copy for each slot — swap `mediaLabel` for a real <img>/<video>
-// once real screenshots/clips are dropped in; layout doesn't need to change.
 const STEPS: TourStep[] = [
   {
-    title: 'Compose on a real canvas',
-    desc: 'Drag, resize, and layer text, images, and video with pixel-accurate handles.',
+    title: 'Bring your ideas to life',
+    desc: 'Drag, resize, and layer text, images, and video on a frame-perfect canvas.',
     tag: 'canvas editor',
-    mediaLabel: 'Screenshot — canvas with layers selected',
+    mediaPath: '/assets/landing/canvas-editor-screenshot.png',
     mediaKind: 'image',
   },
   {
     title: '22 text effects, 18 shader backgrounds',
     desc: 'Pick from a live-preview gallery — see the motion before you commit to it.',
     tag: 'effects gallery',
-    mediaLabel: 'Screenshot or clip — effect picker with live preview',
-    mediaKind: 'video',
+    mediaPath: '/assets/landing/effects-gallery-screenshot.png',
+    mediaKind: 'image',
   },
   {
     title: 'Keyframe your motion',
     desc: 'Spring physics, easing curves, and a draggable keyframe strip on the timeline.',
     tag: 'animation engine',
-    mediaLabel: 'Screenshot — timeline with keyframes',
+    mediaPath: '/assets/landing/timeline-keyframes-screenshot.png',
     mediaKind: 'image',
   },
   {
-    title: 'Export in 1080p',
-    desc: 'Free in-browser export, or render on AWS Lambda from any device.',
-    tag: 'export',
-    mediaLabel: 'Screenshot or clip — export dialog / rendered output',
-    mediaKind: 'video',
+    title: 'Export in 1080p on AWS Lambda',
+    desc: 'Render full resolution from any device. No CPU usage, no waiting.',
+    tag: 'cloud render',
+    mediaPath: '/assets/landing/export-dialog-screenshot.png',
+    mediaKind: 'image',
   },
 ];
 
-function TourMediaPlaceholder({ label, kind }: { label: string; kind: 'image' | 'video' }) {
-  const Icon = kind === 'video' ? Film : ImageIcon;
+function TourMedia({ mediaPath, mediaKind }: { mediaPath: string; mediaKind: 'image' | 'video' }) {
+  const [imageError, setImageError] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+
+  const hasError = (mediaKind === 'image' && imageError) || (mediaKind === 'video' && videoError);
+
   return (
-    <div className="aspect-video w-full rounded-studio-lg bg-studio-panel border border-dashed border-studio-border flex flex-col items-center justify-center gap-2 px-4 text-center">
-      <Icon className="w-5 h-5 text-studio-text-faint" strokeWidth={1.5} />
-      <span className="text-[11px] text-studio-text-faint leading-relaxed">{label}</span>
+    <div className="aspect-video w-full rounded-studio-lg bg-studio-panel border border-dashed border-studio-border overflow-hidden flex items-center justify-center">
+      {hasError ? (
+        <div className="flex flex-col items-center justify-center gap-2 text-center px-4">
+          <ImageIcon className="w-5 h-5 text-studio-text-faint" strokeWidth={1.5} />
+          <span className="text-[11px] text-studio-text-faint">
+            Media not found — check file path or add the asset
+          </span>
+        </div>
+      ) : mediaKind === 'image' ? (
+        <img
+          src={mediaPath}
+          alt="product tour"
+          className="w-full h-full object-contain"
+          loading="lazy"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <video
+          src={mediaPath}
+          className="w-full h-full object-contain"
+          autoPlay
+          loop
+          muted
+          onError={() => setVideoError(true)}
+        />
+      )}
     </div>
   );
 }
@@ -88,7 +113,7 @@ function TourStepRow({ step, index }: { step: TourStep; index: number }) {
       </div>
 
       <div className={reversed ? 'md:order-2' : ''}>
-        <TourMediaPlaceholder label={step.mediaLabel} kind={step.mediaKind} />
+        <TourMedia mediaPath={step.mediaPath} mediaKind={step.mediaKind} />
       </div>
       <div className={reversed ? 'md:order-1 md:text-right' : ''}>
         <span className="font-mono text-[10px] text-studio-accent tracking-widest uppercase">{step.tag}</span>
