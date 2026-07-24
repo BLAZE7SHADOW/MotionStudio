@@ -4,6 +4,6 @@
   "installCommand": "npm install --prefix api",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/|favicon\\.svg|icons\\.svg).*)", "destination": "/index.html" }
   ]
 }
