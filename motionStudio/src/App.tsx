@@ -8,6 +8,7 @@ import DashboardPage from './features/dashboard/DashboardPage';
 import EditorPage from './features/workspace/EditorPage';
 import ContactPage from './features/contact/ContactPage';
 import ErrorPage from './pages/ErrorPage';
+import UpdateBanner from './components/UpdateBanner';
 import { useAuth } from './hooks/useAuth';
 import { useProjectStore, saveProject, loadProjects } from './engines/project';
 
@@ -110,6 +111,7 @@ export default function App() {
       <AuthBridge />
       <CloudSync />
       <RouterProvider router={router} />
+      <UpdateBanner />
       <Analytics />
       <SpeedInsights />
     </>
