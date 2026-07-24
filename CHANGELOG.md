@@ -5,6 +5,73 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-24] — Contact form, portfolio credit, real product-tour screenshots, error boundary, sign-out fix
+
+### Added
+- **On-page "Connect" section** (`LandingPage.tsx`, `id="contact"`) — name, role,
+  a highlighted gradient button showing the actual portfolio domain
+  (`shivamgovindrao.com`) so it reads as a real link rather than generic
+  "view portfolio" copy, a click-to-copy email button, and colorful
+  brand-colored social icons (GitHub / LinkedIn / X). Nav and footer "Contact"
+  links now anchor-scroll to this section instead of navigating away.
+- **`ContactForm.tsx`** (rewritten to MotionStudio's `studio-*` design tokens)
+  and **`CopyEmail.tsx`** — shared components used on both the landing page
+  and the dedicated contact page, posting to `analytics.track.contactFormSubmitted`.
+- **`features/contact/ContactPage.tsx`** — standalone `/contact` route with a
+  fuller profile card (avatar, tagline, resume/portfolio/email buttons, socials)
+  plus the same form, for a shareable direct link.
+- **`src/content/profile.ts`** — single source of truth for name, role, socials,
+  portfolio URL, resume/avatar paths, used by both contact surfaces.
+- **`src/components/icons/BrandIcons.tsx`** — hand-rolled GitHub/LinkedIn/X marks
+  (lucide-react dropped brand icons a while back).
+- **`api/contact.ts`** — new Vercel serverless function. Sends messages via
+  [Resend](https://resend.com) (rate-limited 3 requests/15min per IP, in-memory);
+  falls back to returning `{ fallback: true }` so the client opens a `mailto:`
+  link if `RESEND_API_KEY` isn't configured yet. Replaces an earlier
+  `motionStudio/src/api/contact/route.ts` that was written in Next.js App
+  Router style (`route.ts`, `NextRequest`) and would never have run — this repo
+  is Vite + Vercel Functions, where API routes live at the repo-root `/api/`
+  folder per `vercel.json`'s rewrites, not under `src/`.
+- **Global error boundary** — `pages/ErrorPage.tsx`, wired as both the router's
+  `errorElement` and a catch-all `*` route in `App.tsx`. Bad/unknown URLs
+  previously fell through to React Router's raw default error screen; now they
+  see a branded "page not found" screen with a way back to the landing page.
+- **Graceful broken-media handling** in `ProductTour.tsx` — an `onError` handler
+  swaps a failed image/video for a "media not found" message instead of a
+  broken-image icon, in case a screenshot path is ever wrong or a file goes
+  missing.
+
+### Changed
+- **Real screenshots wired into the landing page product tour** — the four
+  placeholder tiles (canvas editor, effects gallery, timeline keyframes, export)
+  now render actual editor screenshots from `public/assets/landing/`. Switched
+  the fit from `object-cover` to `object-contain` so full screenshots stay
+  visible regardless of capture dimensions, instead of cropping to a forced
+  16:9 and hiding parts of the image.
+- **Product tour's last step reframed around AWS Lambda specifically**
+  ("Export in 1080p on AWS Lambda" / "Render full resolution from any device.
+  No CPU usage, no waiting.") — the in-browser WebCodecs export path isn't
+  fully wired up yet in this project's current build, so the copy no longer
+  implies both paths are ready.
+
+### Fixed
+- **Sign-out didn't redirect to the landing page.** `signOut()` cleared the
+  Supabase session but left the router on `/editor/:id` or `/dashboard` — a
+  page with no valid auth state. Both sign-out call sites (`UserMenu.tsx`,
+  `ExportDialog.tsx`) now `navigate('/', { replace: true })` immediately after
+  the session clears.
+
+Files: `api/contact.ts` (new), `api/package.json`, `src/App.tsx`,
+`src/pages/ErrorPage.tsx` (new), `src/content/profile.ts` (new),
+`src/components/ContactForm.tsx`, `src/components/CopyEmail.tsx` (new),
+`src/components/icons/BrandIcons.tsx` (new), `src/components/UserMenu.tsx`,
+`src/features/contact/ContactPage.tsx` (new),
+`src/features/landing/LandingPage.tsx`,
+`src/features/landing/components/ProductTour.tsx`,
+`src/features/workspace/components/ExportDialog.tsx`, `src/lib/analytics.ts`.
+
+---
+
 ## [2026-07-24] — Landing page: brand emphasis + scroll-driven product tour
 
 ### Added

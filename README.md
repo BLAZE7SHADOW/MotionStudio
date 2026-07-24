@@ -4,6 +4,8 @@
 
 **Live demo → [motionstudio-six.vercel.app](https://motionstudio-six.vercel.app/)**
 
+Built by [Shivam Govind Rao](https://shivamgovindrao.com/) · [get in touch](https://motionstudio-six.vercel.app/#contact)
+
 ---
 
 ## What it is
@@ -65,7 +67,7 @@ Deep dives: [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/adrs/](docs/adrs/) · [U
 ## Backend
 
 - **Auth (Supabase)** — Google OAuth, email/password, anonymous guest (1 free cloud render); device-ID cookie prevents guest abuse; account switches wipe local state for isolation
-- **API (Vercel Functions)** — `/api/render` runs a 4-gate guard: JWT → device → monthly quota → Lambda; `/api/quota` reports usage; `/api/upload-url` issues presigned S3 PUTs
+- **API (Vercel Functions)** — `/api/render` runs a 4-gate guard: JWT → device → monthly quota → Lambda; `/api/quota` reports usage; `/api/upload-url` issues presigned S3 PUTs; `/api/contact` sends messages via Resend
 - **Cloud render (Remotion Lambda)** — headless render on AWS, returns an S3 URL
 - **Cloud sync (Supabase)** — projects upsert as JSONB rows (RLS per user), auto-saved 2 s after any edit
 

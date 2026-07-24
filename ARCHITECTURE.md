@@ -12,7 +12,7 @@ A **browser-based, programmatic video editor** built on [Remotion](https://remot
 Place text / image / video / audio on a canvas, arrange them on a frame-accurate
 timeline, animate them (keyframes + 22 Remocn text effects), and export — in-browser
 via WebCodecs, or on AWS via Remotion Lambda. Backed by a small serverless layer:
-Vercel Functions (render/quota/upload API), Supabase (auth + project sync), S3.
+Vercel Functions (render/quota/upload/contact API), Supabase (auth + project sync), S3.
 
 - ~5K+ lines of TypeScript, 7 engines, 85+ logically-grouped commits.
 - React 19 · TypeScript (strict) · Vite · Tailwind v4 · Zustand · React Router v7 ·
@@ -32,9 +32,10 @@ Vercel Functions (render/quota/upload API), Supabase (auth + project sync), S3.
 | **Tailwind v4 + shadcn/ui** | Fast, consistent dark UI via design tokens; accessible primitives (Dialog, Popover, Select) without reinventing them. |
 | **IndexedDB + localStorage** | Local persistence: structured state is small JSON (localStorage); media is large binary (IndexedDB). |
 | **Supabase** | Auth (OAuth / email / anonymous guest) + Postgres with RLS for render quotas and project cloud sync — no auth server to build or run. |
-| **Vercel Functions** | The API is 3 endpoints (`render`, `quota`, `upload-url`); serverless means zero infrastructure for that footprint. |
+| **Vercel Functions** | The API is 4 endpoints (`render`, `quota`, `upload-url`, `contact`); serverless means zero infrastructure for that footprint. |
 | **Remotion Lambda + S3** | Production export path: headless render on AWS, output to S3. A cloud render pipeline for ~20 minutes of config instead of months of infra. |
 | **Remocn** | 22 copy-paste Remotion text-effect components — animation polish bought, not built, and owned as source in the repo. |
+| **Resend** | Transactional email for the contact form — a single `emails.send()` call instead of managing SMTP or a mail server. |
 
 ---
 
