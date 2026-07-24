@@ -314,22 +314,33 @@ function StockTab({
         )}
 
         {!loading && results.length > 0 && (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-2.5">
             {results.map((r) => (
               <button
                 key={r.id}
                 type="button"
                 onClick={() => handleImport(r)}
                 disabled={importingId !== null}
-                title={`Photo by ${r.photographer} on Pexels`}
-                className="group relative aspect-video rounded-studio-md overflow-hidden border border-studio-border bg-studio-surface disabled:opacity-60"
+                className="group relative w-full aspect-video rounded-studio-md overflow-hidden border border-studio-border bg-studio-surface disabled:opacity-60"
               >
                 <img src={r.thumbnailUrl} alt="" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-120 flex items-center justify-center">
+
+                {r.type === 'video' && (
+                  <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/50 flex items-center justify-center pointer-events-none">
+                    <Play className="w-2.5 h-2.5 text-white" />
+                  </div>
+                )}
+
+                {/* photographer credit — visible by default, not hidden behind hover */}
+                <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-black/70 to-transparent px-1.5 py-1 pointer-events-none">
+                  <span className="block text-[10px] text-white/80 truncate">{r.photographer}</span>
+                </div>
+
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-120 flex items-center justify-center">
                   {importingId === r.id ? (
-                    <Loader2 className="w-4 h-4 text-white animate-spin" />
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
                   ) : (
-                    <span className="opacity-0 group-hover:opacity-100 text-[10px] font-medium text-white transition-opacity duration-120">
+                    <span className="opacity-0 group-hover:opacity-100 text-[11px] font-medium text-white transition-opacity duration-120">
                       Add to project
                     </span>
                   )}

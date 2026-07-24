@@ -5,6 +5,41 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-24] — Bigger Stock media thumbnails, fix broken local vercel dev routing
+
+### Fixed
+- **`vercel dev` was serving the app's own `index.html` for every static
+  asset request**, including the JS bundle itself — `vercel.json`'s catch-all
+  SPA rewrite (`"source": "/(.*)", "destination": "/index.html"`) had no
+  exclusion for `/assets/*`, so `vercel dev` (unlike production Vercel's
+  documented filesystem-first precedence) applied it to every request
+  regardless of whether a matching static file existed. Confirmed via curl:
+  requesting the JS bundle returned 475 bytes of HTML instead of the real
+  ~1.6MB file, `Content-Disposition: inline; filename="index.html"` on a
+  `.js` URL. The app rendered a blank page with no console error, which is
+  what made this easy to miss. Rewrite now explicitly excludes
+  `assets/`, `favicon.svg`, and `icons.svg`. This is what made testing
+  Stock search (which needs `vercel dev` for its `/api/*` route) impossible
+  earlier this session — the plain `npm run dev` server can't reach the API,
+  and `vercel dev` was silently broken.
+
+### Changed
+- **Stock media results (Pexels search) redesigned from a cramped 2-column
+  grid to a single-column list of larger cards.** The old layout put
+  `aspect-video` thumbnails at roughly 90×50px inside the ~220px-wide asset
+  sidebar — too small to judge a photo/video before importing it. Cards are
+  now full sidebar width (~4x the area). Photographer credit moved from a
+  hover-only `title` tooltip to a visible caption on the card itself, same
+  reasoning as the toolbar tooltip audit earlier — hover-only info is easy
+  to miss and isn't discoverable on first use. Video results now get a small
+  play-icon badge, matching the existing `AssetCard` treatment for regular
+  video assets. Verified live end-to-end with a real Pexels search + import.
+
+Files: `vercel.json`, `features/workspace/components/AssetsPanel.tsx`
+(`StockTab`).
+
+---
+
 ## [2026-07-24] — Shrink canvas letterboxing to use more of the panel
 
 ### Changed
