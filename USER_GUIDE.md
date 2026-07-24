@@ -365,9 +365,11 @@ npm run render    # render the default composition to out/video.mp4
 - **Browser export** requires Chrome or Edge (WebCodecs). On Safari or other
   browsers, use the **Cloud Render** tab instead.
 - **Cloud renders are limited** — 1 free for guests, a monthly quota when signed in.
-- **Media doesn't follow you across devices** — projects sync to your account, but
-  image/video/audio files stay on the device that uploaded them (cloud renders can
-  still use them from anywhere).
+- **Media mostly follows you across devices when signed in** — uploads sync to S3
+  in the background, and the editor preview falls back to that copy on a device
+  that doesn't have the file locally. It only stays device-only if you're signed
+  out when you upload, or open the project elsewhere before the background
+  upload finishes.
 - Editor preview audio/video may be muted depending on the browser; the export
   always has correct sound and timing.
 

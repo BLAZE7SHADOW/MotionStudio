@@ -5,6 +5,27 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-25] — Fix: broken media after cross-device project sync
+
+### Fixed
+- **Images/video showed broken after opening a project synced from another
+  browser or profile.** `rehydrateAssets` (run once per project open) only
+  ever looked in the local IndexedDB blob store for asset bytes; if a device
+  never had the file locally — exactly the case for a project pulled down by
+  cloud sync — it silently left the *other* device's dead `blob:` URL in
+  place instead of trying anything else, so the image/video/background just
+  failed to load. The S3 `storageUrl` the background upload already
+  produces (used by the Cloud Render export path via `storageUrl ?? url`)
+  was sitting right there, unused for this. Added the same fallback to
+  `rehydrateAssets`: local blob first, then `storageUrl`, then leave it as
+  a last resort. Softened the USER_GUIDE §15 limitation bullet accordingly —
+  media now mostly follows you across devices when signed in; it only stays
+  device-only if you were signed out at upload time or open the project
+  elsewhere before the background upload finishes.
+  Files: `src/engines/asset/rehydrate.ts`.
+
+---
+
 ## [2026-07-25] — Fix: cloud project sync never actually worked; delete-project support; shimmer-sweep color bug
 
 ### Fixed
