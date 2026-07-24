@@ -5,6 +5,35 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-24] — Fix: cloud render crashed with "supabaseUrl is required."
+
+### Fixed
+- **Every Lambda cloud render (and local CLI render) was failing** with a raw
+  `supabaseUrl is required.` error, surfaced verbatim through `/api/render`'s
+  progress-polling loop. Root cause: `src/remotion/Root.tsx` imports
+  `getCompositionDimensions` from the `engines/project` barrel file, which
+  also re-exports `cloudSync.ts` (`saveProject`/`loadProjects`) — and that
+  module imported `lib/supabase.ts`, which called `createClient()` **at
+  module top-level**. Remotion's bundler (`@remotion/bundler`, used for both
+  the Lambda site and the CLI) doesn't replace Vite's `import.meta.env.VITE_*`
+  syntax, so `VITE_SUPABASE_URL` came through as `undefined` in that bundle —
+  crashing on construction on every single frame, even though the browser app
+  itself worked fine. No Supabase or Vercel dashboard setting was ever going
+  to fix this; it was a bundling/import-graph bug.
+- **Fix:** `lib/supabase.ts` now exports a lazy `getSupabase()` instead of
+  constructing the client eagerly at import time — the client is only built
+  when an actual auth/DB call runs, which never happens on the render path,
+  so importing the module transitively (via the barrel) is now side-effect
+  free. Updated the three call sites: `hooks/useAuth.ts`,
+  `engines/project/cloudSync.ts`, `engines/asset/store.ts`.
+- Verified by running `npx remotion render … --frames=0-2` locally, which
+  reproduced the exact crash before the fix and completed clean after.
+
+Files: `src/lib/supabase.ts`, `src/hooks/useAuth.ts`,
+`src/engines/project/cloudSync.ts`, `src/engines/asset/store.ts`.
+
+---
+
 ## [2026-07-24] — Contact form, portfolio credit, real product-tour screenshots, error boundary, sign-out fix
 
 ### Added

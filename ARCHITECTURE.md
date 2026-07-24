@@ -249,6 +249,16 @@ direct REST fetches with explicit headers surfaced the real errors.
 **Remotion version drift broke Lambda.** Client at 4.0.483 vs Lambda at 4.0.488
 failed at invoke time. → All Remotion packages pinned to one exact version, `^` removed.
 
+**Cloud renders crashed with `supabaseUrl is required.` on every frame.**
+`Root.tsx` imports `getCompositionDimensions` from the `engines/project`
+barrel — which also re-exports `cloudSync.ts`, and that module called
+`createClient()` at **module top-level**. Remotion's bundler doesn't replace
+Vite's `import.meta.env.VITE_*` syntax, so the URL came through `undefined`
+in the Lambda/CLI bundle, throwing on construction before a single frame
+rendered. → Made the client a lazy `getSupabase()` instead of an eager
+top-level singleton — importing the module transitively (via a barrel) no
+longer has a side effect, since it's only constructed on an actual call.
+
 **shadcn CLI wrote to a root `@/` folder.** Root `tsconfig.json` lacked `paths`. →
 Added `paths` so `@/` resolves to `src/`.
 
