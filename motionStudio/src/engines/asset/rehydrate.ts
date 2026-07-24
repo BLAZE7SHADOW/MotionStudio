@@ -5,6 +5,11 @@ import { getBlob } from './blobStore';
  * After a reload, a project's persisted asset URLs are dead blob: strings.
  * This reads each asset's bytes back from IndexedDB and mints a fresh object
  * URL, so images/video/audio work again. Runs once when a project opens.
+ *
+ * On a device that never had the file locally (e.g. a project synced from
+ * another browser/profile), there's no local blob to read — fall back to
+ * the S3 storageUrl the background upload already produced, same fallback
+ * ExportDialog uses, instead of leaving the other device's dead blob: URL.
  */
 export async function rehydrateAssets(projectId: string): Promise<void> {
   const project = useProjectStore.getState().getProject(projectId);
@@ -13,7 +18,9 @@ export async function rehydrateAssets(projectId: string): Promise<void> {
   const refreshed = await Promise.all(
     project.assets.map(async (asset) => {
       const blob = await getBlob(asset.id);
-      return blob ? { ...asset, url: URL.createObjectURL(blob) } : asset;
+      if (blob) return { ...asset, url: URL.createObjectURL(blob) };
+      if (asset.storageUrl) return { ...asset, url: asset.storageUrl };
+      return asset;
     }),
   );
 
