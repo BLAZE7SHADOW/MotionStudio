@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Download, Loader2, MonitorDown, Cloud, LogIn, LogOut, User2 } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
@@ -28,7 +29,13 @@ const QUALITIES = [
 type Tab = 'browser' | 'cloud';
 
 export default function ExportDialog({ project }: { project: Project }) {
+  const navigate = useNavigate();
   const { user, token, loading: authLoading, isAnonymous, signInWithGoogle, signInAsGuest, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/', { replace: true });
+  };
 
   const [tab, setTab] = useState<Tab>('browser');
 
@@ -303,7 +310,7 @@ export default function ExportDialog({ project }: { project: Project }) {
                     </div>
                     <button
                       type="button"
-                      onClick={signOut}
+                      onClick={handleSignOut}
                       className="text-studio-text-faint hover:text-studio-text"
                       title="Sign out"
                     >

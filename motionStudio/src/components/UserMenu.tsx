@@ -1,10 +1,18 @@
 import { LogOut, LogIn } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/hooks/useAuth';
 import { track } from '@/lib/analytics';
 
 export default function UserMenu() {
+  const navigate = useNavigate();
   const { user, isAnonymous, loading, signInWithGoogle, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    track.authSignoutClicked();
+    await signOut();
+    navigate('/', { replace: true });
+  };
 
   if (loading || !user) return null;
 
@@ -55,7 +63,7 @@ export default function UserMenu() {
         {/* Sign out */}
         <button
           type="button"
-          onClick={() => { track.authSignoutClicked(); signOut(); }}
+          onClick={handleSignOut}
           className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm transition-colors"
         >
           <LogOut className="w-3.5 h-3.5" />
