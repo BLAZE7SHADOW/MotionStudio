@@ -5,6 +5,44 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-24] — Live animation previews, Effects/Animation panel reorder
+
+### Added
+- **`AnimationPreview.tsx`** — a small, always-looping live preview of one
+  animation preset's actual motion, same `<Player>` pattern as
+  `ShaderPreview`/`TextEffectPreview`. Shown inline on every Enter/Exit
+  preset button (Fade In, Slide Up, Pop In, etc.) instead of a generic `+`
+  icon, so what a preset does is visible at a glance instead of requiring
+  "add it, then press play to find out."
+
+### Changed
+- **Effects/Animation now sit above Transform/Layer** in the Properties
+  panel, for every element type (text, image/video, shader) — the creative
+  decision comes first, position/layer-order plumbing comes after.
+- **Text elements: Text Effect + Animation merged under one "Effects"
+  header** ("Text Animation" / "Motion" sub-labels), replacing two
+  separately-headed sections with Transform/Layer sandwiched between them.
+  They're two different mechanisms under the hood but were reading as two
+  unrelated features; grouping them fixes that without merging the code.
+- `AnimationSection` gained an optional `hideHeader` prop so it can nest
+  under the shared "Effects" header for text elements while keeping its own
+  "Animation" header for image/video/shader elements, which don't have a
+  competing effect system to nest under.
+
+### Fixed
+- `AnimationSection`'s preset buttons called `preset.build(60)` inline in
+  JSX — a fresh array on every render. Passed as `<Player inputProps>`, an
+  identity change resets Remotion's playback to frame 0, so any upstream
+  re-render would freeze every preview. Same class of bug as the
+  `CanvasPanel` `inputProps` fix earlier this session. Precomputed once at
+  module load into a `Map` instead.
+
+Files: `features/workspace/components/AnimationPreview.tsx` (new),
+`PropertiesPanel.tsx` (`AnimationSection`, `TextProperties`,
+`MediaProperties`, `ShaderProperties`).
+
+---
+
 ## [2026-07-24] — Editor usability pass: legible Transform fields, auto-select, clearer copy
 
 ### Fixed

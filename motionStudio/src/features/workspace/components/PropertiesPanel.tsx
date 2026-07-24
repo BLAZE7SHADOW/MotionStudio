@@ -1,4 +1,4 @@
-import { MousePointer, Plus, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown, Sparkles, Maximize2 } from 'lucide-react';
+import { MousePointer, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown, Sparkles, Maximize2 } from 'lucide-react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
@@ -7,6 +7,21 @@ import type { Animation, AnimationProperty, AnimationEasing, TextEffect, ShaderP
 import { Input } from '@/components/ui/input';
 import ShaderPreview from './ShaderPreview';
 import TextEffectPreview from './TextEffectPreview';
+import AnimationPreview from './AnimationPreview';
+
+/**
+ * Precomputed once at module load, not per-render — each entry is a stable
+ * array reference for the whole app lifetime. AnimationPreview's inner
+ * <Player> treats an inputProps identity change as fresh data and resets to
+ * frame 0, so passing `preset.build(60)` inline in JSX (a new array every
+ * render) froze every preview at frame 0 the moment anything upstream
+ * re-rendered — same class of bug CanvasPanel.tsx's inputProps useMemo fixed
+ * earlier.
+ */
+const PREVIEW_DURATION = 60;
+const PRESET_PREVIEW_ANIMATIONS = new Map(
+  ANIMATION_PRESETS.map((p) => [p.id, p.build(PREVIEW_DURATION)]),
+);
 
 const SHADER_GROUPS: { label: string; shaders: { id: ShaderPreset; label: string }[] }[] = [
   {
@@ -276,11 +291,17 @@ function LayerSection({ reorder }: { reorder: (dir: LayerDir) => void }) {
 }
 
 /* ── shared: animation stack (any element) ── */
-function AnimationSection({ el, update }: { el: BaseElement; update: Update }) {
+function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update: Update; hideHeader?: boolean }) {
   const anims = el.animations ?? [];
   return (
     <>
-      <Section title="Animation" />
+      {hideHeader ? (
+        <div className="px-4 pt-1">
+          <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">Motion</span>
+        </div>
+      ) : (
+        <Section title="Animation" />
+      )}
       <div className="flex flex-col gap-2.5 px-4 py-3">
         {anims.length > 0 && (
           <div className="flex flex-col gap-2">
@@ -308,9 +329,9 @@ function AnimationSection({ el, update }: { el: BaseElement; update: Update }) {
                   key={preset.id}
                   type="button"
                   onClick={() => update({ animations: [...anims, ...preset.build(el.durationInFrames)] })}
-                  className="flex items-center justify-center gap-1.5 h-8 px-2 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
+                  className="flex items-center gap-1.5 h-8 px-1.5 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
                 >
-                  <Plus className="w-3 h-3" />
+                  <AnimationPreview animations={PRESET_PREVIEW_ANIMATIONS.get(preset.id)!} size={22} />
                   {preset.label}
                 </button>
               ))}
@@ -344,7 +365,8 @@ function AnimationSection({ el, update }: { el: BaseElement; update: Update }) {
         )}
 
         <p className="text-[10px] text-studio-text-faint leading-relaxed">
-          Set Start / Dur on each card to sequence effects. Press play to preview.
+          Each preset previews its own motion above. Set Start / Dur on a card to
+          sequence multiple together, and press play to preview the full clip.
         </p>
       </div>
     </>
@@ -391,9 +413,11 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
         </PropRow>
       </div>
 
-      {/* ── Text Effect ── */}
-      <Section title="Text Effect" />
+      {/* ── Effects: text animation + general motion, one umbrella so the two
+             systems read as related instead of as unrelated features ── */}
+      <Section title="Effects" />
       <div className="flex flex-col gap-3 px-4 py-3">
+        <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">Text Animation</span>
         {el.textEffect && <TextEffectPreview effect={el.textEffect} color={el.color} />}
 
         <div className="flex flex-col gap-1.5">
@@ -457,9 +481,9 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
         )}
       </div>
 
+      <AnimationSection el={el} update={update} hideHeader />
       <TransformSection el={el} update={update} />
       <LayerSection reorder={reorder} />
-      <AnimationSection el={el} update={update} />
     </>
   );
 }
@@ -484,9 +508,9 @@ function MediaProperties({
         </button>
       </div>
 
+      <AnimationSection el={el} update={update} />
       <TransformSection el={el} update={update} />
       <LayerSection reorder={reorder} />
-      <AnimationSection el={el} update={update} />
     </>
   );
 }
@@ -533,9 +557,9 @@ function ShaderProperties({ el, update, reorder }: { el: ShaderElement; update: 
         </p>
       </div>
 
+      <AnimationSection el={el} update={update} />
       <TransformSection el={el} update={update} />
       <LayerSection reorder={reorder} />
-      <AnimationSection el={el} update={update} />
     </>
   );
 }
