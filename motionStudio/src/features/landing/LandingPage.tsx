@@ -1,10 +1,22 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clapperboard, Layers, Zap, Music, Cloud, Loader2, ArrowRight } from 'lucide-react';
+import { Clapperboard, Layers, Zap, Music, Cloud, Loader2, ArrowRight, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { profile } from '@/content/profile';
+import { GithubIcon, LinkedinIcon, XIcon } from '@/components/icons/BrandIcons';
+import CopyEmail from '@/components/CopyEmail';
+import ContactForm from '@/components/ContactForm';
 import AuthPanel from './components/AuthPanel';
 import TimelineSignature from './components/TimelineSignature';
 import ProductTour from './components/ProductTour';
+
+const PORTFOLIO_DOMAIN = profile.portfolio.replace(/^https?:\/\//, '').replace(/\/$/, '');
+
+const SOCIALS = [
+  { href: profile.socials.github, label: 'GitHub', Icon: GithubIcon, bg: '#ffffff', fg: '#0d1117' },
+  { href: profile.socials.linkedin, label: 'LinkedIn', Icon: LinkedinIcon, bg: '#0A66C2', fg: '#ffffff' },
+  { href: profile.socials.twitter, label: 'X (Twitter)', Icon: XIcon, bg: '#1DA1F2', fg: '#ffffff' },
+] as const;
 
 // same dot-grid the real canvas editor renders behind the composition —
 // an honest callback to the actual product, not a generic gradient blob
@@ -72,12 +84,20 @@ export default function LandingPage() {
             MotionStudio
           </span>
         </div>
-        <a
-          href="#auth"
-          className="text-[13px] font-medium text-studio-text-muted hover:text-studio-text transition-colors"
-        >
-          Sign in
-        </a>
+        <div className="flex items-center gap-5">
+          <a
+            href="#contact"
+            className="text-[13px] font-medium text-studio-text-muted hover:text-studio-text transition-colors"
+          >
+            Contact
+          </a>
+          <a
+            href="#auth"
+            className="text-[13px] font-medium text-studio-text-muted hover:text-studio-text transition-colors"
+          >
+            Sign in
+          </a>
+        </div>
       </nav>
 
       {/* Hero */}
@@ -167,6 +187,61 @@ export default function LandingPage() {
       <section id="auth" className="flex-1 flex items-center justify-center px-6 py-20 sm:py-28">
         <div className="w-full max-w-95">
           <AuthPanel />
+        </div>
+      </section>
+
+      {/* Connect — who built this, and how to reach them */}
+      <section id="contact" className="px-6 py-16 sm:py-20 border-t border-studio-border">
+        <div className="max-w-2xl mx-auto text-center">
+          <span className="mb-5 inline-block text-[11px] font-medium text-studio-accent bg-studio-accent-subtle border border-studio-accent-border px-2.5 py-1 rounded-full">
+            Made by a solo engineer
+          </span>
+
+          <h2
+            style={{ fontFamily: 'var(--font-display)' }}
+            className="text-[26px] sm:text-[32px] font-semibold text-studio-text tracking-tight mb-1.5"
+          >
+            {profile.name}
+          </h2>
+          <p className="text-[13px] text-studio-text-muted mb-7">{profile.role}</p>
+
+          {/* Portfolio — the headline highlight, real domain visible so it reads as a real link */}
+          <a
+            href={profile.portfolio}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 h-11 px-6 rounded-full text-[15px] font-semibold text-white mb-6 transition-transform hover:-translate-y-0.5"
+            style={{
+              background: 'linear-gradient(135deg, oklch(0.627 0.265 298.232), oklch(0.627 0.265 298.232 / 70%))',
+              boxShadow: '0 8px 30px oklch(0.627 0.265 298.232 / 30%)',
+            }}
+          >
+            {PORTFOLIO_DOMAIN}
+            <ExternalLink className="w-4 h-4" />
+          </a>
+
+          {/* Email + socials */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
+            <CopyEmail email={profile.email} />
+            {SOCIALS.map(({ href, label, Icon, bg, fg }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                title={label}
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:-translate-y-0.5 hover:scale-105"
+                style={{ backgroundColor: bg, color: fg }}
+              >
+                <Icon className="w-4.5 h-4.5" />
+              </a>
+            ))}
+          </div>
+
+          {/* Message form */}
+          <div className="rounded-studio-lg bg-studio-panel border border-studio-border p-6 text-left">
+            <ContactForm />
+          </div>
         </div>
       </section>
 

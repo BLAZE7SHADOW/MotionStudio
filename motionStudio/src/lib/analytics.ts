@@ -77,4 +77,8 @@ export const track = {
 
   exportCloudDownloadClicked: () =>
     posthog.capture('export_cloud_download_clicked'),
+
+  // ── Contact ───────────────────────────────────────────────────────────
+  contactFormSubmitted: (method: 'resend' | 'mailto_fallback' | 'mailto_fallback_error') =>
+    posthog.capture('contact_form_submitted', { method }),
 };

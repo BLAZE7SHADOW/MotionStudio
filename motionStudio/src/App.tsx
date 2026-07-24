@@ -6,6 +6,7 @@ import posthog from 'posthog-js';
 import LandingPage from './features/landing/LandingPage';
 import DashboardPage from './features/dashboard/DashboardPage';
 import EditorPage from './features/workspace/EditorPage';
+import ContactPage from './features/contact/ContactPage';
 import ErrorPage from './pages/ErrorPage';
 import { useAuth } from './hooks/useAuth';
 import { useProjectStore, saveProject, loadProjects } from './engines/project';
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
       { path: '/',                  element: <LandingPage /> },
       { path: '/dashboard',         element: <DashboardPage /> },
       { path: '/editor/:projectId', element: <EditorPage /> },
+      { path: '/contact',          element: <ContactPage /> },
       { path: '*',                  element: <ErrorPage /> },
     ],
   },
