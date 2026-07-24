@@ -13,7 +13,7 @@ const DOT_GRID: React.CSSProperties = {
   backgroundSize: '20px 20px',
 };
 
-const PAD = 48;
+const PAD = 20;
 const ACCENT = 'oklch(0.627 0.265 298.232)';
 
 interface CanvasPanelProps {

@@ -5,6 +5,23 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-24] — Shrink canvas letterboxing to use more of the panel
+
+### Changed
+- **`CanvasPanel`'s fit-to-container padding dropped from 48px to 20px per
+  side.** The canvas frame is sized by `Math.min(availW/compW,
+  availH/compH)` inside the available panel area minus this padding — 48px
+  was sized generously for Moveable's resize handles (small circles that sit
+  right at the frame edge), but that's more room than the handles actually
+  need. Measured before/after in a 1032×593 canvas area: 46% → 51% fit scale.
+  Verified handles still render uncropped at the tightest corner (a
+  full-bleed shader element, x/y at 0, width/height at the full composition
+  size) at the new padding.
+
+Files: `features/workspace/components/CanvasPanel.tsx`.
+
+---
+
 ## [2026-07-24] — Live animation previews, Effects/Animation panel reorder
 
 ### Added
