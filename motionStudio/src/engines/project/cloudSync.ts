@@ -1,8 +1,8 @@
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import type { Project } from './types';
 
 export async function saveProject(project: Project, userId: string): Promise<void> {
-  const { error } = await supabase.from('projects').upsert({
+  const { error } = await getSupabase().from('projects').upsert({
     id: project.id,
     user_id: userId,
     data: project,
@@ -12,7 +12,7 @@ export async function saveProject(project: Project, userId: string): Promise<voi
 }
 
 export async function loadProjects(userId: string): Promise<Project[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('projects')
     .select('data')
     .eq('user_id', userId)
@@ -25,6 +25,6 @@ export async function loadProjects(userId: string): Promise<Project[]> {
 }
 
 export async function deleteCloudProject(projectId: string): Promise<void> {
-  const { error } = await supabase.from('projects').delete().eq('id', projectId);
+  const { error } = await getSupabase().from('projects').delete().eq('id', projectId);
   if (error) console.error('[cloudSync] delete failed', error.message);
 }

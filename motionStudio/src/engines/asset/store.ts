@@ -3,7 +3,7 @@ import type { Asset } from '../project/types';
 import { assetTypeFromFile, probeAsset } from './probe';
 import { putBlob, deleteBlob } from './blobStore';
 import { uploadAssetToStorage, deleteAssetFromStorage } from '@/lib/storage';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 
 /**
  * Asset Engine — service layer over the project's asset library.
@@ -46,7 +46,7 @@ export function useAssetEngine() {
     void Promise.all(
       pairs.map(async ({ asset, file }) => {
         // Get token fresh — hook state may be stale by the time upload runs
-        const { data } = await supabase.auth.getSession();
+        const { data } = await getSupabase().auth.getSession();
         const token = data.session?.access_token;
         if (!token) return; // not signed in; upload skipped, Lambda won't be used
         const storageUrl = await uploadAssetToStorage(asset.id, file, token);
