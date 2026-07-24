@@ -4,7 +4,7 @@ import { interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 
 export interface ShimmerSweepProps {
   text: string;
-  baseColor?: string;
+  color?: string;
   shineColor?: string;
   fontSize?: number;
   fontWeight?: number;
@@ -14,7 +14,7 @@ export interface ShimmerSweepProps {
 
 export function ShimmerSweep({
   text,
-  baseColor = "#3f3f46",
+  color = "#3f3f46",
   shineColor = "#fafafa",
   fontSize = 96,
   fontWeight = 700,
@@ -53,7 +53,7 @@ export function ShimmerSweep({
       }}
     >
       <div style={{ position: "relative", display: "inline-block" }}>
-        <span style={{ ...textStyle, color: baseColor }}>{text}</span>
+        <span style={{ ...textStyle, color }}>{text}</span>
         <span
           className={className}
           style={{
