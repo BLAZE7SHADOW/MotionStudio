@@ -180,7 +180,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                     className="flex items-center justify-center text-[11px] text-studio-text-faint select-none"
                     style={{ height: TRACK_ROW_H * 2 }}
                   >
-                    Add text to see clips here
+                    Add an element to see clips here
                   </div>
                 ) : (
                   ordered.map((el) => (

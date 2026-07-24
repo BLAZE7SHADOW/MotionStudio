@@ -107,10 +107,10 @@ const PROPERTY_LABELS: Record<AnimationProperty, string> = {
 const EASINGS: AnimationEasing[] = ['linear', 'ease', 'spring'];
 
 /* ── shared row: label + input ── */
-function PropRow({ label, children }: { label: string; children: React.ReactNode }) {
+function PropRow({ label, children, compact }: { label: string; children: React.ReactNode; compact?: boolean }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[11px] text-studio-text-faint w-16 shrink-0">{label}</span>
+      <span className={`text-[11px] text-studio-text-faint shrink-0 ${compact ? 'w-4' : 'w-16'}`}>{label}</span>
       {children}
     </div>
   );
@@ -129,7 +129,7 @@ function NumInput({
         step={step}
         value={value}
         onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) onChange(v); }}
-        className="h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm pr-6 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className={`h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${unit ? 'pr-6' : 'pr-2'}`}
       />
       {unit && (
         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-studio-text-faint pointer-events-none">
@@ -223,12 +223,12 @@ function TransformSection({ el, update }: { el: BaseElement; update: Update }) {
       <Section title="Transform" />
       <div className="flex flex-col gap-3 px-4 py-3">
         <div className="flex gap-2">
-          <PropRow label="X"><NumInput value={Math.round(el.x)} onChange={(v) => update({ x: v })} /></PropRow>
-          <PropRow label="Y"><NumInput value={Math.round(el.y)} onChange={(v) => update({ y: v })} /></PropRow>
+          <PropRow label="X" compact><NumInput value={Math.round(el.x)} onChange={(v) => update({ x: v })} /></PropRow>
+          <PropRow label="Y" compact><NumInput value={Math.round(el.y)} onChange={(v) => update({ y: v })} /></PropRow>
         </div>
         <div className="flex gap-2">
-          <PropRow label="W"><NumInput value={Math.round(el.width)} onChange={(v) => update({ width: v })} /></PropRow>
-          <PropRow label="H"><NumInput value={Math.round(el.height)} onChange={(v) => update({ height: v })} /></PropRow>
+          <PropRow label="W" compact><NumInput value={Math.round(el.width)} onChange={(v) => update({ width: v })} /></PropRow>
+          <PropRow label="H" compact><NumInput value={Math.round(el.height)} onChange={(v) => update({ height: v })} /></PropRow>
         </div>
         <PropRow label="Rotation">
           <NumInput value={Math.round(el.rotation)} onChange={(v) => update({ rotation: v })} unit="°" />

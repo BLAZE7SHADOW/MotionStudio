@@ -16,8 +16,9 @@ interface ToolbarProps {
 
 export default function Toolbar({ project }: ToolbarProps) {
   const { addText, addShader } = useCanvasEngine();
-  const isPlaying    = useEditorStore((s) => s.isPlaying);
-  const setIsPlaying = useEditorStore((s) => s.setIsPlaying);
+  const isPlaying     = useEditorStore((s) => s.isPlaying);
+  const setIsPlaying  = useEditorStore((s) => s.setIsPlaying);
+  const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
   const undo    = useProjectStore((s) => s.undo);
   const redo    = useProjectStore((s) => s.redo);
   const canUndo = useProjectStore((s) => s.past.length > 0);
@@ -64,7 +65,7 @@ export default function Toolbar({ project }: ToolbarProps) {
         variant="ghost"
         size="icon"
         title="Add Text"
-        onClick={() => { track.editorTextAdded(); addText(); }}
+        onClick={() => { track.editorTextAdded(); const el = addText(); if (el) setSelectedElement(el.id); }}
         className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
       >
         <Type className="w-3.75 h-3.75" />
@@ -73,7 +74,11 @@ export default function Toolbar({ project }: ToolbarProps) {
         variant="ghost"
         size="icon"
         title="Add Background"
-        onClick={() => { track.editorShaderAdded({ shader: 'shader-mesh-gradient' }); addShader('shader-mesh-gradient'); }}
+        onClick={() => {
+          track.editorShaderAdded({ shader: 'shader-mesh-gradient' });
+          const el = addShader('shader-mesh-gradient');
+          if (el) setSelectedElement(el.id);
+        }}
         className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
       >
         <Sparkles className="w-3.75 h-3.75" />

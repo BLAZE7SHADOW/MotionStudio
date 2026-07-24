@@ -5,6 +5,42 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-24] — Editor usability pass: legible Transform fields, auto-select, clearer copy
+
+### Fixed
+- **Transform panel's X/Y/W/H fields were functionally illegible.** `NumInput`
+  hardcoded 24px of right padding reserved for a unit suffix ("px", "%") even
+  on fields that pass no unit at all. Those four fields sit two-per-row at
+  ~37px wide, so a value like `1000` had roughly 10px of usable space —
+  correct in the data, invisible on screen. Padding is now conditional on
+  whether a `unit` is actually passed, and the X/Y/W/H labels shrank from a
+  generic 64px-wide column to a 16px one (`PropRow`'s new `compact` prop) —
+  those labels are single letters, they didn't need the room "Rotation" and
+  "Opacity" do.
+- **Project Settings toolbar button had no tooltip.** Audited all toolbar
+  icon buttons — "Add Text" and "Add Background" already had proper `title`
+  attributes (confirmed via the DOM, not just a hover screenshot — automated
+  browser hovering doesn't reliably trigger Chrome's native tooltip timing,
+  which had made them look broken during a first pass). Only the Project
+  Settings icon was actually missing one; added `title="Project settings"`.
+
+### Changed
+- **New elements are now auto-selected.** Clicking "Add Text" or "Add
+  Background" used to leave the Properties panel on "Select an element to
+  edit its properties" — you had to know to go click what you'd just added.
+  Both toolbar actions now call `setSelectedElement` with the created
+  element's id, matching the add → immediately adjust flow every comparable
+  tool (Figma, Canva) already gives you.
+- Timeline empty-state copy changed from "Add text to see clips here" to
+  "Add an element…" — the old wording implied text was the only way to
+  populate the timeline, when images/video/audio all do too.
+
+Files: `features/workspace/components/PropertiesPanel.tsx` (`NumInput`,
+`PropRow`, `TransformSection`), `Toolbar.tsx`, `ProjectSettingsPopover.tsx`,
+`TimelinePanel.tsx`.
+
+---
+
 ## [2026-07-24] — Fix RGB Glitch background/blend bug, live text-effect preview, typewriter cursor speed
 
 ### Fixed
