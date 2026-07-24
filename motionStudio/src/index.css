@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 @import "@fontsource/inter";
+@import "@fontsource-variable/bricolage-grotesque";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -116,6 +117,9 @@
   --font-sans:    'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-heading: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono:    ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace;
+  /* Landing-page hero display face only — distinct personality from the
+     editor's Geist Sans, paired deliberately rather than reused everywhere */
+  --font-display: 'Bricolage Grotesque Variable', 'Geist Variable', ui-sans-serif, sans-serif;
 
   /* Studio color utilities */
   --color-studio-bg:             var(--studio-bg);

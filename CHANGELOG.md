@@ -5,6 +5,51 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-24] — Landing page redesign
+
+### Changed
+- **Rebuilt the landing page** — previously a single-viewport nav + two-column
+  (pitch/features left, permanently-docked auth form right) layout that read
+  more like a login gate than a marketing page. Now a full scrolling page:
+  hero → features → stats → auth → footer, with "Sign in" in the nav
+  scrolling down to the auth section instead of it eating a fixed 400px
+  column on every view.
+- **Hero headline set in a new display face** (`Bricolage Grotesque
+  Variable`, via `@fontsource-variable/bricolage-grotesque`) paired against
+  the app's existing Geist body/UI font — deliberate two-face pairing
+  instead of reusing the editor's font everywhere, which would've made the
+  marketing page feel like an extension of the settings panel rather than
+  its own surface.
+- **Feature cards restyled to look like the app's own layer rows** (colored
+  left accent bar, icon chip, monospace technical tag — `spring() ·
+  easing`, `AWS Lambda · 1080p`, etc.) instead of generic icon+title+desc
+  cards, grounding each feature in something concrete from the real product
+  rather than templated SaaS-landing-page phrasing.
+- **Hero background reuses the actual canvas editor's dot-grid pattern**
+  (`DOT_GRID`, copied from `CanvasPanel.tsx`) instead of a generic gradient
+  blob — an honest visual callback to the real editing surface.
+
+### Added
+- **`TimelineSignature.tsx`** — the page's signature element: a real,
+  frame-driven timeline scrubber (timecode counter, moving playhead,
+  keyframe diamonds that flash on an accent red as the playhead crosses
+  them, an easing-curve hint above the track). Hand-rolled with
+  `requestAnimationFrame` rather than importing the actual Remotion
+  `<Player>`, since a marketing page that loads before anyone's signed in
+  shouldn't carry that dependency weight just for a decorative loop.
+  Demonstrates the product's core idea (frame-accurate, keyframe-driven
+  motion) instead of just describing it in copy. Respects
+  `prefers-reduced-motion` — parks on a static frame instead of animating.
+- **`--font-display` token** in `index.css`, scoped to the landing page's
+  hero only (not applied globally, so the rest of the app's type system is
+  untouched).
+
+Files: `features/landing/LandingPage.tsx`, `features/landing/components/
+TimelineSignature.tsx` (new), `index.css`, `package.json`
+(`@fontsource-variable/bricolage-grotesque`).
+
+---
+
 ## [2026-07-24] — Empty-canvas onboarding
 
 ### Added
