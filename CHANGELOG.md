@@ -5,6 +5,33 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-24] — Landing page: brand emphasis + scroll-driven product tour
+
+### Added
+- **`ProductTour.tsx`** — a new "See it in action" section between Features
+  and Stats. A vertical rail fills as you scroll through the section
+  (tracked via `getBoundingClientRect`, rAF-throttled scroll listener), with
+  keyframe-diamond markers that light up red at each step — the same visual
+  language as the hero's `TimelineSignature`, not a generic borrowed
+  "connecting line" effect. Each step alternates sides and reveals via
+  `IntersectionObserver` as it scrolls into view. Media slots are currently
+  labeled placeholders (screenshot/clip captions) — swapping in real
+  screenshots/video is a one-line change per step in the `STEPS` array, no
+  layout changes needed.
+
+### Changed
+- **Hero now leads with the product name.** Previously the headline never
+  actually said "MotionStudio" — only the small nav wordmark did. Flipped
+  so "MotionStudio" (set in the display face, accent-colored second half)
+  is the dominant hero line, with the original pitch ("Motion graphics,
+  frame by frame — built in your browser") as a supporting subhead. Nav
+  wordmark also sized up and set in the display face for more presence.
+
+Files: `features/landing/LandingPage.tsx`, `features/landing/components/
+ProductTour.tsx` (new).
+
+---
+
 ## [2026-07-24] — Landing page redesign
 
 ### Changed

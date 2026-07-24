@@ -4,6 +4,7 @@ import { Clapperboard, Layers, Zap, Music, Cloud, Loader2, ArrowRight } from 'lu
 import { useAuth } from '@/hooks/useAuth';
 import AuthPanel from './components/AuthPanel';
 import TimelineSignature from './components/TimelineSignature';
+import ProductTour from './components/ProductTour';
 
 // same dot-grid the real canvas editor renders behind the composition —
 // an honest callback to the actual product, not a generic gradient blob
@@ -61,10 +62,15 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="h-14 border-b border-studio-border bg-studio-panel/80 backdrop-blur-sm flex items-center justify-between px-6 shrink-0 sticky top-0 z-20">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-studio-sm bg-studio-accent flex items-center justify-center">
-            <Clapperboard className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-studio-sm bg-studio-accent flex items-center justify-center">
+            <Clapperboard className="w-4.5 h-4.5 text-white" />
           </div>
-          <span className="text-[15px] font-semibold tracking-tight text-studio-text">MotionStudio</span>
+          <span
+            style={{ fontFamily: 'var(--font-display)' }}
+            className="text-[17px] font-semibold tracking-tight text-studio-text"
+          >
+            MotionStudio
+          </span>
         </div>
         <a
           href="#auth"
@@ -94,15 +100,18 @@ export default function LandingPage() {
 
           <h1
             style={{ fontFamily: 'var(--font-display)' }}
-            className="text-[40px] sm:text-[56px] lg:text-[64px] leading-[1.02] font-semibold text-studio-text tracking-tight mb-5"
+            className="text-[48px] sm:text-[68px] lg:text-[76px] leading-[0.98] font-semibold text-studio-text tracking-tight mb-4"
           >
-            Motion graphics,<br />
-            <span className="text-studio-accent">frame by frame.</span>
+            Motion<span className="text-studio-accent">Studio</span>
           </h1>
 
-          <p className="text-[16px] lg:text-[17px] text-studio-text-muted leading-relaxed mb-9 max-w-[480px]">
-            Canvas editor, spring animations, audio mixing, and cloud render —
-            frame-perfect output in minutes. No plugins, no subscriptions.
+          <p className="text-[17px] lg:text-[19px] text-studio-text-secondary leading-snug mb-3 max-w-[480px]">
+            Motion graphics, frame by frame — built in your browser.
+          </p>
+
+          <p className="text-[14px] text-studio-text-muted leading-relaxed mb-9 max-w-[440px]">
+            Canvas editor, spring animations, audio mixing, and cloud render.
+            No plugins, no subscriptions.
           </p>
 
           <a
@@ -145,6 +154,8 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <ProductTour />
+
       {/* Stats — real substance, not decoration */}
       <section className="px-6 py-10 border-b border-studio-border">
         <p className="text-center font-mono text-[12px] text-studio-text-faint tracking-wide">
@@ -154,7 +165,7 @@ export default function LandingPage() {
 
       {/* Auth */}
       <section id="auth" className="flex-1 flex items-center justify-center px-6 py-20 sm:py-28">
-        <div className="w-full max-w-[380px]">
+        <div className="w-full max-w-95">
           <AuthPanel />
         </div>
       </section>
