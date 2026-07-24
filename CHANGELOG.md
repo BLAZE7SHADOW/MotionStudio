@@ -28,9 +28,17 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
   `engines/project/cloudSync.ts`, `engines/asset/store.ts`.
 - Verified by running `npx remotion render … --frames=0-2` locally, which
   reproduced the exact crash before the fix and completed clean after.
+- **Follow-up: the code fix alone didn't fix production.** Cloud renders kept
+  failing with the identical error even after this shipped to Vercel — because
+  `REMOTION_SERVE_URL` points at a separate static bundle already sitting in
+  S3, which a Vercel deploy never rebuilds. Added `npm run deploy:lambda-site`
+  (`remotion lambda sites create src/remotion/index.ts --site-name=motionstudio`)
+  and ran it manually to push the fixed bundle — confirmed same site name
+  produces the same Serve URL, so no `.env` changes were needed.
 
 Files: `src/lib/supabase.ts`, `src/hooks/useAuth.ts`,
-`src/engines/project/cloudSync.ts`, `src/engines/asset/store.ts`.
+`src/engines/project/cloudSync.ts`, `src/engines/asset/store.ts`, `package.json`
+(new `deploy:lambda-site` script).
 
 ---
 

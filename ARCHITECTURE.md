@@ -184,6 +184,17 @@ returns an S3 URL. Media is remapped from `blob:` URLs to public S3 `storageUrl`
 before invoking (uploaded in the background at import time via presigned PUTs from
 `/api/upload-url`). Remotion's CLI path also still works for local power users.
 
+> **Two separate deploy targets — easy to forget one.** Vercel deploys the Vite
+> app and `/api/*` functions on every push; it does **not** touch the Remotion
+> Lambda site. `REMOTION_SERVE_URL` points at a static bundle already sitting in
+> S3, built and uploaded independently via `npm run deploy:lambda-site`
+> (`remotion lambda sites create src/remotion/index.ts --site-name=motionstudio`
+> — same site name in, same URL out, so nothing else needs updating). **Any
+> change reachable from `src/remotion/index.ts`** — the composition tree,
+> `engines/rendering`, or anything a barrel file transitively pulls in — needs
+> that command re-run, or cloud renders keep executing the old bundle while
+> the rest of the app looks fully deployed and up to date.
+
 ### Auth, quota & the serverless guard
 Three sign-in paths (Google OAuth, email/password, anonymous guest with 1 free cloud
 render), all owned by a single `useAuth` hook — components never touch supabase
@@ -258,6 +269,14 @@ in the Lambda/CLI bundle, throwing on construction before a single frame
 rendered. → Made the client a lazy `getSupabase()` instead of an eager
 top-level singleton — importing the module transitively (via a barrel) no
 longer has a side effect, since it's only constructed on an actual call.
+
+**Fixing the code didn't fix the render — the S3 site was still stale.**
+After the lazy-`getSupabase()` fix above shipped to Vercel, cloud renders
+*still* failed with the identical error. The Vercel deploy only rebuilds the
+app and API functions; the actual Lambda-executed bundle is a separate
+artifact in S3 that nothing rebuilds automatically. → Added
+`npm run deploy:lambda-site` and ran it manually to push the fixed bundle;
+now it's a documented one-liner instead of a step that's easy to forget.
 
 **shadcn CLI wrote to a root `@/` folder.** Root `tsconfig.json` lacked `paths`. →
 Added `paths` so `@/` resolves to `src/`.

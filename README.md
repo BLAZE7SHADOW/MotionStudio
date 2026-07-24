@@ -68,7 +68,7 @@ Deep dives: [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/adrs/](docs/adrs/) · [U
 
 - **Auth (Supabase)** — Google OAuth, email/password, anonymous guest (1 free cloud render); device-ID cookie prevents guest abuse; account switches wipe local state for isolation
 - **API (Vercel Functions)** — `/api/render` runs a 4-gate guard: JWT → device → monthly quota → Lambda; `/api/quota` reports usage; `/api/upload-url` issues presigned S3 PUTs; `/api/contact` sends messages via Resend
-- **Cloud render (Remotion Lambda)** — headless render on AWS, returns an S3 URL
+- **Cloud render (Remotion Lambda)** — headless render on AWS, returns an S3 URL. **Two separate deploy targets:** pushing to Vercel never rebuilds this — after any change reachable from `src/remotion/index.ts`, run `npm run deploy:lambda-site` to re-upload the bundle Lambda actually executes
 - **Cloud sync (Supabase)** — projects upsert as JSONB rows (RLS per user), auto-saved 2 s after any edit
 
 ## Getting started
