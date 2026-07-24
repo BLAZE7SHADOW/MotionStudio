@@ -85,6 +85,8 @@ export type TextElement = BaseElement & {
   textEffectSpeed?: number;
   /** Word/phrase to highlight — used by inline-highlight and marker-highlight effects */
   textEffectHighlight?: string;
+  /** Cursor blinks per second — used by the typewriter effect only */
+  textEffectCursorBlinkSpeed?: number;
 };
 
 export type ImageElement = BaseElement & {

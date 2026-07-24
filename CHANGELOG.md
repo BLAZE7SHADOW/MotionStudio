@@ -5,6 +5,46 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-24] — Fix RGB Glitch background/blend bug, live text-effect preview, typewriter cursor speed
+
+### Fixed
+- **`RGBGlitchText`** had the same background bug as yesterday's 7, just missed
+  by an exact-string grep last time: `background: "#fafafa"` instead of
+  `"white"`. Also removed `mixBlendMode: "multiply"` from its RGB channel
+  copies — `multiply` composites against whatever's behind it, so on a dark
+  canvas the glitch colors would multiply to black and disappear even with
+  the background fixed. Channels are now plain opacity-composited, so the
+  effect reads correctly on any background color, not just light ones.
+- **`StaggeredFadeUp`** was the only one of the 20 text effects with no easing
+  curve — every sibling uses a bezier ease, this one interpolated linearly.
+  Added the same ease-out curve `BottomUpLetters`/`TopDownLetters` use.
+
+### Added
+- **Live preview for text effects** (`TextEffectPreview.tsx`) — same idea as
+  the existing shader preview: a small looping Remotion `<Player>` shown in
+  the Properties panel once an effect is picked, so you see how it actually
+  moves before committing, instead of guessing from a name in a `<select>`.
+  Rendered over a checkerboard (not a flat panel color) since effects are
+  transparent — a solid preview background would misrepresent how they'll
+  actually composite over other layers. Reuses the same lazy-loaded effect
+  map `TextRenderer.tsx` already had, now exported for this purpose
+  (`Effects`, `LazyTypewriter`, `LazyInlineHighlight`, `LazyMarkerHighlight`),
+  mirroring how `ShaderRenderer.tsx` already exports `Shaders`.
+- **Typewriter cursor blink speed** — `Caret.tsx` already supported
+  `blinkPerSecond`, but `Typewriter` never forwarded it, so the blink rate was
+  stuck at the default. Added `TextElement.textEffectCursorBlinkSpeed`, threaded
+  through a new `cursorBlinkPerSecond` prop on `Typewriter`, with a "Cursor
+  blink" control in the Properties panel (shown only when the typewriter
+  effect is selected).
+
+Files: `components/remocn/rgb-glitch-text.tsx`, `staggered-fade-up.tsx`,
+`typewriter.tsx`; `engines/project/types.ts`;
+`engines/rendering/components/renderers/TextRenderer.tsx`;
+`features/workspace/components/TextEffectPreview.tsx` (new),
+`PropertiesPanel.tsx`.
+
+---
+
 ## [2026-07-23] — Fix Remocn text effects painting an opaque white background
 
 ### Fixed

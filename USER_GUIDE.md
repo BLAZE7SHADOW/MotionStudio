@@ -185,8 +185,14 @@ Pick one from the dropdown, grouped by style:
   Inline / Marker Highlight…
 - **Tech / Glitch** — Typewriter, Matrix Decode, RGB Glitch.
 
+A live loop preview shows above the picker once an effect is selected, so you
+can see how it moves before committing to it — same idea as the shader
+preview in §7b.
+
 Controls:
 - **Speed** — multiplies the effect's pace (1 = normal, 2 = twice as fast).
+- **Cursor blink** — Typewriter only: how many times per second the cursor
+  blinks.
 - **Highlight word** — for the two Highlight effects only: which word/phrase in
   your text gets the highlight treatment.
 - **None (use keyframes)** — turn the effect off and animate with §7 instead.

@@ -3,8 +3,9 @@ import { useCurrentFrame, useVideoConfig } from 'remotion';
 import type { TextElement, TextEffect } from '../../../project/types';
 import { textElementStyle, elementBoxStyle } from '../../style';
 
-// Lazily imported — each effect is a separate bundle chunk, only loaded when used
-const Effects = {
+// Lazily imported — each effect is a separate bundle chunk, only loaded when used.
+// Exported so a live preview thumbnail (Properties panel) can reuse the same map.
+export const Effects = {
   'soft-blur-in':        lazy(() => import('@/components/remocn/soft-blur-in').then(m => ({ default: m.SoftBlurIn }))),
   'blur-out-up':         lazy(() => import('@/components/remocn/blur-out-up').then(m => ({ default: m.BlurOutUp }))),
   'focus-blur-resolve':  lazy(() => import('@/components/remocn/focus-blur-resolve').then(m => ({ default: m.FocusBlurResolve }))),
@@ -22,16 +23,18 @@ const Effects = {
   'short-slide-right':   lazy(() => import('@/components/remocn/short-slide-right').then(m => ({ default: m.ShortSlideRight }))),
   'short-slide-down':    lazy(() => import('@/components/remocn/short-slide-down').then(m => ({ default: m.ShortSlideDown }))),
   'shimmer-sweep':       lazy(() => import('@/components/remocn/shimmer-sweep').then(m => ({ default: m.ShimmerSweep }))),
-  'typewriter':          lazy(() => import('@/components/remocn/typewriter').then(m => ({ default: m.Typewriter }))),
   'matrix-decode':       lazy(() => import('@/components/remocn/matrix-decode').then(m => ({ default: m.MatrixDecode }))),
   'rgb-glitch-text':     lazy(() => import('@/components/remocn/rgb-glitch-text').then(m => ({ default: m.RGBGlitchText }))),
 } satisfies Partial<Record<TextEffect, React.LazyExoticComponent<React.ComponentType<{
   text: string; fontSize?: number; color?: string; speed?: number;
 }>>>>;
 
-// Highlight effects have a different props shape — handled separately
-const LazyInlineHighlight  = lazy(() => import('@/components/remocn/inline-highlight').then(m => ({ default: m.InlineHighlight })));
-const LazyMarkerHighlight  = lazy(() => import('@/components/remocn/marker-highlight').then(m => ({ default: m.MarkerHighlight })));
+// Typewriter and the two highlight effects take a different props shape than the
+// shared `Effects` map (extra typewriter-only / before-highlight-after fields) —
+// handled separately, and exported for the same preview-reuse reason as above.
+export const LazyTypewriter      = lazy(() => import('@/components/remocn/typewriter').then(m => ({ default: m.Typewriter })));
+export const LazyInlineHighlight = lazy(() => import('@/components/remocn/inline-highlight').then(m => ({ default: m.InlineHighlight })));
+export const LazyMarkerHighlight = lazy(() => import('@/components/remocn/marker-highlight').then(m => ({ default: m.MarkerHighlight })));
 
 export default function TextRenderer({ el }: { el: TextElement }) {
   const localFrame = useCurrentFrame();
@@ -58,6 +61,20 @@ export default function TextRenderer({ el }: { el: TextElement }) {
           {el.textEffect === 'inline-highlight'
             ? <LazyInlineHighlight {...hlProps} />
             : <LazyMarkerHighlight {...hlProps} />}
+        </Suspense>
+      </div>
+    );
+  }
+
+  if (el.textEffect === 'typewriter') {
+    return (
+      <div style={boxStyle}>
+        <Suspense fallback={null}>
+          <LazyTypewriter
+            {...sharedProps}
+            cursorColor={el.color}
+            cursorBlinkPerSecond={el.textEffectCursorBlinkSpeed ?? 1}
+          />
         </Suspense>
       </div>
     );

@@ -53,7 +53,6 @@ export function RGBGlitchText({
     fontFamily:
       "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif",
     whiteSpace: "pre",
-    mixBlendMode: "multiply",
   };
 
   return (
@@ -64,7 +63,7 @@ export function RGBGlitchText({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#fafafa",
+        background: "transparent",
       }}
     >
       <div

@@ -7,6 +7,7 @@ export interface TypewriterProps {
   text: string;
   cursor?: boolean;
   charsPerSecond?: number;
+  cursorBlinkPerSecond?: number;
   speed?: number;
   fontSize?: number;
   color?: string;
@@ -19,6 +20,7 @@ export function Typewriter({
   text,
   cursor = true,
   charsPerSecond = 22,
+  cursorBlinkPerSecond = 1,
   speed = 1,
   fontSize = 48,
   color = "#171717",
@@ -56,6 +58,7 @@ export function Typewriter({
           <Caret
             color={cursorColor}
             blink={!tw.typing}
+            blinkPerSecond={cursorBlinkPerSecond}
             speed={speed}
             radius={0}
             style={{

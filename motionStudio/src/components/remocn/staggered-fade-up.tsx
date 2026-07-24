@@ -1,6 +1,6 @@
 "use client";
 
-import { interpolate, useCurrentFrame } from "remotion";
+import { Easing, interpolate, useCurrentFrame } from "remotion";
 
 export interface StaggeredFadeUpProps {
   text: string;
@@ -51,13 +51,16 @@ export function StaggeredFadeUp({
       >
         {words.map((word, i) => {
           const local = frame - i * staggerDelay;
+          const easing = Easing.bezier(0.18, 1, 0.32, 1);
           const opacity = interpolate(local, [0, 12], [0, 1], {
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
+            easing,
           });
           const y = interpolate(local, [0, 12], [distance, 0], {
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
+            easing,
           });
           return (
             <span

@@ -6,6 +6,7 @@ import type { TextElement, AudioElement, ShaderElement, BaseElement, ElementPatc
 import type { Animation, AnimationProperty, AnimationEasing, TextEffect, ShaderPreset } from '@/engines/project';
 import { Input } from '@/components/ui/input';
 import ShaderPreview from './ShaderPreview';
+import TextEffectPreview from './TextEffectPreview';
 
 const SHADER_GROUPS: { label: string; shaders: { id: ShaderPreset; label: string }[] }[] = [
   {
@@ -393,6 +394,8 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
       {/* ── Text Effect ── */}
       <Section title="Text Effect" />
       <div className="flex flex-col gap-3 px-4 py-3">
+        {el.textEffect && <TextEffectPreview effect={el.textEffect} color={el.color} />}
+
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1.5 mb-0.5">
             <Sparkles className="w-3 h-3 text-studio-accent" />
@@ -420,6 +423,17 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
               value={el.textEffectSpeed ?? 1}
               onChange={(v) => update({ textEffectSpeed: Math.max(0.1, v) })}
               step={0.1}
+            />
+          </PropRow>
+        )}
+
+        {el.textEffect === 'typewriter' && (
+          <PropRow label="Cursor blink">
+            <NumInput
+              value={el.textEffectCursorBlinkSpeed ?? 1}
+              onChange={(v) => update({ textEffectCursorBlinkSpeed: Math.max(0.1, v) })}
+              step={0.1}
+              unit="/s"
             />
           </PropRow>
         )}
