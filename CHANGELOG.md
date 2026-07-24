@@ -5,6 +5,53 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-25] — Fix: cloud project sync never actually worked; delete-project support; shimmer-sweep color bug
+
+### Fixed
+- **Cloud project sync was completely non-functional since the feature was built.**
+  `engines/project/cloudSync.ts` has always called `.from('projects')`, but the
+  `projects` table **never existed in Supabase** — only `device_renders` and
+  `renders` were ever created. Every `saveProject`/`loadProjects` call failed
+  with `Could not find the table 'public.projects' in the schema cache`, but
+  the error only went to `console.error`, so it silently looked like it worked.
+  Projects only ever lived in the browser's local `zustand`-persisted storage,
+  which is why opening a different browser (or clearing storage) always showed
+  an empty dashboard — there was never a cloud copy to restore. Confirmed by
+  querying the Supabase REST API directly with the service-role key (bypasses
+  RLS) and getting a table-not-found error. Root-caused and fixed by creating
+  `public.projects` (`id uuid pk`, `user_id uuid → auth.users`, `data jsonb`,
+  `updated_at timestamptz`) with RLS policies scoped to `auth.uid() = user_id`,
+  plus explicit `grant … to authenticated, service_role` (this project's
+  `public` schema didn't have Supabase's usual default privilege grants
+  applied, so the table alone still 403'd until grants were added). No code
+  changes were needed — `cloudSync.ts` was already written correctly against
+  a schema that simply didn't exist yet.
+- **Shimmer Sweep text effect ignored the element's chosen color.**
+  `TextRenderer.tsx` passes every text effect a shared `{ text, fontSize, color,
+  speed }` prop set, but `ShimmerSweep`'s own props were named `baseColor` /
+  `shineColor` — so the `color` prop was silently dropped and the base text
+  always rendered with the hardcoded default gray, no matter what color was
+  picked in the Properties panel. Renamed the prop to `color` to match the
+  shared signature every other effect in the `Effects` map already uses.
+  Files: `src/components/remocn/shimmer-sweep.tsx`.
+
+### Added
+- **Delete project**, dashboard-side. Hovering a project card reveals a trash
+  icon; clicking opens a confirmation dialog (reusing the existing `Dialog`
+  primitive, not a native `confirm()`). Confirming removes the project from
+  local state (`useProjectStore.deleteProject`), deletes its asset bytes from
+  IndexedDB (`deleteBlob`) and S3 (`deleteAssetFromStorage`, currently a
+  no-op stub), and deletes the cloud row (`deleteCloudProject`, already
+  existed but was unused until now). New orchestration function
+  `deleteProjectCompletely` in `engines/project/deleteProject.ts` ties the
+  three together so no call site has to remember all of them. Tracked via a
+  new `project_deleted` PostHog event.
+  Files: `src/engines/project/store.ts`, `src/engines/project/deleteProject.ts`,
+  `src/engines/project/index.ts`, `src/features/dashboard/components/ProjectCard.tsx`,
+  `src/lib/analytics.ts`.
+
+---
+
 ## [2026-07-24] — Fix: cloud render crashed with "supabaseUrl is required."
 
 ### Fixed

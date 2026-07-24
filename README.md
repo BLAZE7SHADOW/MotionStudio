@@ -25,7 +25,7 @@ MotionStudio is a full video compositor that runs in the browser. You place elem
 - **Stock media** — search and import free Pexels photos/videos directly into a project (server-proxied, auth-gated)
 - **One-click backgrounds** — turn any image/video into a full-canvas background (resize, reposition, send to back)
 - **Two export paths** — in-browser WebCodecs (free, Chrome/Edge) and Remotion Lambda cloud render (any device, 1080p)
-- **Accounts & sync** — Google OAuth / email / guest; projects auto-save to Supabase and restore on any device
+- **Accounts & sync** — Google OAuth / email / guest; projects auto-save to Supabase, restore on any device, delete anytime from the Dashboard
 - **Persistence** — project JSON in localStorage + cloud, asset bytes in IndexedDB, S3 for cloud renders
 - **Responsive landing + auth, desktop-only editor** — sign up from any device; the dashboard and editor gate below 1024px with a "use a bigger screen" message
 

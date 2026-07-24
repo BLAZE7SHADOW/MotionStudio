@@ -284,6 +284,28 @@ Added `paths` so `@/` resolves to `src/`.
 **White-on-white text.** Default text color was `#ffffff` on a white canvas — invisible,
 no error. A reminder that "no crash" ≠ "correct."
 
+**Cloud project sync silently never worked — the table didn't exist.**
+`cloudSync.ts` was written correctly against a `projects` table that was
+never actually created in Supabase; every save/load failed with a
+table-not-found error that only reached `console.error`, so the UI never
+showed a problem — projects just quietly never made it further than
+`localStorage`, meaning a new browser always looked empty. Confirmed by
+querying the Supabase REST API directly with the service-role key. → Created
+the table with RLS scoped to `auth.uid() = user_id`, plus an explicit
+`GRANT … TO authenticated, service_role` (same class of gotcha as the
+Supabase-permissions bullet above — this project's `public` schema didn't
+have the usual default privilege grants applied). A reminder that
+`console.error` on a persistence path is invisible until someone goes
+looking — it should have surfaced as user-facing state instead.
+
+**A prop name mismatch silently ate a color setting.** `TextRenderer.tsx`
+passes every text effect a shared `{ text, fontSize, color, speed }` object,
+but `ShimmerSweep` declared its own prop as `baseColor` — so the `color`
+value was passed, matched nothing, and was dropped without a TypeScript
+error (excess/mismatched props on a spread aren't checked the way an object
+literal would be). → Renamed the prop to `color` to match the shared shape
+every other effect in the `Effects` map already uses.
+
 ---
 
 ## 7. Trade-offs & limitations (honest)

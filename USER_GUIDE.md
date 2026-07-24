@@ -70,6 +70,9 @@ That's the whole loop: **add → arrange → animate → preview → export.**
   files stay on the device you uploaded them from (cloud renders can still use them).
 - **Duration**: 10 seconds by default. Change it (5 / 10 / 15 / 30s) in the same
   settings popover. Changing the frame rate keeps the length in seconds.
+- **Delete**: hover a project card on the Dashboard → trash icon → confirm.
+  Removes the project and its media everywhere it's stored — this device,
+  the cloud, and any other browser you've signed into. Can't be undone.
 
 ---
 
