@@ -160,6 +160,26 @@ immutably, snapshots **share unchanged sub-objects** (cheap — no deep copies).
 edits within ~500ms **coalesce** into one step, so a whole drag or typing burst = one
 undo. **Why it was nearly free:** every edit already flows through `updateProject`.
 
+### Deploy freshness — detecting a stale tab without forcing a reload
+A client-side route change never re-fetches `index.html`, so a tab left open across
+a deploy has nothing telling it to check for new code — it keeps running the old
+bundle indefinitely, cache headers notwithstanding. `vite.config.ts` writes an
+unhashed `dist/version.json` (`{ buildId }`, sourced from `VERCEL_GIT_COMMIT_SHA`)
+at build time via a `closeBundle` plugin hook, alongside injecting the same
+`buildId` into the client as `__APP_VERSION__` via `define`. `useVersionCheck`
+polls that file every 5 minutes and on tab-focus, always with `cache: 'no-store'`
+(the hashed JS/CSS in `/assets/` is cached forever — this one file deliberately
+isn't). On a mismatch it surfaces `<UpdateBanner>` — a dismissible "new version
+available" prompt, never an automatic reload, because this is an editor with
+in-progress work an unannounced reload would destroy. Separately, `main.tsx`
+listens for Vite's own `vite:preloadError` event and *does* reload automatically
+there — that only fires when a lazy-loaded chunk (one of the 22 text effects or
+18 shaders) already failed to load, so there's nothing left to lose.
+**Gotcha:** the SPA catch-all rewrite in root `vercel.json` excludes only
+`api/`, `assets/`, and the two icon files — `version.json` had to be added to
+that exclusion list too, or the rewrite silently serves `index.html` for it
+instead of real JSON, breaking the check without ever erroring.
+
 ### Export — two production paths
 
 **Path 1: in-browser (WebCodecs + Mediabunny)** — free, unlimited, Chrome/Edge only:

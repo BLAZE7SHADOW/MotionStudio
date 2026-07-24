@@ -5,6 +5,37 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-25] — Added: stale-deploy detection with a dismissible update banner
+
+### Added
+- **A tab left open across a deploy now knows about it.** SPA route changes
+  never re-fetch `index.html`, so a running tab had no way to learn a new
+  version existed — it would just keep running old code until someone
+  happened to hard-refresh. `vite.config.ts` now writes an unhashed
+  `dist/version.json` at build time (`buildId` sourced from Vercel's
+  `VERCEL_GIT_COMMIT_SHA`) and injects the same id into the client as
+  `__APP_VERSION__`. A new `useVersionCheck` hook polls that file every 5
+  minutes and on tab-focus (always `cache: 'no-store'`); on a mismatch it
+  shows `<UpdateBanner>`, a small dismissible "new version available —
+  Refresh" prompt. It deliberately never auto-reloads — this is an editor
+  with in-progress work, and yanking the page out from under a mid-edit or
+  mid-export would be worse than the staleness itself.
+- **Safety net for lazy-loaded chunks specifically.** `main.tsx` listens for
+  Vite's own `vite:preloadError` event and reloads automatically *there* —
+  that only fires when one of the 22 text effect / 18 shader chunks has
+  already failed to load (e.g. a very old tab whose deploy got pruned), so
+  there's nothing left to lose by reloading.
+- **Fixed the root `vercel.json` SPA rewrite to not swallow `version.json`.**
+  The catch-all rewrite only excluded `api/`, `assets/`, and the two icon
+  files — `version.json` wasn't in that list, so it would've silently served
+  `index.html` instead of real JSON, breaking the whole mechanism without
+  ever throwing a visible error. Added it to the exclusion list.
+  Files: `vite.config.ts`, `src/vite-env.d.ts`, `src/hooks/useVersionCheck.ts`,
+  `src/components/UpdateBanner.tsx`, `src/main.tsx`, `src/App.tsx`,
+  `vercel.json`.
+
+---
+
 ## [2026-07-25] — Fix: broken media after cross-device project sync
 
 ### Fixed

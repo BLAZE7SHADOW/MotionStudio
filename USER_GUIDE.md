@@ -337,6 +337,10 @@ npm run render    # render the default composition to out/video.mp4
   full size and pixel-identical to what you see.
 - **One source of truth** — the canvas, timeline, and properties are three views
   of the same element. Change it anywhere, everywhere updates.
+- **Update banner** — if a tab's been open across a new deploy, a small "new
+  version available" banner appears at the bottom of the screen. It never
+  reloads on its own (so it won't interrupt an edit or export in progress) —
+  click Refresh whenever it's convenient.
 
 ---
 
