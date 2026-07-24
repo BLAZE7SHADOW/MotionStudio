@@ -17,6 +17,8 @@ interface ProjectStore {
   updateProject: (id: string, updates: UpdateProjectInput, opts?: { history?: boolean }) => void;
   /** Replace the entire projects list — used when loading from cloud. Clears history. */
   setProjects: (projects: Project[]) => void;
+  /** Remove one project from local state. Cloud row + asset bytes are the caller's job. */
+  deleteProject: (id: string) => void;
   undo: () => void;
   redo: () => void;
   /** Wipe all projects + history. Called on account switch to prevent data bleed. */
@@ -75,6 +77,12 @@ export const useProjectStore = create<ProjectStore>()(
         }),
 
       setProjects: (projects) => set({ projects, past: [], future: [] }),
+
+      deleteProject: (id) =>
+        set((state) => ({
+          projects: state.projects.filter((p) => p.id !== id),
+          activeProjectId: state.activeProjectId === id ? null : state.activeProjectId,
+        })),
 
       undo: () =>
         set((state) => {

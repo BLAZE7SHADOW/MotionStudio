@@ -33,6 +33,9 @@ export const track = {
   projectOpened: (props: { aspect_ratio: string; fps: number }) =>
     posthog.capture('project_opened', props),
 
+  projectDeleted: () =>
+    posthog.capture('project_deleted'),
+
   // ── Editor ────────────────────────────────────────────────────────────
   editorTextAdded: () =>
     posthog.capture('editor_text_added'),

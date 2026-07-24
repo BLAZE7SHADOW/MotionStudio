@@ -10,3 +10,4 @@ export type {
 export { TEXT_EFFECTS, SHADER_PRESETS } from './types';
 export type { UpdateProjectInput } from './store';
 export { saveProject, loadProjects, deleteCloudProject } from './cloudSync';
+export { deleteProjectCompletely } from './deleteProject';
