@@ -6,11 +6,9 @@ export default function ErrorPage() {
   const navigate = useNavigate();
 
   let status = 500;
-  let message = 'Something went wrong';
 
   if (isRouteErrorResponse(error)) {
     status = error.status;
-    message = error.statusText || 'Error';
   }
 
   const isNotFound = status === 404;
