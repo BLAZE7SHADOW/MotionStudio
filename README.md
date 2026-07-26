@@ -12,10 +12,11 @@ Built by [Shivam Govind Rao](https://shivamgovindrao.com/) · [get in touch](htt
 
 MotionStudio is a full video compositor that runs in the browser. You place elements on a canvas, arrange them on a timeline, animate them per-property, and export real video. The editor preview, the in-browser export, and the AWS Lambda cloud render all run the **same React composition** — what you see while editing is exactly what renders.
 
-~5K+ lines of strict TypeScript · 7 engines · 85+ logically-grouped commits · 5 element types.
+~5K+ lines of strict TypeScript · 7 engines · 90+ logically-grouped commits · 5 element types · 14 templates.
 
 ## Features
 
+- **14 ready-made templates** — announcement clips, hooks, offers, title cards; pick one and you have an animated composition in three clicks instead of twenty
 - **Canvas editing** — drag / resize / rotate / inline text edit, layer ordering, drag-and-drop asset placement
 - **Frame-accurate timeline** — per-element clips (move/trim), scrubbing, time-based playback clock
 - **Keyframe animation** — opacity, position, scale, rotation via `interpolate`/`spring`, with presets and a draggable keyframe strip

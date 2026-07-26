@@ -160,6 +160,32 @@ immutably, snapshots **share unchanged sub-objects** (cheap — no deep copies).
 edits within ~500ms **coalesce** into one step, so a whole drag or typing burst = one
 undo. **Why it was nearly free:** every edit already flows through `updateProject`.
 
+### Templates — starting points, not a second data model
+A template is just **a project's element list, authored ahead of time**
+(`src/content/templates/`). No new rendering path, no template runtime: a
+`TemplateDefinition` holds plain `CanvasElement`s minus their ids, and
+`instantiateTemplate()` mints a fresh `crypto.randomUUID()` per element at
+create time so two projects never share ids. `createProject` grew two optional
+fields (`elements`, `durationInFrames`); the blank path is byte-identical to
+before. **Why it stayed this small:** the `Project` aggregate root already is
+the whole document — so "a template" and "a project someone made" are the same
+shape, and the editor can't tell them apart.
+
+Two constraints worth knowing:
+- **Templates ship text and shaders only — never media.** Image/video/audio
+  elements point at an `assetId` whose bytes live in IndexedDB and S3, which a
+  static definition can't supply; a media-bearing template would apply as a
+  broken canvas. Text + the 18 shaders render instantly with nothing to upload.
+- **The picker shows one live preview, not a grid of them.** Each shader is its
+  own WebGL context and browsers cap those (~8–16), so a dozen autoplaying cards
+  would exhaust the limit. The selected template previews beside the list —
+  the same pattern the Properties panel already uses for effects and shaders,
+  and it renders the real `MotionComposition`, so the preview *is* the output.
+
+`track.projectCreated` carries `template_id` / `template_category` (both
+`'blank'` for an empty project) — deliberate instrumentation, since which
+templates get used is the evidence for who the product is actually for.
+
 ### Deploy freshness — detecting a stale tab without forcing a reload
 A client-side route change never re-fetches `index.html`, so a tab left open across
 a deploy has nothing telling it to check for new code — it keeps running the old

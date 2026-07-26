@@ -59,7 +59,16 @@ That's the whole loop: **add → arrange → animate → preview → export.**
 
 ## 3. Projects
 
-- **Create**: Dashboard → **New Project**. Choose name, aspect ratio, frame rate.
+- **Create**: Dashboard → **New Project**. Pick a **template** from the list on the
+  left — a live preview of it plays on the right — then click **Use Template**.
+  The template sets the aspect ratio, frame rate and length for you, and the
+  project opens with its text and background already animated; edit the text and
+  you have a finished clip. Choose **Blank project** instead for an empty canvas,
+  where you pick aspect ratio and frame rate yourself.
+- **Templates available**: *Announce* (Feature shipped, Now live, Coming soon,
+  Metric milestone, Changelog drop) · *Hooks* (Bold question, Quote card, Stat
+  drop, Wait for it) · *Offers* (New offer, Product drop, Testimonial) ·
+  *Basics* (Title card, Outro/CTA).
 - **Open**: click a project card on the Dashboard.
 - **Change aspect ratio / frame rate anytime**: toolbar → the **`16:9 · 30 fps`**
   chip → adjust in the popover. The canvas updates instantly.

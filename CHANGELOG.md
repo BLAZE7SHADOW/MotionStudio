@@ -5,6 +5,49 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-26] — Added: 14 ready-made templates (fixes the blank-canvas problem)
+
+### Added
+- **Templates — the product had no starting point.** Every project began as an
+  empty canvas needing ~20 operations to reach 10 seconds of output (New
+  Project → name → aspect → fps → Create → Add Background → pick shader → Add
+  Text → type → size → font → color → pick effect → speed → position → clip
+  timing → Preview → Export → resolution → quality → download). That's why
+  making a video felt hectic even for the person who built the editor. There
+  was no shortage of capability — 22 text effects, 18 shaders, keyframes — just
+  nowhere to start from. 14 templates now cut that to roughly three operations.
+- **Template set**, spanning the two audiences that share the same composition
+  shapes (builders announcing work; marketers/freelancers announcing offers):
+  *announce* — Feature shipped, Now live, Coming soon, Metric milestone,
+  Changelog drop · *hook* — Bold question, Quote card, Stat drop, Wait for it ·
+  *offer* — New offer, Product drop, Testimonial · *basic* — Title card,
+  Outro/CTA. Blank project is still there, unchanged.
+- **Templates are just project data, not a second model.** A
+  `TemplateDefinition` is a list of ordinary `CanvasElement`s minus their ids;
+  `instantiateTemplate()` mints fresh ids per use. `createProject` gained two
+  optional fields (`elements`, `durationInFrames`) and the blank path behaves
+  exactly as before. Nothing new was needed in the renderer.
+- **Deliberate constraint: templates carry text + shaders only, never media.**
+  Image/video/audio elements reference an `assetId` whose bytes live in
+  IndexedDB/S3, which a static definition can't ship — such a template would
+  apply as a broken canvas. Text and the 18 shaders render instantly with
+  nothing to upload.
+- **The picker previews one template at a time, deliberately.** Each shader is
+  its own WebGL context and browsers cap those around 8–16, so a grid of
+  autoplaying cards would exhaust the limit. The selection previews beside the
+  list — same pattern the Properties panel uses for effects/shaders — rendering
+  the real `MotionComposition`, so the preview is literally the output.
+- **`track.projectCreated` now carries `template_id` and `template_category`**
+  (`'blank'` for an empty project). This is the point: which templates get used
+  is the evidence for which audience the product is actually for, rather than
+  deciding that from intuition.
+
+Files: `src/content/templates/{types,definitions,index}.ts`,
+`src/features/dashboard/components/{TemplatePicker,TemplatePreview,CreateProjectModal}.tsx`,
+`src/engines/project/{store,types}.ts`, `src/lib/analytics.ts`
+
+---
+
 ## [2026-07-25] — Added: stale-deploy detection with a dismissible update banner
 
 ### Added
