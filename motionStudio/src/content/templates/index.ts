@@ -7,13 +7,14 @@ export type { TemplateDefinition, TemplateCategory, TemplateElement } from './ty
 
 export const CATEGORY_LABELS: Record<TemplateCategory, string> = {
   announce: 'Announce',
+  dev: 'Dev & Product',
   hook: 'Hooks',
   offer: 'Offers',
   basic: 'Basics',
 };
 
 /** Display order for the picker — Basics last, since Blank lives beside them. */
-export const CATEGORY_ORDER: TemplateCategory[] = ['announce', 'hook', 'offer', 'basic'];
+export const CATEGORY_ORDER: TemplateCategory[] = ['announce', 'dev', 'hook', 'offer', 'basic'];
 
 export function getTemplate(id: string): TemplateDefinition | undefined {
   return TEMPLATES.find((t) => t.id === id);

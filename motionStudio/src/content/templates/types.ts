@@ -10,16 +10,17 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K>
 /** An element as authored in a template — ids are minted at instantiation. */
 export type TemplateElement = DistributiveOmit<CanvasElement, 'id'>;
 
-export type TemplateCategory = 'announce' | 'hook' | 'offer' | 'basic';
+export type TemplateCategory = 'announce' | 'hook' | 'offer' | 'dev' | 'basic';
 
 /**
  * A ready-made starting point: the element list a project begins with, instead
  * of a blank canvas.
  *
- * Templates deliberately use ONLY text and shader elements. Image/video/audio
- * elements reference an `assetId` whose bytes live in IndexedDB (and S3), which
- * a template can't ship — so a media-bearing template would apply as a broken
- * canvas. Text + the 18 shaders render instantly with nothing to upload.
+ * Templates deliberately use ONLY text, shader and block elements. Image/video/
+ * audio elements reference an `assetId` whose bytes live in IndexedDB (and S3),
+ * which a template can't ship — so a media-bearing template would apply as a
+ * broken canvas. Text, the 18 shaders and the blocks all render instantly with
+ * nothing to upload.
  */
 export interface TemplateDefinition {
   /** Stable — used as the analytics id, so don't rename it after shipping. */

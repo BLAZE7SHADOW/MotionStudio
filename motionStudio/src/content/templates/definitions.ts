@@ -1,4 +1,4 @@
-import type { ShaderPreset, TextEffect } from '@/engines/project';
+import type { ShaderPreset, TextEffect, BlockPreset, BlockProps } from '@/engines/project';
 import type { TemplateDefinition, TemplateElement } from './types';
 
 /**
@@ -40,8 +40,43 @@ function bg(
   };
 }
 
+interface BlockSpec {
+  preset: BlockPreset;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  zIndex: number;
+  durationInFrames: number;
+  startFrame?: number;
+  props?: BlockProps;
+}
+
+/**
+ * A structured block. `durationInFrames` must be at least the block's natural
+ * length or the animation gets cut off — see the validation in the template
+ * check script.
+ */
+function block(spec: BlockSpec): TemplateElement {
+  return {
+    type: 'block',
+    block: spec.preset,
+    blockProps: spec.props ?? {},
+    x: spec.x,
+    y: spec.y,
+    width: spec.width,
+    height: spec.height,
+    rotation: 0,
+    opacity: 1,
+    zIndex: spec.zIndex,
+    startFrame: spec.startFrame ?? 0,
+    durationInFrames: spec.durationInFrames,
+  };
+}
+
 interface TextSpec {
   content: string;
+  contentTo?: string;
   x: number;
   y: number;
   width: number;
@@ -60,6 +95,7 @@ function text(spec: TextSpec): TemplateElement {
   return {
     type: 'text',
     content: spec.content,
+    contentTo: spec.contentTo,
     x: spec.x,
     y: spec.y,
     width: spec.width,
@@ -162,7 +198,55 @@ export const TEMPLATES: TemplateDefinition[] = [
     ],
   },
 
+  {
+    id: 'milestone-counter',
+    name: 'Milestone counter',
+    description: 'A number counting up to a milestone, with a confetti payoff.',
+    category: 'announce',
+    aspectRatio: '1:1',
+    fps: 30,
+    durationInSeconds: 10,
+    elements: [
+      bg('shader-grain-gradient', SQ.w, SQ.h, S10),
+      // the odometer scrolls digits vertically, so the box needs well over one
+      // line of height or boxStyle's overflow:hidden crops the reel
+      text({ content: '0', contentTo: '10000', x: 90, y: 280, width: 900, height: 440, fontSize: 150, zIndex: 1, durationInFrames: S10, effect: 'rolling-number' }),
+      text({ content: 'developers shipping faster', x: 90, y: 760, width: 900, height: 120, fontSize: 44, zIndex: 2, durationInFrames: S10, effect: 'staggered-fade-up' }),
+      // fires after the counter lands, per the archetype's "one accent pop"
+      block({ preset: 'confetti', x: 0, y: 0, width: SQ.w, height: SQ.h, zIndex: 3, startFrame: 150, durationInFrames: 150, props: { particleCount: 180, power: 20 } }),
+    ],
+  },
+
   /* ── Hook ─────────────────────────────────────────────────────────── */
+  {
+    id: 'before-after',
+    name: 'Before → after',
+    description: 'Strike out the old way, replace it with yours.',
+    category: 'hook',
+    aspectRatio: '9:16',
+    fps: 30,
+    durationInSeconds: 10,
+    elements: [
+      bg('shader-warp', PORT.w, PORT.h, S10),
+      text({ content: 'Stop doing it the hard way', x: 90, y: 560, width: 900, height: 140, fontSize: 46, zIndex: 1, durationInFrames: S10, effect: 'tracking-in' }),
+      text({ content: '3 hours of editing', contentTo: '30 seconds', x: 90, y: 780, width: 900, height: 400, fontSize: 78, zIndex: 2, durationInFrames: S10, effect: 'strikethrough-replace' }),
+    ],
+  },
+  {
+    id: 'price-reveal',
+    name: 'Price reveal',
+    description: 'Roll a price into view — launches, upgrades, discounts.',
+    category: 'offer',
+    aspectRatio: '1:1',
+    fps: 30,
+    durationInSeconds: 10,
+    elements: [
+      bg('shader-liquid-metal', SQ.w, SQ.h, S10),
+      text({ content: 'Launch pricing', x: 90, y: 280, width: 900, height: 120, fontSize: 46, zIndex: 1, durationInFrames: S10, effect: 'tracking-in' }),
+      text({ content: '$99', contentTo: '$29', x: 90, y: 430, width: 900, height: 280, fontSize: 150, zIndex: 2, durationInFrames: S10, effect: 'slot-machine-roll' }),
+      text({ content: 'First 100 customers only', x: 90, y: 750, width: 900, height: 110, fontSize: 40, zIndex: 3, durationInFrames: S10, effect: 'soft-blur-in' }),
+    ],
+  },
   {
     id: 'bold-question',
     name: 'Bold question',
@@ -261,6 +345,88 @@ export const TEMPLATES: TemplateDefinition[] = [
       bg('shader-simplex-noise', SQ.w, SQ.h, S15),
       text({ content: 'This saved us hours every week', x: 90, y: 330, width: 900, height: 380, fontSize: 84, zIndex: 1, durationInFrames: S15, effect: 'marker-highlight', highlight: 'hours every week' }),
       text({ content: '— Happy customer', x: 90, y: 760, width: 900, height: 100, fontSize: 40, zIndex: 2, durationInFrames: S15, effect: 'soft-blur-in' }),
+    ],
+  },
+
+  /* ── Dev & Product ────────────────────────────────────────────────── */
+  {
+    id: 'cli-demo',
+    name: 'CLI demo',
+    description: 'Show a command running — the shape of a dev-tool clip.',
+    category: 'dev',
+    aspectRatio: '16:9',
+    fps: 30,
+    durationInSeconds: 15,
+    elements: [
+      bg('shader-dot-orbit', LAND.w, LAND.h, S15),
+      text({ content: 'Ship it in one command', x: 160, y: 110, width: 1600, height: 150, fontSize: 62, zIndex: 1, durationInFrames: S15, effect: 'kinetic-center-build' }),
+      block({
+        preset: 'terminal-simulator',
+        x: 260, y: 320, width: 1400, height: 620,
+        zIndex: 2, startFrame: 90, durationInFrames: S15 - 90,
+        props: {
+          lines: '$ npx motionstudio build\nresolving composition...\nrendering 300 frames\n✓ done in 4.2s',
+          title: '~/projects/my-app',
+          prompt: '$',
+          fontSize: 24,
+        },
+      }),
+    ],
+  },
+  {
+    id: 'code-drop',
+    name: 'Code drop',
+    description: 'Reveal a snippet in a frosted editor window.',
+    category: 'dev',
+    aspectRatio: '16:9',
+    fps: 30,
+    durationInSeconds: 10,
+    elements: [
+      bg('shader-neuro-noise', LAND.w, LAND.h, S10),
+      text({ content: 'Three lines. That’s the whole API.', x: 160, y: 120, width: 1600, height: 130, fontSize: 54, zIndex: 1, durationInFrames: S10, effect: 'soft-blur-in' }),
+      block({
+        preset: 'glass-code-block',
+        x: 390, y: 300, width: 1140, height: 690,
+        zIndex: 2, durationInFrames: S10,
+        props: {
+          code: 'import { render } from "motionstudio";\n\nawait render("./scene.tsx", {\n  format: "mp4",\n});',
+          title: 'render.ts',
+          fontSize: 26,
+        },
+      }),
+    ],
+  },
+  {
+    id: 'how-it-works',
+    name: 'How it works',
+    description: 'Three steps lighting up in sequence.',
+    category: 'dev',
+    aspectRatio: '16:9',
+    fps: 30,
+    durationInSeconds: 10,
+    elements: [
+      bg('shader-mesh-gradient', LAND.w, LAND.h, S10),
+      text({ content: 'How it works', x: 160, y: 280, width: 1600, height: 200, fontSize: 108, zIndex: 1, durationInFrames: S10, effect: 'per-character-rise' }),
+      block({
+        preset: 'progress-steps',
+        x: 210, y: 600, width: 1500, height: 260,
+        zIndex: 2, startFrame: 60, durationInFrames: S10 - 60,
+        props: { steps: 'Connect\nGenerate\nShip', activeColor: '#22c55e', textColor: '#ffffff' },
+      }),
+    ],
+  },
+  {
+    id: 'stack-marquee',
+    name: 'Stack marquee',
+    description: 'A scrolling wall of names — tools, features, customers.',
+    category: 'dev',
+    aspectRatio: '16:9',
+    fps: 30,
+    durationInSeconds: 10,
+    elements: [
+      bg('shader-dithering', LAND.w, LAND.h, S10),
+      text({ content: 'Works with everything', x: 160, y: 140, width: 1600, height: 130, fontSize: 52, zIndex: 1, durationInFrames: S10, effect: 'tracking-in' }),
+      text({ content: 'React\nTypeScript\nRemotion\nAWS Lambda\nSupabase', x: 0, y: 360, width: 1920, height: 420, fontSize: 84, zIndex: 2, durationInFrames: S10, effect: 'perspective-marquee' }),
     ],
   },
 
