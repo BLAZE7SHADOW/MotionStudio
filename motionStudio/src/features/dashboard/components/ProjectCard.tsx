@@ -66,10 +66,13 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           <Trash2 className="size-3.5" />
         </button>
 
-        {/* Thumbnail — a real frame of the project, animating on hover */}
+        {/* Thumbnail — a real frame of the project, animating on hover.
+            True aspect ratio: cards are grouped by format now, so a tall
+            portrait card no longer makes the grid ragged and doesn't need
+            the squash that used to hide it. */}
         <div
           className="w-full bg-studio-bg border-b border-studio-border overflow-hidden"
-          style={{ aspectRatio: `${ratio.w} / ${Math.min(ratio.h, ratio.w * 1.5)}` }}
+          style={{ aspectRatio: `${ratio.w} / ${ratio.h}` }}
         >
           <ProjectThumbnail project={project} />
         </div>
