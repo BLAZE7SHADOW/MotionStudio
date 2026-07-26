@@ -27,7 +27,10 @@ const ASPECT_OPTIONS: { value: AspectRatio; label: string; sub: string }[] = [
 ];
 
 const FPS_OPTIONS = [24, 30, 60] as const;
-const DURATION_OPTIONS = [5, 10, 15, 30] as const; // seconds
+// 60/90 exist for longer-form work like a product explainer, which doesn't fit
+// in 30s. Note the cloud-render path currently can't finish a video this long
+// (see the timeout note in ARCHITECTURE.md) — browser export handles it fine.
+const DURATION_OPTIONS = [5, 10, 15, 30, 60, 90] as const; // seconds
 
 export default function ProjectSettingsPopover({ project }: ProjectSettingsPopoverProps) {
   const updateProject = useProjectStore((s) => s.updateProject);
@@ -145,7 +148,7 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
             <Label className="text-[11px] font-medium text-studio-text-muted uppercase tracking-wider">
               Duration
             </Label>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-3 gap-1.5">
               {DURATION_OPTIONS.map((s) => (
                 <button
                   key={s}
