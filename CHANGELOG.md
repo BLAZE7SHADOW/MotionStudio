@@ -5,6 +5,27 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Changed: dashboard groups projects by aspect ratio
+
+### Changed
+- **Projects are now grouped into Landscape / Portrait / Square sections.**
+  With real previews in place, a single grid mixing formats looked ragged: a
+  16:9 card is short and a 9:16 card nearly twice as tall, so rows never lined
+  up. Each section now holds one shape, and only appears when it has projects.
+- **Card thumbnails use their true aspect ratio again.** The previous layout
+  squashed portrait cards (`min(h, w * 1.5)`, so 9:16 rendered as 9:13.5) purely
+  to limit how much they broke the grid. Grouping removes that need, so a
+  portrait card is now honestly 9:16.
+- **Column counts differ per section** — portrait cards are tall, so that
+  section uses more, narrower columns (up to 8) while landscape uses up to 5.
+- Section config is keyed by `AspectRatio` rather than held in a plain array, so
+  adding a fourth ratio without a section fails the build instead of silently
+  hiding those projects from the dashboard.
+
+Files: `src/features/dashboard/components/{ProjectGrid,ProjectCard}.tsx`
+
+---
+
 ## [2026-07-26] — Added: live project previews on the dashboard, editor navigation
 
 ### Added

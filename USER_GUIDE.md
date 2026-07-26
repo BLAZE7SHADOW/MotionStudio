@@ -73,6 +73,10 @@ That's the whole loop: **add → arrange → animate → preview → export.**
 - **Open**: click a project card on the Dashboard. Each card shows a real frame
   of that project, and animates when you hover it — so you can tell your
   projects apart at a glance instead of reading names.
+- **Grouped by shape**: the Dashboard splits your projects into **Landscape**,
+  **Portrait** and **Square** sections, so cards of the same format line up
+  instead of making a ragged grid. A section only appears when you have
+  projects in it.
 - **Leaving the editor**: the **←** button or the **MotionStudio logo** in the
   editor toolbar takes you back to your projects. Nothing needs saving first —
   edits autosave a couple of seconds after you stop.
