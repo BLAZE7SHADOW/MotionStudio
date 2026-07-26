@@ -1,7 +1,8 @@
 import { useProjectStore } from '../project/store';
 import { getCompositionDimensions } from '../project/dimensions';
-import type { CanvasElement, TextElement, ImageElement, VideoElement, AudioElement, ShaderElement, ShaderPreset } from './types';
+import type { CanvasElement, TextElement, ImageElement, VideoElement, AudioElement, ShaderElement, ShaderPreset, BlockElement, BlockPreset } from './types';
 import type { AddTextInput } from './types';
+import { getBlock } from '@/content/blocks/registry';
 
 /**
  * A patch for any element. Because CanvasElement is a union, `Omit<union, K>`
@@ -13,7 +14,8 @@ export type ElementPatch =
   Partial<Omit<ImageElement, 'id' | 'type'>> &
   Partial<Omit<VideoElement, 'id' | 'type'>> &
   Partial<Omit<AudioElement, 'id' | 'type'>> &
-  Partial<Omit<ShaderElement, 'id' | 'type'>>;
+  Partial<Omit<ShaderElement, 'id' | 'type'>> &
+  Partial<Omit<BlockElement, 'id' | 'type'>>;
 
 export function useCanvasEngine() {
   const project       = useProjectStore((s) =>
@@ -197,6 +199,41 @@ export function useCanvasEngine() {
   }
 
   /**
+   * Add a structured UI block (terminal, code panel, pipeline, confetti),
+   * centered and sized from the registry's defaults.
+   *
+   * The clip is at least the block's natural length — a shorter Sequence would
+   * cut the animation off mid-way, which is the most common way these
+   * components get misused.
+   */
+  function addBlock(preset: BlockPreset): CanvasElement | null {
+    if (!project) return null;
+    const def = getBlock(preset);
+    const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
+    const w = Math.min(def.defaultSize.width, compW);
+    const h = Math.min(def.defaultSize.height, compH);
+
+    const element: BlockElement = {
+      id:               crypto.randomUUID(),
+      type:             'block',
+      block:            preset,
+      blockProps:       { ...def.defaults },
+      x:                Math.round((compW - w) / 2),
+      y:                Math.round((compH - h) / 2),
+      width:            w,
+      height:           h,
+      rotation:         0,
+      opacity:          1,
+      zIndex:           elements.length,
+      startFrame:       0,
+      durationInFrames: Math.max(def.naturalLength, project.durationInFrames),
+    };
+
+    updateProject(project.id, { canvas: { elements: [...elements, element] } });
+    return element;
+  }
+
+  /**
    * Resize + reposition an existing element to fill the canvas and send it
    * behind every other layer — same non-negative zIndex scheme as addShader.
    */
@@ -255,5 +292,5 @@ export function useCanvasEngine() {
     updateProject(project.id, { canvas: { elements: next } });
   }
 
-  return { elements, addText, addImage, addVideo, addAudio, addShader, makeBackground, updateElement, removeElement, reorderLayer };
+  return { elements, addText, addImage, addVideo, addAudio, addShader, addBlock, makeBackground, updateElement, removeElement, reorderLayer };
 }

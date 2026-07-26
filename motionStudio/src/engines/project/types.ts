@@ -71,13 +71,43 @@ export const TEXT_EFFECTS = [
   'kinetic-center-build', 'short-slide-right', 'short-slide-down',
   'shimmer-sweep', 'inline-highlight', 'marker-highlight',
   'typewriter', 'matrix-decode', 'rgb-glitch-text',
+  'infinite-marquee',
+  // list-valued — each line of `content` is one item
+  'value-swap', 'rolodex-flip', 'perspective-marquee',
+  // two-value — `content` is the "from", `contentTo` the "to"
+  'fade-through', 'per-word-crossfade', 'shared-axis-y', 'shared-axis-z',
+  'strikethrough-replace', 'slot-machine-roll',
+  // two-value numeric — both parsed with Number()
+  'rolling-number', 'number-wheel',
 ] as const;
 
 export type TextEffect = typeof TEXT_EFFECTS[number];
 
+/** Effects that read every line of `content` as a separate item. */
+export const LIST_TEXT_EFFECTS = ['value-swap', 'rolodex-flip', 'perspective-marquee'] as const;
+
+/** Effects that animate from `content` to `contentTo`. */
+export const TWO_VALUE_TEXT_EFFECTS = [
+  'fade-through', 'per-word-crossfade', 'shared-axis-y', 'shared-axis-z',
+  'strikethrough-replace', 'slot-machine-roll', 'rolling-number', 'number-wheel',
+] as const;
+
+export function isTwoValueEffect(effect: TextEffect | undefined): boolean {
+  return !!effect && (TWO_VALUE_TEXT_EFFECTS as readonly string[]).includes(effect);
+}
+
+export function isListEffect(effect: TextEffect | undefined): boolean {
+  return !!effect && (LIST_TEXT_EFFECTS as readonly string[]).includes(effect);
+}
+
 export type TextElement = BaseElement & {
   type: 'text';
   content: string;
+  /**
+   * The "to" value for two-value effects (swaps and number counters); `content`
+   * is the "from". Numeric effects parse both with Number(). Unused otherwise.
+   */
+  contentTo?: string;
   fontSize: number;
   fontFamily: string;
   color: string;
@@ -123,7 +153,33 @@ export type ShaderElement = BaseElement & {
   shaderSpeed?: number;
 };
 
-export type CanvasElement = TextElement | ImageElement | VideoElement | AudioElement | ShaderElement;
+export const BLOCK_PRESETS = [
+  'terminal-simulator', 'glass-code-block', 'progress-steps', 'confetti',
+] as const;
+
+export type BlockPreset = typeof BLOCK_PRESETS[number];
+
+/** A block's configuration. Values stay flat and primitive on purpose. */
+export type BlockProps = Record<string, string | number | boolean>;
+
+/**
+ * A structured UI component (terminal window, code block, pipeline, confetti)
+ * that text effects can't express because it takes arrays and objects.
+ *
+ * `blockProps` is deliberately FLAT and JSON-serializable — a project is stored
+ * as a JSONB row in Supabase and in localStorage, so anything non-primitive
+ * wouldn't survive the round trip. Components wanting arrays-of-objects (a
+ * terminal's lines, a pipeline's steps) take a multiline string here and parse
+ * it at render time; see `content/blocks/registry.ts`.
+ */
+export type BlockElement = BaseElement & {
+  type: 'block';
+  block: BlockPreset;
+  blockProps: BlockProps;
+};
+
+export type CanvasElement =
+  TextElement | ImageElement | VideoElement | AudioElement | ShaderElement | BlockElement;
 
 /* ── Project ── */
 

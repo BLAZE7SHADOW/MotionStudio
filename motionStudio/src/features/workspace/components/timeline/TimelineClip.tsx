@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { frameToX, framesToWidth } from '@/engines/timeline';
 import type { TimelineScale } from '@/engines/timeline';
 import type { CanvasElement, Animation } from '@/engines/project';
+import { getBlock } from '@/content/blocks/registry';
 
 const MIN_CLIP_FRAMES = 1;
 const MIN_ANIM_FRAMES = 1;
@@ -29,6 +30,7 @@ const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(mi
 
 function clipLabel(el: CanvasElement): string {
   if (el.type === 'text') return el.content.trim() || 'Text';
+  if (el.type === 'block') return getBlock(el.block).label;
   return el.type;
 }
 

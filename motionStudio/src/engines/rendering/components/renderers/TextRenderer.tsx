@@ -25,9 +25,41 @@ export const Effects = {
   'shimmer-sweep':       lazy(() => import('@/components/remocn/shimmer-sweep').then(m => ({ default: m.ShimmerSweep }))),
   'matrix-decode':       lazy(() => import('@/components/remocn/matrix-decode').then(m => ({ default: m.MatrixDecode }))),
   'rgb-glitch-text':     lazy(() => import('@/components/remocn/rgb-glitch-text').then(m => ({ default: m.RGBGlitchText }))),
+  'infinite-marquee':    lazy(() => import('@/components/remocn/infinite-marquee').then(m => ({ default: m.InfiniteMarquee }))),
 } satisfies Partial<Record<TextEffect, React.LazyExoticComponent<React.ComponentType<{
   text: string; fontSize?: number; color?: string; speed?: number;
 }>>>>;
+
+// Two-value effects animate from one value to another. Their prop NAMES differ
+// (fromText/toText vs from/to), so each group is mapped separately rather than
+// forced through one signature.
+const SwapEffects = {
+  'fade-through':       lazy(() => import('@/components/remocn/fade-through').then(m => ({ default: m.FadeThrough }))),
+  'per-word-crossfade': lazy(() => import('@/components/remocn/per-word-crossfade').then(m => ({ default: m.PerWordCrossfade }))),
+  'shared-axis-y':      lazy(() => import('@/components/remocn/shared-axis-y').then(m => ({ default: m.SharedAxisY }))),
+  'shared-axis-z':      lazy(() => import('@/components/remocn/shared-axis-z').then(m => ({ default: m.SharedAxisZ }))),
+} satisfies Partial<Record<TextEffect, React.LazyExoticComponent<React.ComponentType<{
+  fromText: string; toText: string; fontSize?: number; color?: string; speed?: number;
+}>>>>;
+
+const FromToEffects = {
+  'strikethrough-replace': lazy(() => import('@/components/remocn/strikethrough-replace').then(m => ({ default: m.StrikethroughReplace }))),
+  'slot-machine-roll':     lazy(() => import('@/components/remocn/slot-machine-roll').then(m => ({ default: m.SlotMachineRoll }))),
+} satisfies Partial<Record<TextEffect, React.LazyExoticComponent<React.ComponentType<{
+  from: string; to: string; fontSize?: number; color?: string; speed?: number;
+}>>>>;
+
+const NumberEffects = {
+  'rolling-number': lazy(() => import('@/components/remocn/rolling-number').then(m => ({ default: m.RollingNumber }))),
+  'number-wheel':   lazy(() => import('@/components/remocn/number-wheel').then(m => ({ default: m.NumberWheel }))),
+} satisfies Partial<Record<TextEffect, React.LazyExoticComponent<React.ComponentType<{
+  from: number; to: number; fontSize?: number; color?: string; speed?: number;
+}>>>>;
+
+// List effects read each line of `content` as one item.
+const LazyValueSwap          = lazy(() => import('@/components/remocn/value-swap').then(m => ({ default: m.ValueSwap })));
+const LazyRolodexFlip        = lazy(() => import('@/components/remocn/rolodex-flip').then(m => ({ default: m.RolodexFlip })));
+const LazyPerspectiveMarquee = lazy(() => import('@/components/remocn/perspective-marquee').then(m => ({ default: m.PerspectiveMarquee })));
 
 // Typewriter and the two highlight effects take a different props shape than the
 // shared `Effects` map (extra typewriter-only / before-highlight-after fields) —
@@ -75,6 +107,68 @@ export default function TextRenderer({ el }: { el: TextElement }) {
             cursorColor={el.color}
             cursorBlinkPerSecond={el.textEffectCursorBlinkSpeed ?? 1}
           />
+        </Suspense>
+      </div>
+    );
+  }
+
+  // ── Two-value effects: `content` is the "from", `contentTo` the "to" ──
+  const speed = el.textEffectSpeed ?? 1;
+  const to = el.contentTo ?? el.content;
+
+  const SwapComponent = SwapEffects[el.textEffect as keyof typeof SwapEffects];
+  if (SwapComponent) {
+    return (
+      <div style={boxStyle}>
+        <Suspense fallback={null}>
+          <SwapComponent fromText={el.content} toText={to} fontSize={el.fontSize} color={el.color} speed={speed} />
+        </Suspense>
+      </div>
+    );
+  }
+
+  const FromToComponent = FromToEffects[el.textEffect as keyof typeof FromToEffects];
+  if (FromToComponent) {
+    return (
+      <div style={boxStyle}>
+        <Suspense fallback={null}>
+          <FromToComponent from={el.content} to={to} fontSize={el.fontSize} color={el.color} speed={speed} />
+        </Suspense>
+      </div>
+    );
+  }
+
+  const NumberComponent = NumberEffects[el.textEffect as keyof typeof NumberEffects];
+  if (NumberComponent) {
+    // Non-numeric text would render NaN — fall back to 0 so a mistyped value
+    // shows a harmless counter instead of breaking the frame.
+    const from = Number(el.content.replace(/[^\d.-]/g, '')) || 0;
+    const target = Number(to.replace(/[^\d.-]/g, '')) || 0;
+    return (
+      <div style={boxStyle}>
+        <Suspense fallback={null}>
+          <NumberComponent from={from} to={target} fontSize={el.fontSize} color={el.color} speed={speed} />
+        </Suspense>
+      </div>
+    );
+  }
+
+  // ── List effects: each line of `content` is one item ──
+  if (el.textEffect === 'value-swap' || el.textEffect === 'rolodex-flip' || el.textEffect === 'perspective-marquee') {
+    const items = el.content.split('\n').filter(Boolean);
+    const style = { fontSize: el.fontSize, color: el.color, fontFamily: el.fontFamily };
+    // value-swap needs explicit swap frames — space them evenly across the clip
+    // so every value gets equal screen time regardless of how many there are.
+    const step = el.durationInFrames / Math.max(items.length, 1);
+    const swapAt = items.slice(1).map((_, i) => Math.round((i + 1) * step));
+    return (
+      <div style={boxStyle}>
+        <Suspense fallback={null}>
+          {el.textEffect === 'value-swap' && <LazyValueSwap values={items} at={swapAt} style={style} />}
+          {el.textEffect === 'rolodex-flip' && <LazyRolodexFlip items={items} style={style} />}
+          {el.textEffect === 'perspective-marquee' && (
+            <LazyPerspectiveMarquee items={items} fontSize={el.fontSize} color={el.color} speed={speed} />
+          )}
         </Suspense>
       </div>
     );

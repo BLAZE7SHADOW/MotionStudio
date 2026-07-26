@@ -50,6 +50,9 @@ export const track = {
   editorShaderAdded: (props: { shader: string }) =>
     posthog.capture('editor_shader_added', props),
 
+  editorBlockAdded: (props: { block: string }) =>
+    posthog.capture('editor_block_added', props),
+
   editorPreviewToggled: (playing: boolean) =>
     posthog.capture('editor_preview_toggled', { playing }),
 

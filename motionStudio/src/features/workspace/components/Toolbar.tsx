@@ -1,6 +1,9 @@
-import { Undo2, Redo2, Clapperboard, Type, Sparkles, Play, Pause } from 'lucide-react';
+import { Undo2, Redo2, Clapperboard, Type, Sparkles, Play, Pause, SquareTerminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { BLOCK_PRESETS } from '@/engines/project';
+import { getBlock } from '@/content/blocks/registry';
 import type { Project } from '@/engines/project';
 import { useProjectStore } from '@/engines/project';
 import { useCanvasEngine } from '@/engines/canvas';
@@ -15,7 +18,7 @@ interface ToolbarProps {
 }
 
 export default function Toolbar({ project }: ToolbarProps) {
-  const { addText, addShader } = useCanvasEngine();
+  const { addText, addShader, addBlock } = useCanvasEngine();
   const isPlaying     = useEditorStore((s) => s.isPlaying);
   const setIsPlaying  = useEditorStore((s) => s.setIsPlaying);
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
@@ -83,6 +86,45 @@ export default function Toolbar({ project }: ToolbarProps) {
       >
         <Sparkles className="w-3.75 h-3.75" />
       </Button>
+
+      {/* Structured blocks — terminal, code, pipeline, confetti */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Add Block"
+            className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
+          >
+            <SquareTerminal className="w-3.75 h-3.75" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          className="w-56 p-1.5 bg-studio-panel border-studio-border-strong rounded-studio-lg"
+        >
+          {BLOCK_PRESETS.map((preset) => {
+            const def = getBlock(preset);
+            return (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => {
+                  track.editorBlockAdded({ block: preset });
+                  const el = addBlock(preset);
+                  if (el) setSelectedElement(el.id);
+                }}
+                className="w-full text-left px-2.5 py-2 rounded-studio-md hover:bg-studio-surface transition-colors duration-[120ms]"
+              >
+                <span className="block text-[12px] font-medium text-studio-text">{def.label}</span>
+                <span className="block text-[10px] text-studio-text-faint leading-snug mt-0.5">
+                  {def.description}
+                </span>
+              </button>
+            );
+          })}
+        </PopoverContent>
+      </Popover>
 
       <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />
 

@@ -2,8 +2,10 @@ import { MousePointer, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown, Spar
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
-import type { TextElement, AudioElement, ShaderElement, BaseElement, ElementPatch } from '@/engines/canvas';
+import type { TextElement, AudioElement, ShaderElement, BlockElement, BaseElement, ElementPatch } from '@/engines/canvas';
 import type { Animation, AnimationProperty, AnimationEasing, TextEffect, ShaderPreset } from '@/engines/project';
+import { isTwoValueEffect, isListEffect } from '@/engines/project';
+import { getBlock } from '@/content/blocks/registry';
 import { Input } from '@/components/ui/input';
 import ShaderPreview from './ShaderPreview';
 import TextEffectPreview from './TextEffectPreview';
@@ -105,6 +107,33 @@ const TEXT_EFFECT_GROUPS: { label: string; effects: { id: TextEffect; label: str
       { id: 'typewriter',     label: 'Typewriter' },
       { id: 'matrix-decode',  label: 'Matrix Decode' },
       { id: 'rgb-glitch-text', label: 'RGB Glitch' },
+    ],
+  },
+  {
+    label: 'Numbers',
+    effects: [
+      { id: 'rolling-number',    label: 'Rolling Number' },
+      { id: 'number-wheel',      label: 'Number Wheel' },
+      { id: 'slot-machine-roll', label: 'Slot Machine Roll' },
+    ],
+  },
+  {
+    label: 'Swap (from → to)',
+    effects: [
+      { id: 'fade-through',          label: 'Fade Through' },
+      { id: 'per-word-crossfade',    label: 'Per Word Crossfade' },
+      { id: 'shared-axis-y',         label: 'Shared Axis Y' },
+      { id: 'shared-axis-z',         label: 'Shared Axis Z' },
+      { id: 'strikethrough-replace', label: 'Strikethrough Replace' },
+    ],
+  },
+  {
+    label: 'Lists & Marquee',
+    effects: [
+      { id: 'value-swap',          label: 'Value Swap' },
+      { id: 'rolodex-flip',        label: 'Rolodex Flip' },
+      { id: 'perspective-marquee', label: 'Perspective Marquee' },
+      { id: 'infinite-marquee',    label: 'Infinite Marquee' },
     ],
   },
 ];
@@ -380,14 +409,40 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
       <Section title="Text" />
       <div className="flex flex-col gap-3 px-4 py-3">
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] text-studio-text-faint">Content</span>
+          <span className="text-[11px] text-studio-text-faint">
+            {isTwoValueEffect(el.textEffect) ? 'Content (from)' : 'Content'}
+          </span>
           <textarea
             value={el.content}
             onChange={(e) => update({ content: e.target.value })}
             rows={3}
             className="w-full resize-none rounded-studio-sm bg-studio-surface border border-studio-border text-[12px] text-studio-text px-2.5 py-2 placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent-border focus:ring-1 focus:ring-studio-accent transition-colors"
           />
+          {isListEffect(el.textEffect) && (
+            <p className="text-[10px] text-studio-text-faint leading-relaxed">
+              This effect cycles through your lines — put one value per line.
+            </p>
+          )}
         </div>
+
+        {/* Two-value effects animate content → contentTo */}
+        {isTwoValueEffect(el.textEffect) && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] text-studio-text-faint">Content (to)</span>
+            <Input
+              value={el.contentTo ?? ''}
+              placeholder={el.textEffect === 'rolling-number' || el.textEffect === 'number-wheel' ? '10000' : 'The value it changes to…'}
+              onChange={(e) => update({ contentTo: e.target.value || undefined })}
+              className="h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm"
+            />
+            {(el.textEffect === 'rolling-number' || el.textEffect === 'number-wheel') && (
+              <p className="text-[10px] text-studio-text-faint leading-relaxed">
+                Counts from Content to this value. Numbers only — symbols are stripped.
+                Use Slot Machine Roll for values like “$99”.
+              </p>
+            )}
+          </div>
+        )}
         <PropRow label="Font size">
           <NumInput value={el.fontSize} onChange={(v) => update({ fontSize: v })} unit="px" />
         </PropRow>
@@ -482,6 +537,97 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
       </div>
 
       <AnimationSection el={el} update={update} hideHeader />
+      <TransformSection el={el} update={update} />
+      <LayerSection reorder={reorder} />
+    </>
+  );
+}
+
+/* ── block (terminal, code, pipeline, confetti) ── */
+function BlockProperties({
+  el, update, reorder,
+}: {
+  el: BlockElement; update: Update; reorder: (dir: 'front' | 'forward' | 'backward' | 'back') => void;
+}) {
+  const def = getBlock(el.block);
+  const value = (key: string) => el.blockProps[key] ?? def.defaults[key] ?? '';
+  const setProp = (key: string, v: string | number) =>
+    update({ blockProps: { ...def.defaults, ...el.blockProps, [key]: v } });
+
+  const tooShort = el.durationInFrames < def.naturalLength;
+
+  return (
+    <>
+      <Section title={def.label} />
+      <div className="flex flex-col gap-3 px-4 py-3">
+        <p className="text-[10px] text-studio-text-faint leading-relaxed">{def.description}</p>
+
+        {/* Under-budgeting a block's clip cuts its animation off part-way —
+            the single easiest way to make one of these look broken. */}
+        {tooShort && (
+          <p className="text-[10px] text-amber-400/90 leading-relaxed">
+            This clip is {el.durationInFrames}f but the animation needs {def.naturalLength}f —
+            it will be cut off. Lengthen the clip on the timeline.
+          </p>
+        )}
+
+        {def.fields.map((field) => (
+          <div key={field.key} className="flex flex-col gap-1.5">
+            <span className="text-[11px] text-studio-text-faint">{field.label}</span>
+
+            {field.type === 'textarea' && (
+              <textarea
+                value={String(value(field.key))}
+                onChange={(e) => setProp(field.key, e.target.value)}
+                rows={5}
+                className="w-full resize-none rounded-studio-sm bg-studio-surface border border-studio-border text-[12px] text-studio-text px-2.5 py-2 font-mono placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent-border focus:ring-1 focus:ring-studio-accent transition-colors"
+              />
+            )}
+
+            {field.type === 'text' && (
+              <Input
+                value={String(value(field.key))}
+                onChange={(e) => setProp(field.key, e.target.value)}
+                className="h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm"
+              />
+            )}
+
+            {field.type === 'number' && (
+              <NumInput
+                value={Number(value(field.key)) || 0}
+                onChange={(v) => setProp(field.key, v)}
+              />
+            )}
+
+            {field.type === 'color' && (
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-7 h-7 rounded-studio-sm border border-studio-border shrink-0 overflow-hidden cursor-pointer relative"
+                  style={{ backgroundColor: String(value(field.key)) }}
+                >
+                  <input
+                    type="color"
+                    value={String(value(field.key))}
+                    onChange={(e) => setProp(field.key, e.target.value)}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  />
+                </div>
+                <Input
+                  value={String(value(field.key))}
+                  onChange={(e) => setProp(field.key, e.target.value)}
+                  className="h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm font-mono"
+                />
+              </div>
+            )}
+
+            {field.hint && (
+              <p className="text-[10px] text-studio-text-faint leading-relaxed">{field.hint}</p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <AnimationSection el={el} update={update} />
       <TransformSection el={el} update={update} />
       <LayerSection reorder={reorder} />
     </>
@@ -631,6 +777,14 @@ export default function PropertiesPanel() {
           )}
           {selected.type === 'shader' && (
             <ShaderProperties
+              key={selected.id}
+              el={selected}
+              update={(u) => updateElement(selected.id, u)}
+              reorder={(dir) => reorderLayer(selected.id, dir)}
+            />
+          )}
+          {selected.type === 'block' && (
+            <BlockProperties
               key={selected.id}
               el={selected}
               update={(u) => updateElement(selected.id, u)}

@@ -4,6 +4,7 @@ import ImageRenderer from './renderers/ImageRenderer';
 import VideoRenderer from './renderers/VideoRenderer';
 import AudioRenderer from './renderers/AudioRenderer';
 import ShaderRenderer from './renderers/ShaderRenderer';
+import BlockRenderer from './renderers/BlockRenderer';
 
 /**
  * Dispatches an element to its type-specific renderer. Image elements resolve
@@ -33,6 +34,8 @@ export default function ElementRenderer({
     }
     case 'shader':
       return <ShaderRenderer el={el} />;
+    case 'block':
+      return <BlockRenderer el={el} />;
     default:
       return null;
   }
