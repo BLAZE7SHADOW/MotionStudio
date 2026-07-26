@@ -66,9 +66,10 @@ That's the whole loop: **add → arrange → animate → preview → export.**
   you have a finished clip. Choose **Blank project** instead for an empty canvas,
   where you pick aspect ratio and frame rate yourself.
 - **Templates available**: *Announce* (Feature shipped, Now live, Coming soon,
-  Metric milestone, Changelog drop) · *Hooks* (Bold question, Quote card, Stat
-  drop, Wait for it) · *Offers* (New offer, Product drop, Testimonial) ·
-  *Basics* (Title card, Outro/CTA).
+  Metric milestone, Milestone counter, Changelog drop) · *Dev & Product* (CLI
+  demo, Code drop, How it works, Stack marquee) · *Hooks* (Bold question, Quote
+  card, Stat drop, Wait for it, Before → after) · *Offers* (New offer, Product
+  drop, Testimonial, Price reveal) · *Basics* (Title card, Outro/CTA).
 - **Open**: click a project card on the Dashboard.
 - **Change aspect ratio / frame rate anytime**: toolbar → the **`16:9 · 30 fps`**
   chip → adjust in the popover. The canvas updates instantly.
@@ -185,7 +186,7 @@ element gives a fade-in-hold-fade-out.
 
 ---
 
-## 7a. Text effects (22 presets)
+## 7a. Text effects (34 presets)
 
 Text elements have a second, richer animation system: **Properties → Text Effect**.
 Pick one from the dropdown, grouped by style:
@@ -211,6 +212,26 @@ Controls:
 
 A text effect **replaces** the element's plain rendering — it plays every time the
 clip starts, both in the editor preview and in the export.
+
+---
+
+## 7c. Blocks (terminal, code, steps, confetti)
+
+Toolbar → the **terminal icon (Add Block)** → pick one. Blocks are structured
+components that a text effect can't express:
+
+- **Terminal** — a window that types commands and streams output. In
+  **Properties → Lines**, write one line each; prefix `$ ` for a command,
+  `✓ ` for a success line, `✗ ` for an error. Everything else is plain output.
+- **Code block** — a frosted editor window revealing your code line by line.
+- **Progress steps** — a pipeline whose steps light up in order, one per line.
+- **Confetti** — a celebratory burst. Drop it on top of a finished scene and set
+  its clip to start at the moment you want it to fire.
+
+**Watch the clip length.** Each block needs a minimum number of frames to play in
+full (the terminal needs the most). If its clip is too short the animation gets
+cut off part-way, and the Properties panel will warn you with the number of
+frames it needs — lengthen the clip on the timeline to fix it.
 
 ---
 

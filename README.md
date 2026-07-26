@@ -1,6 +1,6 @@
 # MotionStudio
 
-**A browser-based motion graphics editor built on [Remotion](https://remotion.dev)** — compose text, image, video, audio, and shader backgrounds on a frame-accurate timeline, animate with keyframes and 22 text effects, and export to MP4 in the browser or on the cloud.
+**A browser-based motion graphics editor built on [Remotion](https://remotion.dev)** — compose text, image, video, audio, and shader backgrounds on a frame-accurate timeline, animate with keyframes and 34 text effects, and export to MP4 in the browser or on the cloud.
 
 **Live demo → [motionstudio-six.vercel.app](https://motionstudio-six.vercel.app/)**
 
@@ -12,16 +12,17 @@ Built by [Shivam Govind Rao](https://shivamgovindrao.com/) · [get in touch](htt
 
 MotionStudio is a full video compositor that runs in the browser. You place elements on a canvas, arrange them on a timeline, animate them per-property, and export real video. The editor preview, the in-browser export, and the AWS Lambda cloud render all run the **same React composition** — what you see while editing is exactly what renders.
 
-~5K+ lines of strict TypeScript · 7 engines · 90+ logically-grouped commits · 5 element types · 14 templates.
+~5K+ lines of strict TypeScript · 7 engines · 95+ logically-grouped commits · 6 element types · 21 templates.
 
 ## Features
 
-- **14 ready-made templates** — announcement clips, hooks, offers, title cards; pick one and you have an animated composition in three clicks instead of twenty
+- **21 ready-made templates** — announcement clips, dev/product demos, hooks, offers, title cards; pick one and you have an animated composition in three clicks instead of twenty
 - **Canvas editing** — drag / resize / rotate / inline text edit, layer ordering, drag-and-drop asset placement
 - **Frame-accurate timeline** — per-element clips (move/trim), scrubbing, time-based playback clock
 - **Keyframe animation** — opacity, position, scale, rotation via `interpolate`/`spring`, with presets and a draggable keyframe strip
-- **22 text effects** — Remocn animation components (per-character rise, typewriter, glitch, shimmer, highlights…), lazy-loaded per effect
+- **34 text effects** — Remocn animation components (per-character rise, typewriter, glitch, shimmer, odometers, value swaps, marquees…), lazy-loaded per effect
 - **18 shader backgrounds** — full-bleed, frame-synced WebGL backdrops (gradients, noise, warp, particles…), lazy-loaded per preset
+- **4 UI blocks** — terminal window, frosted code editor, progress pipeline, confetti; structured components a text effect can't express
 - **Media** — image, video (`OffthreadVideo`), audio elements with library, probing, and thumbnails
 - **Stock media** — search and import free Pexels photos/videos directly into a project (server-proxied, auth-gated)
 - **One-click backgrounds** — turn any image/video into a full-canvas background (resize, reposition, send to back)
@@ -44,7 +45,7 @@ features/   own UI             (compose)    · timeline · animation · asset ·
 **One rendering pipeline everywhere:**
 
 ```
-MotionComposition → <Sequence> per element → ElementRenderer → Text/Image/Video/Audio renderer
+MotionComposition → <Sequence> per element → ElementRenderer → Text/Image/Video/Audio/Shader/Block renderer
         ▲                        ▲                          ▲
   editor <Player>       WebCodecs export             Remotion Lambda
 ```
@@ -108,7 +109,8 @@ motionStudio/
     engines/            data + logic: project, editor, canvas, rendering, timeline,
                         animation, asset, export
     features/           UI: landing, dashboard, workspace (canvas/timeline/panels)
-    components/remocn/  22 text-effect components
+    content/            templates + block registry
+    components/remocn/  57 Remocn components (text effects, shaders, UI blocks)
     remotion/           composition entry for Lambda/CLI rendering
 docs/adrs/              architecture decision records
 ```

@@ -5,6 +5,78 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-26] — Added: 12 text effects, a `block` element type, 7 new templates
+
+### Added
+- **Expanded the component vocabulary, because templates had hit a ceiling.**
+  The 14 templates all looked like *text on a shader* — not a design failure but
+  the limit of a 5-type element model. An audit against the Remocn catalog found
+  only 41 of its 122 components installed; missing were all 12 transitions, all
+  6 UI blocks, all 9 social cards, confetti and 12 text animations. Conclusion:
+  Remocn *is* the library, so don't build a custom one — the bottleneck was
+  MotionStudio's element model.
+- **12 new text effects**, grouped by how they read their content:
+  *Numbers* — Rolling Number, Number Wheel, Slot Machine Roll ·
+  *Swap* — Fade Through, Per Word Crossfade, Shared Axis Y/Z, Strikethrough
+  Replace · *Lists & Marquee* — Value Swap, Rolodex Flip, Perspective Marquee,
+  Infinite Marquee. This cost exactly **one new optional field**
+  (`TextElement.contentTo`): list effects reuse `content` split on newlines,
+  two-value effects animate `content` → `contentTo`, and numeric ones parse both
+  with `Number()`. Their prop names differ upstream (`fromText`/`toText` vs
+  `from`/`to`), so `TextRenderer` maps each group rather than forcing one
+  signature.
+- **A sixth element type, `block`** — structured components that take arrays and
+  objects and therefore can't be text effects: **terminal-simulator**,
+  **glass-code-block**, **progress-steps**, **confetti**. Backed by a registry
+  (`src/content/blocks/registry.ts`) where each entry declares its lazy import,
+  defaults, natural length, a field schema the Properties panel renders inputs
+  from, and a `toProps` translator — so adding the next block is a registry
+  entry, not a code change.
+- **`blockProps` is deliberately flat and JSON-serializable.** Projects persist
+  to localStorage and a Supabase JSONB column, so components wanting
+  arrays-of-objects take a multiline string parsed at render time — a terminal's
+  `$ ` / `✓ ` / `✗ ` line prefixes become `{text, type}` pairs.
+- **7 new templates**, shaped by Remocn's own `references/archetypes/` shot
+  lists (which turned out to be a frame-level spec for exactly this audience):
+  *Dev & Product* — CLI demo, Code drop, How it works, Stack marquee ·
+  *Announce* — Milestone counter (rolling number + confetti payoff) ·
+  *Hooks* — Before → after · *Offers* — Price reveal. 21 templates total.
+- Toolbar gained an **Add Block** control; new `editor_block_added` event.
+
+### Fixed
+- **Every Remocn text component was rendering in serif — in the editor *and* in
+  exports.** All 30-odd of them set `font-family: var(--font-geist-sans), …,
+  sans-serif`, but that variable ships with Remocn's Next.js setup and was never
+  defined here. CSS treats an undefined `var()` with no fallback as invalid at
+  computed-value time, which discards the **whole** declaration instead of
+  falling through to the trailing `sans-serif` — so text silently fell back to
+  the browser default, Times. Fixed by defining the variable once on
+  `MotionComposition`'s root `AbsoluteFill`, the single component mounted by
+  both the editor `<Player>` and the Remotion render. Found by rendering a
+  template through the CLI and actually looking at a frame.
+- Milestone counter's odometer was cropped: the digit reel scrolls vertically and
+  `boxStyle`'s `overflow: hidden` cut it, so the box needed well over one line of
+  height.
+
+### Notes
+- Verified by rendering block and number templates end-to-end through
+  `npx remotion render` and inspecting real frames — not just the editor.
+- Known, pre-existing: **shader backgrounds fail a local CLI render** with
+  "WebGL is not supported in this browser" (headless Chrome without GPU flags).
+  Lambda renders are unaffected; this only limits local CLI testing of
+  shader-bearing templates.
+- **Cloud renders need `npm run deploy:lambda-site`** to pick these components
+  up — the Lambda S3 bundle is a separate deploy target from Vercel.
+
+Files: `src/content/blocks/registry.ts`, `src/content/templates/definitions.ts`,
+`src/engines/project/types.ts`, `src/engines/canvas/store.ts`,
+`src/engines/rendering/components/{MotionComposition,ElementRenderer}.tsx`,
+`src/engines/rendering/components/renderers/{TextRenderer,BlockRenderer}.tsx`,
+`src/features/workspace/components/{PropertiesPanel,Toolbar}.tsx`,
+plus 16 new components in `src/components/remocn/`
+
+---
+
 ## [2026-07-26] — Added: 14 ready-made templates (fixes the blank-canvas problem)
 
 ### Added

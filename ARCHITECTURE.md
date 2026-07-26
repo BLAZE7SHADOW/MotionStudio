@@ -10,11 +10,11 @@ use it) and `docs/adrs/` (formal decision records).
 
 A **browser-based, programmatic video editor** built on [Remotion](https://remotion.dev).
 Place text / image / video / audio on a canvas, arrange them on a frame-accurate
-timeline, animate them (keyframes + 22 Remocn text effects), and export — in-browser
+timeline, animate them (keyframes + 34 Remocn text effects, 18 shaders, 4 UI blocks), and export — in-browser
 via WebCodecs, or on AWS via Remotion Lambda. Backed by a small serverless layer:
 Vercel Functions (render/quota/upload/contact API), Supabase (auth + project sync), S3.
 
-- ~5K+ lines of TypeScript, 7 engines, 85+ logically-grouped commits.
+- ~5K+ lines of TypeScript, 7 engines, 95+ logically-grouped commits.
 - React 19 · TypeScript (strict) · Vite · Tailwind v4 · Zustand · React Router v7 ·
   Remotion (Player + Lambda) · Mediabunny (WebCodecs muxer) · react-moveable · shadcn/ui ·
   Remocn · Supabase · AWS (Lambda, S3) · IndexedDB · localStorage.
@@ -34,7 +34,7 @@ Vercel Functions (render/quota/upload/contact API), Supabase (auth + project syn
 | **Supabase** | Auth (OAuth / email / anonymous guest) + Postgres with RLS for render quotas and project cloud sync — no auth server to build or run. |
 | **Vercel Functions** | The API is 4 endpoints (`render`, `quota`, `upload-url`, `contact`); serverless means zero infrastructure for that footprint. |
 | **Remotion Lambda + S3** | Production export path: headless render on AWS, output to S3. A cloud render pipeline for ~20 minutes of config instead of months of infra. |
-| **Remocn** | 22 copy-paste Remotion text-effect components — animation polish bought, not built, and owned as source in the repo. |
+| **Remocn** | 57 copy-paste Remotion components (text effects, shaders, UI blocks) — animation polish bought, not built, and owned as source in the repo. |
 | **Resend** | Transactional email for the contact form — a single `emails.send()` call instead of managing SMTP or a mail server. |
 
 ---
@@ -175,7 +175,8 @@ Two constraints worth knowing:
 - **Templates ship text and shaders only — never media.** Image/video/audio
   elements point at an `assetId` whose bytes live in IndexedDB and S3, which a
   static definition can't supply; a media-bearing template would apply as a
-  broken canvas. Text + the 18 shaders render instantly with nothing to upload.
+  broken canvas. Text, the 18 shaders and the 4 blocks render instantly with
+  nothing to upload.
 - **The picker shows one live preview, not a grid of them.** Each shader is its
   own WebGL context and browsers cap those (~8–16), so a dozen autoplaying cards
   would exhaust the limit. The selected template previews beside the list —
@@ -185,6 +186,42 @@ Two constraints worth knowing:
 `track.projectCreated` carries `template_id` / `template_category` (both
 `'blank'` for an empty project) — deliberate instrumentation, since which
 templates get used is the evidence for who the product is actually for.
+
+### Blocks — a registry instead of another hardcoded union
+Text effects and shaders are string-literal unions with a hand-maintained lazy map,
+which is fine for "one component, one string" but can't express components that take
+arrays and objects (a terminal's lines, a pipeline's steps). Those became a sixth
+element type, `BlockElement`, backed by `src/content/blocks/registry.ts`: each entry
+declares its lazy import, defaults, natural length, a **field schema** the Properties
+panel renders inputs from, and a `toProps` translator. Adding a block is a registry
+entry; the renderer and the panel don't change.
+
+**`blockProps` is deliberately flat and primitive.** A project is persisted as JSON —
+localStorage and a Supabase JSONB column — so nothing non-serializable can live on an
+element. Components wanting arrays-of-objects take a **multiline string** that
+`toProps` parses at render time (a terminal's `$ `/`✓ ` line prefixes become
+`{text, type}`). The editor stays a plain textarea and the data round-trips.
+
+**Natural length is a real constraint, not a style note.** Every Remocn component has
+a length it needs (terminal-simulator 240f, glass-code-block 180f, rolling-number
+150f); a shorter clip cuts the animation off. `addBlock` sizes new clips to at least
+the natural length, the Properties panel warns when a clip is too short, and the
+template check enforces it. Worth knowing: components differ in how they read time —
+some are fixed-length, while others (like `rolling-number`) call
+`useVideoConfig().durationInFrames` and therefore stretch to the **composition**
+length rather than their clip's.
+
+### The undefined CSS variable that made every text effect serif
+Every Remocn text component sets `font-family: var(--font-geist-sans), -apple-system,
+…, sans-serif`. That variable ships with Remocn's own Next.js setup, not with us, and
+CSS treats an undefined `var()` with no fallback as *invalid at computed-value time* —
+which throws away the **entire** declaration rather than falling through to the
+`sans-serif` at the end. So all 30-odd text components silently rendered in the browser
+default, Times. Fixed by defining the variable once on `MotionComposition`'s root
+`AbsoluteFill` — the one component mounted by both the editor `<Player>` and the
+Remotion render, so preview and export stay identical for the same reason `style.ts`
+is shared. Found by rendering a template through the CLI and looking at a frame; it
+had been invisible because "no error" is not the same as "correct."
 
 ### Deploy freshness — detecting a stale tab without forcing a reload
 A client-side route change never re-fetches `index.html`, so a tab left open across
@@ -199,8 +236,8 @@ isn't). On a mismatch it surfaces `<UpdateBanner>` — a dismissible "new versio
 available" prompt, never an automatic reload, because this is an editor with
 in-progress work an unannounced reload would destroy. Separately, `main.tsx`
 listens for Vite's own `vite:preloadError` event and *does* reload automatically
-there — that only fires when a lazy-loaded chunk (one of the 22 text effects or
-18 shaders) already failed to load, so there's nothing left to lose.
+there — that only fires when a lazy-loaded chunk (one of the 34 text effects,
+18 shaders or 4 blocks) already failed to load, so there's nothing left to lose.
 **Gotcha:** the SPA catch-all rewrite in root `vercel.json` excludes only
 `api/`, `assets/`, and the two icon files — `version.json` had to be added to
 that exclusion list too, or the rewrite silently serves `index.html` for it
