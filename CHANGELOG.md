@@ -5,6 +5,33 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-26] — Added: live project previews on the dashboard, editor navigation
+
+### Added
+- **Project cards now show a real preview instead of an aspect-ratio label.**
+  Every card was an identical grey box reading "16:9", so a list of projects was
+  indistinguishable. Cards now render an actual frame of the project (40% in, so
+  entrance animations have played) and animate on hover.
+- **Two deliberate constraints in `ProjectThumbnail`:** it uses `<Thumbnail>`
+  (a single static frame) rather than `<Player>`, upgrading to a playing Player
+  only for the hovered card — because each shader background is its own WebGL
+  context and browsers cap those around 8–16, so a grid of autoplaying previews
+  would exhaust the limit and start losing contexts. It also only mounts once
+  scrolled into view (IntersectionObserver, 200px margin) so a long list doesn't
+  build every composition up front.
+- Previews prefer an asset's `storageUrl` over its `url`: a project's `blob:`
+  URLs are dead outside the session that created them and the dashboard never
+  runs `rehydrateAssets`, so the S3 copy is the one that actually resolves —
+  the same fallback the editor and export paths use.
+- **Editor navigation** — a back arrow and a clickable logo in the editor
+  toolbar, both returning to the project list; edits are already autosaved, so
+  leaving mid-edit is safe. The dashboard logo now links to the landing page.
+
+Files: `src/features/dashboard/components/{ProjectThumbnail,ProjectCard,DashboardHeader}.tsx`,
+`src/features/workspace/components/Toolbar.tsx`
+
+---
+
 ## [2026-07-26] — Added: 12 text effects, a `block` element type, 7 new templates
 
 ### Added

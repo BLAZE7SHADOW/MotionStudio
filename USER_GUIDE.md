@@ -70,7 +70,12 @@ That's the whole loop: **add → arrange → animate → preview → export.**
   demo, Code drop, How it works, Stack marquee) · *Hooks* (Bold question, Quote
   card, Stat drop, Wait for it, Before → after) · *Offers* (New offer, Product
   drop, Testimonial, Price reveal) · *Basics* (Title card, Outro/CTA).
-- **Open**: click a project card on the Dashboard.
+- **Open**: click a project card on the Dashboard. Each card shows a real frame
+  of that project, and animates when you hover it — so you can tell your
+  projects apart at a glance instead of reading names.
+- **Leaving the editor**: the **←** button or the **MotionStudio logo** in the
+  editor toolbar takes you back to your projects. Nothing needs saving first —
+  edits autosave a couple of seconds after you stop.
 - **Change aspect ratio / frame rate anytime**: toolbar → the **`16:9 · 30 fps`**
   chip → adjust in the popover. The canvas updates instantly.
 - **Autosave**: your projects **and** uploaded media are saved automatically in
