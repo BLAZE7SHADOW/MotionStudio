@@ -141,4 +141,9 @@ export interface Project {
   };
 }
 
-export type CreateProjectInput = Pick<Project, 'name' | 'aspectRatio' | 'fps'>;
+export type CreateProjectInput = Pick<Project, 'name' | 'aspectRatio' | 'fps'> & {
+  /** Seeded by a template; a blank project starts with none. */
+  elements?: CanvasElement[];
+  /** Template-defined length. Falls back to DEFAULT_DURATION_SECONDS × fps. */
+  durationInFrames?: number;
+};

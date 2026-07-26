@@ -41,12 +41,15 @@ export const useProjectStore = create<ProjectStore>()(
 
       createProject: (input) => {
         const now = Date.now();
+        // elements/durationInFrames are template-only — pulled out of the spread
+        // so they don't land on the Project as stray top-level fields.
+        const { elements, durationInFrames, ...rest } = input;
         const project: Project = {
           id: crypto.randomUUID(),
-          ...input,
-          durationInFrames: Math.round(input.fps * DEFAULT_DURATION_SECONDS),
+          ...rest,
+          durationInFrames: durationInFrames ?? Math.round(input.fps * DEFAULT_DURATION_SECONDS),
           assets: [],
-          canvas: { elements: [] },
+          canvas: { elements: elements ?? [] },
           createdAt: now,
           updatedAt: now,
         };
