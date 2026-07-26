@@ -16,24 +16,44 @@ import type { TemplateDefinition, TemplateElement } from './types';
 
 const FONT = 'Inter, sans-serif';
 
-/** Full-canvas shader backdrop, always the bottom layer. */
+/**
+ * Palette, from Remocn's `references/design.md`. Templates stay inside it so
+ * they read as one product rather than a swatch book.
+ */
+const INK = '#fafafa';      // primary text
+const DIM = '#a1a1aa';      // secondary text — hierarchy without a second accent
+const GREEN = '#22c55e';
+const SKY = '#0ea5e9';
+const VIOLET = '#a855f7';
+const WARM = '#d97757';
+
+/**
+ * Full-canvas shader backdrop, always the bottom layer.
+ *
+ * The defaults are deliberately *restrained*. Remocn's anti-patterns doc calls
+ * a bright, fast, full-frame gradient wash "the #1 tell" of generic-looking
+ * work: a moving background is fine, but it has to be a **slow, muted** shader
+ * that never competes with the text for attention. So speed defaults low and
+ * the layer is knocked back with opacity rather than run at full strength —
+ * the composition's own near-black shows through and keeps contrast high.
+ */
 function bg(
   shader: ShaderPreset,
   width: number,
   height: number,
   durationInFrames: number,
-  shaderSpeed = 1,
+  { speed = 0.3, opacity = 0.35 }: { speed?: number; opacity?: number } = {},
 ): TemplateElement {
   return {
     type: 'shader',
     shader,
-    shaderSpeed,
+    shaderSpeed: speed,
     x: 0,
     y: 0,
     width,
     height,
     rotation: 0,
-    opacity: 1,
+    opacity,
     zIndex: 0,
     startFrame: 0,
     durationInFrames,
@@ -107,7 +127,7 @@ function text(spec: TextSpec): TemplateElement {
     durationInFrames: spec.durationInFrames,
     fontSize: spec.fontSize,
     fontFamily: FONT,
-    color: spec.color ?? '#ffffff',
+    color: spec.color ?? INK,
     textEffect: spec.effect,
     textEffectSpeed: spec.effectSpeed,
     textEffectHighlight: spec.highlight,
@@ -136,9 +156,9 @@ export const TEMPLATES: TemplateDefinition[] = [
     durationInSeconds: 10,
     elements: [
       bg('shader-mesh-gradient', LAND.w, LAND.h, S10),
-      text({ content: 'JUST SHIPPED', x: 160, y: 300, width: 1600, height: 90, fontSize: 42, zIndex: 1, durationInFrames: S10, effect: 'tracking-in' }),
+      text({ content: 'Just shipped', x: 160, y: 300, width: 1600, height: 90, fontSize: 42, zIndex: 1, durationInFrames: S10, color: GREEN, effect: 'tracking-in' }),
       text({ content: 'Dark mode is live', x: 160, y: 420, width: 1600, height: 240, fontSize: 130, zIndex: 2, durationInFrames: S10, effect: 'per-character-rise' }),
-      text({ content: 'yourapp.com', x: 160, y: 690, width: 1600, height: 90, fontSize: 38, zIndex: 3, durationInFrames: S10, effect: 'soft-blur-in' }),
+      text({ content: 'yourapp.com', x: 160, y: 690, width: 1600, height: 90, fontSize: 38, zIndex: 3, durationInFrames: S10, color: DIM, effect: 'soft-blur-in' }),
     ],
   },
   {
@@ -151,8 +171,8 @@ export const TEMPLATES: TemplateDefinition[] = [
     durationInSeconds: 10,
     elements: [
       bg('shader-warp', LAND.w, LAND.h, S10),
-      text({ content: 'NOW LIVE', x: 160, y: 380, width: 1600, height: 280, fontSize: 170, zIndex: 1, durationInFrames: S10, effect: 'kinetic-center-build' }),
-      text({ content: 'Version 2.0 is here', x: 160, y: 700, width: 1600, height: 100, fontSize: 44, zIndex: 2, durationInFrames: S10, effect: 'staggered-fade-up' }),
+      text({ content: 'Now live', x: 160, y: 380, width: 1600, height: 280, fontSize: 170, zIndex: 1, durationInFrames: S10, effect: 'kinetic-center-build' }),
+      text({ content: 'Version 2.0 is here', x: 160, y: 700, width: 1600, height: 100, fontSize: 44, zIndex: 2, durationInFrames: S10, color: SKY, effect: 'staggered-fade-up' }),
     ],
   },
   {
@@ -165,8 +185,8 @@ export const TEMPLATES: TemplateDefinition[] = [
     durationInSeconds: 10,
     elements: [
       bg('shader-smoke-ring', PORT.w, PORT.h, S10),
-      text({ content: 'COMING SOON', x: 90, y: 780, width: 900, height: 280, fontSize: 100, zIndex: 1, durationInFrames: S10, effect: 'mask-reveal-up' }),
-      text({ content: 'Something new. Very soon.', x: 90, y: 1110, width: 900, height: 120, fontSize: 40, zIndex: 2, durationInFrames: S10, effect: 'soft-blur-in' }),
+      text({ content: 'Coming soon', x: 90, y: 780, width: 900, height: 280, fontSize: 100, zIndex: 1, durationInFrames: S10, effect: 'mask-reveal-up' }),
+      text({ content: 'Something new. Very soon.', x: 90, y: 1110, width: 900, height: 120, fontSize: 40, zIndex: 2, durationInFrames: S10, color: VIOLET, effect: 'soft-blur-in' }),
     ],
   },
   {
@@ -179,8 +199,8 @@ export const TEMPLATES: TemplateDefinition[] = [
     durationInSeconds: 10,
     elements: [
       bg('shader-grain-gradient', SQ.w, SQ.h, S10),
-      text({ content: '10,000', x: 90, y: 360, width: 900, height: 300, fontSize: 190, zIndex: 1, durationInFrames: S10, effect: 'spring-scale-in' }),
-      text({ content: 'users and counting', x: 90, y: 690, width: 900, height: 110, fontSize: 44, zIndex: 2, durationInFrames: S10, effect: 'staggered-fade-up' }),
+      text({ content: '10,000', x: 90, y: 360, width: 900, height: 300, fontSize: 190, zIndex: 1, durationInFrames: S10, color: GREEN, effect: 'spring-scale-in' }),
+      text({ content: 'users and counting', x: 90, y: 690, width: 900, height: 110, fontSize: 44, zIndex: 2, durationInFrames: S10, color: DIM, effect: 'staggered-fade-up' }),
     ],
   },
   {
@@ -192,8 +212,8 @@ export const TEMPLATES: TemplateDefinition[] = [
     fps: 30,
     durationInSeconds: 15,
     elements: [
-      bg('shader-dot-orbit', LAND.w, LAND.h, S15),
-      text({ content: "WHAT'S NEW", x: 160, y: 260, width: 1600, height: 90, fontSize: 42, zIndex: 1, durationInFrames: S15, effect: 'tracking-in' }),
+      bg('shader-dot-orbit', LAND.w, LAND.h, S15, { speed: 0.2, opacity: 0.18 }),
+      text({ content: "What's new", x: 160, y: 260, width: 1600, height: 90, fontSize: 42, zIndex: 1, durationInFrames: S15, color: SKY, effect: 'tracking-in' }),
       text({ content: 'Faster exports\nNew shader backgrounds\nKeyboard shortcuts', x: 160, y: 400, width: 1600, height: 420, fontSize: 72, zIndex: 2, durationInFrames: S15, effect: 'line-by-line-slide' }),
     ],
   },
@@ -210,8 +230,8 @@ export const TEMPLATES: TemplateDefinition[] = [
       bg('shader-grain-gradient', SQ.w, SQ.h, S10),
       // the odometer scrolls digits vertically, so the box needs well over one
       // line of height or boxStyle's overflow:hidden crops the reel
-      text({ content: '0', contentTo: '10000', x: 90, y: 280, width: 900, height: 440, fontSize: 150, zIndex: 1, durationInFrames: S10, effect: 'rolling-number' }),
-      text({ content: 'developers shipping faster', x: 90, y: 760, width: 900, height: 120, fontSize: 44, zIndex: 2, durationInFrames: S10, effect: 'staggered-fade-up' }),
+      text({ content: '0', contentTo: '10000', x: 90, y: 280, width: 900, height: 440, fontSize: 150, zIndex: 1, durationInFrames: S10, color: GREEN, effect: 'rolling-number' }),
+      text({ content: 'developers shipping faster', x: 90, y: 760, width: 900, height: 120, fontSize: 44, zIndex: 2, durationInFrames: S10, color: DIM, effect: 'staggered-fade-up' }),
       // fires after the counter lands, per the archetype's "one accent pop"
       block({ preset: 'confetti', x: 0, y: 0, width: SQ.w, height: SQ.h, zIndex: 3, startFrame: 150, durationInFrames: 150, props: { particleCount: 180, power: 20 } }),
     ],
@@ -228,7 +248,7 @@ export const TEMPLATES: TemplateDefinition[] = [
     durationInSeconds: 10,
     elements: [
       bg('shader-warp', PORT.w, PORT.h, S10),
-      text({ content: 'Stop doing it the hard way', x: 90, y: 560, width: 900, height: 140, fontSize: 46, zIndex: 1, durationInFrames: S10, effect: 'tracking-in' }),
+      text({ content: 'Stop doing it the hard way', x: 90, y: 560, width: 900, height: 140, fontSize: 46, zIndex: 1, durationInFrames: S10, color: DIM, effect: 'tracking-in' }),
       text({ content: '3 hours of editing', contentTo: '30 seconds', x: 90, y: 780, width: 900, height: 400, fontSize: 78, zIndex: 2, durationInFrames: S10, effect: 'strikethrough-replace' }),
     ],
   },
@@ -241,10 +261,10 @@ export const TEMPLATES: TemplateDefinition[] = [
     fps: 30,
     durationInSeconds: 10,
     elements: [
-      bg('shader-liquid-metal', SQ.w, SQ.h, S10),
-      text({ content: 'Launch pricing', x: 90, y: 280, width: 900, height: 120, fontSize: 46, zIndex: 1, durationInFrames: S10, effect: 'tracking-in' }),
-      text({ content: '$99', contentTo: '$29', x: 90, y: 430, width: 900, height: 280, fontSize: 150, zIndex: 2, durationInFrames: S10, effect: 'slot-machine-roll' }),
-      text({ content: 'First 100 customers only', x: 90, y: 750, width: 900, height: 110, fontSize: 40, zIndex: 3, durationInFrames: S10, effect: 'soft-blur-in' }),
+      bg('shader-liquid-metal', SQ.w, SQ.h, S10, { speed: 0.2, opacity: 0.22 }),
+      text({ content: 'Launch pricing', x: 90, y: 280, width: 900, height: 120, fontSize: 46, zIndex: 1, durationInFrames: S10, color: DIM, effect: 'tracking-in' }),
+      text({ content: '$99', contentTo: '$29', x: 90, y: 430, width: 900, height: 280, fontSize: 150, zIndex: 2, durationInFrames: S10, color: GREEN, effect: 'slot-machine-roll' }),
+      text({ content: 'First 100 customers only', x: 90, y: 750, width: 900, height: 110, fontSize: 40, zIndex: 3, durationInFrames: S10, color: DIM, effect: 'soft-blur-in' }),
     ],
   },
   {
@@ -256,7 +276,7 @@ export const TEMPLATES: TemplateDefinition[] = [
     fps: 30,
     durationInSeconds: 10,
     elements: [
-      bg('shader-liquid-metal', PORT.w, PORT.h, S10),
+      bg('shader-liquid-metal', PORT.w, PORT.h, S10, { speed: 0.2, opacity: 0.22 }),
       text({ content: 'What if you could ship 10x faster?', x: 90, y: 700, width: 900, height: 520, fontSize: 96, zIndex: 1, durationInFrames: S10, effect: 'staggered-fade-up' }),
     ],
   },
@@ -271,7 +291,7 @@ export const TEMPLATES: TemplateDefinition[] = [
     elements: [
       bg('shader-perlin-noise', SQ.w, SQ.h, S10),
       text({ content: 'Ship it before\nyou feel ready.', x: 90, y: 330, width: 900, height: 340, fontSize: 92, zIndex: 1, durationInFrames: S10, effect: 'line-by-line-slide' }),
-      text({ content: '— Someone wise', x: 90, y: 720, width: 900, height: 100, fontSize: 40, zIndex: 2, durationInFrames: S10, effect: 'soft-blur-in' }),
+      text({ content: '— Someone wise', x: 90, y: 720, width: 900, height: 100, fontSize: 40, zIndex: 2, durationInFrames: S10, color: DIM, effect: 'soft-blur-in' }),
     ],
   },
   {
@@ -283,9 +303,9 @@ export const TEMPLATES: TemplateDefinition[] = [
     fps: 30,
     durationInSeconds: 10,
     elements: [
-      bg('shader-god-rays', PORT.w, PORT.h, S10),
-      text({ content: '93%', x: 90, y: 700, width: 900, height: 320, fontSize: 220, zIndex: 1, durationInFrames: S10, effect: 'spring-scale-in' }),
-      text({ content: 'of users never read the docs', x: 90, y: 1070, width: 900, height: 200, fontSize: 52, zIndex: 2, durationInFrames: S10, effect: 'staggered-fade-up' }),
+      bg('shader-god-rays', PORT.w, PORT.h, S10, { speed: 0.2, opacity: 0.22 }),
+      text({ content: '93%', x: 90, y: 700, width: 900, height: 320, fontSize: 220, zIndex: 1, durationInFrames: S10, color: GREEN, effect: 'spring-scale-in' }),
+      text({ content: 'of users never read the docs', x: 90, y: 1070, width: 900, height: 200, fontSize: 52, zIndex: 2, durationInFrames: S10, color: DIM, effect: 'staggered-fade-up' }),
     ],
   },
   {
@@ -298,7 +318,7 @@ export const TEMPLATES: TemplateDefinition[] = [
     durationInSeconds: 10,
     elements: [
       bg('shader-swirl', PORT.w, PORT.h, S10),
-      text({ content: 'Wait for it...', x: 90, y: 850, width: 900, height: 220, fontSize: 80, zIndex: 1, durationInFrames: 120, effect: 'typewriter' }),
+      text({ content: 'Wait for it...', x: 90, y: 850, width: 900, height: 220, fontSize: 80, zIndex: 1, durationInFrames: 120, color: DIM, effect: 'typewriter' }),
       text({ content: 'This changes everything', x: 90, y: 760, width: 900, height: 400, fontSize: 96, zIndex: 2, startFrame: 120, durationInFrames: 180, effect: 'rgb-glitch-text' }),
     ],
   },
@@ -313,9 +333,9 @@ export const TEMPLATES: TemplateDefinition[] = [
     fps: 30,
     durationInSeconds: 10,
     elements: [
-      bg('shader-pulsing-border', SQ.w, SQ.h, S10),
-      text({ content: '30% OFF', x: 90, y: 350, width: 900, height: 300, fontSize: 175, zIndex: 1, durationInFrames: S10, effect: 'micro-scale-fade' }),
-      text({ content: 'This week only', x: 90, y: 680, width: 900, height: 110, fontSize: 48, zIndex: 2, durationInFrames: S10, effect: 'tracking-in' }),
+      bg('shader-pulsing-border', SQ.w, SQ.h, S10, { speed: 0.25, opacity: 0.3 }),
+      text({ content: '30% off', x: 90, y: 350, width: 900, height: 300, fontSize: 175, zIndex: 1, durationInFrames: S10, color: WARM, effect: 'micro-scale-fade' }),
+      text({ content: 'This week only', x: 90, y: 680, width: 900, height: 110, fontSize: 48, zIndex: 2, durationInFrames: S10, color: DIM, effect: 'tracking-in' }),
     ],
   },
   {
@@ -327,10 +347,10 @@ export const TEMPLATES: TemplateDefinition[] = [
     fps: 30,
     durationInSeconds: 10,
     elements: [
-      bg('shader-metaballs', PORT.w, PORT.h, S10),
-      text({ content: 'NEW DROP', x: 90, y: 640, width: 900, height: 140, fontSize: 56, zIndex: 1, durationInFrames: S10, effect: 'tracking-in' }),
+      bg('shader-metaballs', PORT.w, PORT.h, S10, { speed: 0.2, opacity: 0.22 }),
+      text({ content: 'New drop', x: 90, y: 640, width: 900, height: 140, fontSize: 56, zIndex: 1, durationInFrames: S10, color: WARM, effect: 'tracking-in' }),
       text({ content: 'The Everyday Tee', x: 90, y: 820, width: 900, height: 340, fontSize: 104, zIndex: 2, durationInFrames: S10, effect: 'mask-reveal-up' }),
-      text({ content: 'Available now', x: 90, y: 1210, width: 900, height: 110, fontSize: 42, zIndex: 3, durationInFrames: S10, effect: 'soft-blur-in' }),
+      text({ content: 'Available now', x: 90, y: 1210, width: 900, height: 110, fontSize: 42, zIndex: 3, durationInFrames: S10, color: DIM, effect: 'soft-blur-in' }),
     ],
   },
   {
@@ -344,7 +364,7 @@ export const TEMPLATES: TemplateDefinition[] = [
     elements: [
       bg('shader-simplex-noise', SQ.w, SQ.h, S15),
       text({ content: 'This saved us hours every week', x: 90, y: 330, width: 900, height: 380, fontSize: 84, zIndex: 1, durationInFrames: S15, effect: 'marker-highlight', highlight: 'hours every week' }),
-      text({ content: '— Happy customer', x: 90, y: 760, width: 900, height: 100, fontSize: 40, zIndex: 2, durationInFrames: S15, effect: 'soft-blur-in' }),
+      text({ content: '— Happy customer', x: 90, y: 760, width: 900, height: 100, fontSize: 40, zIndex: 2, durationInFrames: S15, color: DIM, effect: 'soft-blur-in' }),
     ],
   },
 
@@ -358,7 +378,7 @@ export const TEMPLATES: TemplateDefinition[] = [
     fps: 30,
     durationInSeconds: 15,
     elements: [
-      bg('shader-dot-orbit', LAND.w, LAND.h, S15),
+      bg('shader-dot-orbit', LAND.w, LAND.h, S15, { speed: 0.15, opacity: 0.14 }),
       text({ content: 'Ship it in one command', x: 160, y: 110, width: 1600, height: 150, fontSize: 62, zIndex: 1, durationInFrames: S15, effect: 'kinetic-center-build' }),
       block({
         preset: 'terminal-simulator',
@@ -382,8 +402,8 @@ export const TEMPLATES: TemplateDefinition[] = [
     fps: 30,
     durationInSeconds: 10,
     elements: [
-      bg('shader-neuro-noise', LAND.w, LAND.h, S10),
-      text({ content: 'Three lines. That’s the whole API.', x: 160, y: 120, width: 1600, height: 130, fontSize: 54, zIndex: 1, durationInFrames: S10, effect: 'soft-blur-in' }),
+      bg('shader-neuro-noise', LAND.w, LAND.h, S10, { speed: 0.2, opacity: 0.25 }),
+      text({ content: 'Three lines. That’s the whole API.', x: 160, y: 120, width: 1600, height: 130, fontSize: 54, zIndex: 1, durationInFrames: S10, color: DIM, effect: 'soft-blur-in' }),
       block({
         preset: 'glass-code-block',
         x: 390, y: 300, width: 1140, height: 690,
@@ -411,7 +431,7 @@ export const TEMPLATES: TemplateDefinition[] = [
         preset: 'progress-steps',
         x: 210, y: 600, width: 1500, height: 260,
         zIndex: 2, startFrame: 60, durationInFrames: S10 - 60,
-        props: { steps: 'Connect\nGenerate\nShip', activeColor: '#22c55e', textColor: '#ffffff' },
+        props: { steps: 'Connect\nGenerate\nShip', activeColor: GREEN, textColor: INK },
       }),
     ],
   },
@@ -424,8 +444,8 @@ export const TEMPLATES: TemplateDefinition[] = [
     fps: 30,
     durationInSeconds: 10,
     elements: [
-      bg('shader-dithering', LAND.w, LAND.h, S10),
-      text({ content: 'Works with everything', x: 160, y: 140, width: 1600, height: 130, fontSize: 52, zIndex: 1, durationInFrames: S10, effect: 'tracking-in' }),
+      bg('shader-dithering', LAND.w, LAND.h, S10, { speed: 0.2, opacity: 0.2 }),
+      text({ content: 'Works with everything', x: 160, y: 140, width: 1600, height: 130, fontSize: 52, zIndex: 1, durationInFrames: S10, color: SKY, effect: 'tracking-in' }),
       text({ content: 'React\nTypeScript\nRemotion\nAWS Lambda\nSupabase', x: 0, y: 360, width: 1920, height: 420, fontSize: 84, zIndex: 2, durationInFrames: S10, effect: 'perspective-marquee' }),
     ],
   },
