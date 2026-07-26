@@ -5,6 +5,36 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Changed: templates follow Remocn's design rules (they were slop)
+
+### Changed
+- **Every template's background is now restrained.** The first pass ran vivid
+  shaders at full opacity and `speed: 1` in nearly every template, which is
+  precisely what Remocn's `anti-patterns.md` calls out as "the #1 tell" of
+  generic-looking work: a bright, fast, full-frame wash that fights the text for
+  attention. The `bg()` helper now defaults to `speed 0.3 / opacity 0.35`, with
+  visually busy shaders (liquid-metal, metaballs, god-rays, dithering,
+  dot-orbit) knocked back further to ~0.14–0.22. The composition's near-black
+  shows through, so contrast — and legibility — goes up.
+- **One accent colour per template, on a neutral base.** Text now uses a small
+  palette from `design.md` (`#fafafa` primary, `#a1a1aa` secondary) with exactly
+  one accent per video — green `#22c55e`, sky `#0ea5e9`, violet `#a855f7`, or
+  warm `#d97757` — applied only to the emphasised element (a kicker, an active
+  number, a price). Previously every line was pure white, so nothing led.
+- **ALL-CAPS removed** ("JUST SHIPPED" → "Just shipped", "NOW LIVE" → "Now
+  live", "30% OFF" → "30% off", …). `design.md` rule 2 is explicit that
+  uppercase shouldn't be a reflex for emphasis; hierarchy comes from size,
+  colour and weight instead.
+- Verified by rendering a template through the CLI and comparing frames, not by
+  assuming — the difference is large and visible.
+
+Note: this is a correction of my own earlier work. The design rules were read
+during the template build and then under-applied.
+
+Files: `src/content/templates/definitions.ts`
+
+---
+
 ## [2026-07-27] — Changed: dashboard groups projects by aspect ratio
 
 ### Changed
