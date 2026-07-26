@@ -1,4 +1,5 @@
-import { Undo2, Redo2, Clapperboard, Type, Sparkles, Play, Pause, SquareTerminal } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Undo2, Redo2, Clapperboard, Type, Sparkles, Play, Pause, SquareTerminal, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -18,6 +19,7 @@ interface ToolbarProps {
 }
 
 export default function Toolbar({ project }: ToolbarProps) {
+  const navigate = useNavigate();
   const { addText, addShader, addBlock } = useCanvasEngine();
   const isPlaying     = useEditorStore((s) => s.isPlaying);
   const setIsPlaying  = useEditorStore((s) => s.setIsPlaying);
@@ -29,13 +31,30 @@ export default function Toolbar({ project }: ToolbarProps) {
 
   return (
     <div className="h-11 border-b border-studio-border bg-studio-panel flex items-center px-3 gap-0.5 shrink-0">
-      {/* Logo */}
-      <div className="flex items-center gap-2 px-1.5 mr-2">
+      {/* Back to the project list. Edits are already autosaved (2 s debounce +
+          localStorage persist), so leaving mid-edit is safe. */}
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Back to projects"
+        onClick={() => navigate('/dashboard')}
+        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
+      >
+        <ArrowLeft className="w-4 h-4" />
+      </Button>
+
+      {/* Logo — also goes back to the project list */}
+      <button
+        type="button"
+        onClick={() => navigate('/dashboard')}
+        title="Back to projects"
+        className="flex items-center gap-2 px-1.5 mr-2 rounded-studio-sm hover:bg-studio-surface transition-colors duration-[120ms] cursor-pointer"
+      >
         <div className="w-5 h-5 rounded-[4px] bg-studio-accent flex items-center justify-center">
           <Clapperboard className="w-3 h-3 text-white" />
         </div>
         <span className="text-[13px] font-semibold text-studio-text">MotionStudio</span>
-      </div>
+      </button>
 
       <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />
 

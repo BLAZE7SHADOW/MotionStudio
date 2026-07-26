@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import ProjectThumbnail from './ProjectThumbnail';
 
 interface ProjectCardProps {
   project: Project;
@@ -65,12 +66,12 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           <Trash2 className="size-3.5" />
         </button>
 
-        {/* Thumbnail */}
+        {/* Thumbnail — a real frame of the project, animating on hover */}
         <div
-          className="w-full bg-studio-bg flex items-center justify-center border-b border-studio-border"
+          className="w-full bg-studio-bg border-b border-studio-border overflow-hidden"
           style={{ aspectRatio: `${ratio.w} / ${Math.min(ratio.h, ratio.w * 1.5)}` }}
         >
-          <span className="text-[11px] font-mono text-studio-text-faint">{project.aspectRatio}</span>
+          <ProjectThumbnail project={project} />
         </div>
 
         {/* Metadata */}
