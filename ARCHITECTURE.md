@@ -278,6 +278,22 @@ before invoking (uploaded in the background at import time via presigned PUTs fr
 > that command re-run, or cloud renders keep executing the old bundle while
 > the rest of the app looks fully deployed and up to date.
 
+### The render endpoint's hidden ceiling
+`api/render.ts` starts a Lambda render then **polls it server-side** for up to
+6 minutes (`120 × 3s`) before returning the S3 URL. That only works because no
+one has rendered anything long: no `maxDuration` is configured in `vercel.json`
+or the function itself, so Vercel terminates it at the platform default (~60s) —
+far short of its own loop. A 10s clip finishes inside that window; a 60–90s one
+won't, and the caller sees a timeout even though Lambda succeeded and the file
+is sitting in S3.
+
+Raising `maxDuration` only moves the ceiling. The correct fix is to stop holding
+the request open: return the `renderId` immediately and let the client poll a
+`/api/render-status` endpoint — the standard serverless pattern for work that
+outlives a request, and it removes the limit rather than enlarging it. Not done
+yet; browser export (WebCodecs, entirely client-side) has no such constraint and
+covers long videos today.
+
 ### Auth, quota & the serverless guard
 Three sign-in paths (Google OAuth, email/password, anonymous guest with 1 free cloud
 render), all owned by a single `useAuth` hook — components never touch supabase

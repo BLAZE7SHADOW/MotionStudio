@@ -5,6 +5,35 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Added: 60s and 90s project lengths
+
+### Added
+- **Project duration can now be 60s or 90s**, not just up to 30s. The cap made
+  the product a short-clip maker by definition; a product explainer — the video
+  we want to make to test whether the tool delivers real value — is 60–90s and
+  simply couldn't be built. `DURATION_OPTIONS` in `ProjectSettingsPopover.tsx`
+  gains 60/90 and the picker moves to a 3-column grid to fit six options.
+- No timeline work was needed: `chooseTickIntervalFrames` already selects from
+  `[1,2,5,10,15,30,60,…]`-second spacings targeting ~80px per label, so a 90s
+  project lands on 10s ticks by itself. Verified by rendering the tail frames
+  (2690–2699) of a 2700-frame composition through the Remotion CLI.
+
+### Known limitation
+- **Cloud Render can't finish a 60s/90s video.** `api/render.ts` polls Lambda
+  for up to 6 minutes (`120 × 3s`), but no `maxDuration` is configured anywhere,
+  so Vercel kills the function at its default (~60s). Short clips render inside
+  that window — which is why the two renders on record succeeded — but a long
+  one will fail with a timeout even though Lambda finished and the file exists
+  in S3. **Browser export is unaffected**: it's WebCodecs on the user's own
+  machine with no server involved. Documented in USER_GUIDE §3 and §15.
+  The proper fix is to stop polling server-side: return the `renderId`
+  immediately and let the client poll a status endpoint, which removes the
+  ceiling entirely rather than raising it.
+
+Files: `src/features/workspace/components/ProjectSettingsPopover.tsx`
+
+---
+
 ## [2026-07-27] — Changed: templates follow Remocn's design rules (they were slop)
 
 ### Changed

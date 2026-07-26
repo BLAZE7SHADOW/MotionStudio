@@ -87,8 +87,11 @@ That's the whole loop: **add → arrange → animate → preview → export.**
 - **Cloud sync**: when signed in, projects also save to your account a couple of
   seconds after every edit, and load back on any device you log in from. Media
   files stay on the device you uploaded them from (cloud renders can still use them).
-- **Duration**: 10 seconds by default. Change it (5 / 10 / 15 / 30s) in the same
-  settings popover. Changing the frame rate keeps the length in seconds.
+- **Duration**: 10 seconds by default. Change it (5 / 10 / 15 / 30 / 60 / 90s) in
+  the same settings popover. Changing the frame rate keeps the length in seconds.
+  **Note for 60s and 90s projects:** use the **Browser** export tab — it runs on
+  your own machine and handles any length. Cloud Render currently can't finish a
+  video that long (see §15).
 - **Delete**: hover a project card on the Dashboard → trash icon → confirm.
   Removes the project and its media everywhere it's stored — this device,
   the cloud, and any other browser you've signed into. Can't be undone.
@@ -402,7 +405,12 @@ npm run render    # render the default composition to out/video.mp4
   wide) — they're not usable on phones or small tablets, and show a
   "use a bigger screen" message below that width. The landing page and
   sign-in work on any screen size.
-- Project length is chosen from presets (5 / 10 / 15 / 30s); no custom value yet.
+- Project length is chosen from presets (5 / 10 / 15 / 30 / 60 / 90s); no custom
+  value yet.
+- **Cloud Render can't complete long videos yet.** The server waits for the
+  render, but it gets cut off after about a minute — long enough for short
+  clips, not for a 60s or 90s one. Use the **Browser** export tab for those; it
+  runs entirely on your machine and has no such limit.
 - **Scene grouping** (moving several elements as one unit) isn't built yet — use
   timeline positioning to sequence.
 - **Browser export** requires Chrome or Edge (WebCodecs). On Safari or other
