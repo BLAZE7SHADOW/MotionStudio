@@ -27,8 +27,15 @@ export const track = {
     posthog.capture('auth_upgrade_to_google_clicked'),
 
   // ── Projects ──────────────────────────────────────────────────────────
-  projectCreated: (props: { aspect_ratio: string; fps: number }) =>
-    posthog.capture('project_created', props),
+  // template_id / template_category are 'blank' for an empty project — the
+  // split between them is how we learn which templates (and which audience)
+  // actually get used.
+  projectCreated: (props: {
+    aspect_ratio: string;
+    fps: number;
+    template_id: string;
+    template_category: string;
+  }) => posthog.capture('project_created', props),
 
   projectOpened: (props: { aspect_ratio: string; fps: number }) =>
     posthog.capture('project_opened', props),
