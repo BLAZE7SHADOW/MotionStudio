@@ -1,5 +1,6 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
 import { Player } from '@remotion/player';
+import type { PlayerRef } from '@remotion/player';
 import { AbsoluteFill } from 'remotion';
 import { Effects, LazyTypewriter, LazyInlineHighlight, LazyMarkerHighlight } from '@/engines/rendering/components/renderers/TextRenderer';
 import type { TextEffect } from '@/engines/project';
@@ -58,6 +59,22 @@ function PreviewComposition({ effect, color }: { effect: TextEffect; color: stri
  * since a plain <select> option only has a name.
  */
 export default function TextEffectPreview({ effect, color }: { effect: TextEffect; color: string }) {
+  const playerRef = useRef<PlayerRef>(null);
+
+  // A fresh object here makes the Player treat every parent render as new data
+  // and reset to frame 0 — and the Properties panel re-renders on any store
+  // change, so the preview never got past its first frame.
+  const inputProps = useMemo(() => ({ effect, color }), [effect, color]);
+
+  // Driven explicitly rather than via autoPlay, which doesn't reliably start
+  // when the element mounts inside a panel that is still settling.
+  useEffect(() => {
+    const p = playerRef.current;
+    if (!p) return;
+    p.seekTo(0);
+    p.play();
+  }, [effect]);
+
   return (
     <div
       className="rounded-studio-md overflow-hidden border border-studio-border"
@@ -65,8 +82,9 @@ export default function TextEffectPreview({ effect, color }: { effect: TextEffec
     >
       <Player
         key={effect}
+        ref={playerRef}
         component={PreviewComposition}
-        inputProps={{ effect, color }}
+        inputProps={inputProps}
         durationInFrames={90}
         fps={30}
         compositionWidth={PREVIEW_W}

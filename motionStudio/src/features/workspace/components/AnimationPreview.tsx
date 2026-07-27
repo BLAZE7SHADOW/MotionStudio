@@ -1,4 +1,6 @@
+import { useEffect, useMemo, useRef } from 'react';
 import { Player } from '@remotion/player';
+import type { PlayerRef } from '@remotion/player';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
 import { evaluateAnimations } from '@/engines/animation';
 import type { Animation } from '@/engines/project';
@@ -39,14 +41,29 @@ function PreviewComposition({ animations }: { animations: Animation[] }) {
 export default function AnimationPreview({
   animations, size = 28,
 }: { animations: Animation[]; size?: number }) {
+  const playerRef = useRef<PlayerRef>(null);
+  // Callers build this array inline, so it is a new reference every render.
+  // Keying the memo on the array's *contents* is what actually holds the
+  // Player still — memoising on the array itself would never hit.
+  const key = JSON.stringify(animations);
+  const inputProps = useMemo(() => ({ animations }), [key]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const p = playerRef.current;
+    if (!p) return;
+    p.seekTo(0);
+    p.play();
+  }, [key]);
+
   return (
     <div
       className="rounded-studio-sm overflow-hidden border border-studio-border bg-studio-bg shrink-0"
       style={{ width: size, height: size }}
     >
       <Player
+        ref={playerRef}
         component={PreviewComposition}
-        inputProps={{ animations }}
+        inputProps={inputProps}
         durationInFrames={PREVIEW_DURATION}
         fps={PREVIEW_FPS}
         compositionWidth={size}

@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Player } from '@remotion/player';
+import type { PlayerRef } from '@remotion/player';
 import { AbsoluteFill } from 'remotion';
 import { Shaders } from '@/engines/rendering/components/renderers/ShaderRenderer';
 import type { ShaderPreset } from '@/engines/project';
@@ -25,6 +27,18 @@ function PreviewComposition({ preset }: { preset: ShaderPreset }) {
  * low resolution, autoplaying on loop.
  */
 export default function ShaderPreview({ preset }: { preset: ShaderPreset }) {
+  const playerRef = useRef<PlayerRef>(null);
+  // Referentially stable, or the Player resets to frame 0 on every re-render
+  // of the Properties panel and the preview never advances.
+  const inputProps = useMemo(() => ({ preset }), [preset]);
+
+  useEffect(() => {
+    const p = playerRef.current;
+    if (!p) return;
+    p.seekTo(0);
+    p.play();
+  }, [preset]);
+
   return (
     <div
       className="rounded-studio-md overflow-hidden border border-studio-border"
@@ -32,8 +46,9 @@ export default function ShaderPreview({ preset }: { preset: ShaderPreset }) {
     >
       <Player
         key={preset}
+        ref={playerRef}
         component={PreviewComposition}
-        inputProps={{ preset }}
+        inputProps={inputProps}
         durationInFrames={150}
         fps={30}
         compositionWidth={PREVIEW_W}
