@@ -14,3 +14,4 @@ export {
 export type { UpdateProjectInput } from './store';
 export { saveProject, loadProjects, deleteCloudProject } from './cloudSync';
 export { deleteProjectCompletely } from './deleteProject';
+export { projectShaderPresets } from './shaders';

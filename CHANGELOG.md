@@ -23,11 +23,16 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
   forgotten by the other. The list of shaders to warm is likewise derived from
   the template definitions rather than hardcoded.
 
-### Deliberately not done
-- **No prefetching on the dashboard.** Project thumbnails already load exactly
-  the shaders those projects use, on mount — there's nothing to warm ahead of
-  time. Prefetching the full set there would fetch ~156 KB of shaders a user
-  may never see, on a page that typically needs one or two.
+### Also on the dashboard — scoped to the user's own projects
+- The dashboard warms **only the shaders its projects actually use**, derived
+  from the projects themselves. This is bounded by definition: it can never
+  fetch more than the thumbnails would fetch anyway as their cards mount, it
+  only moves the work earlier — which matters because a card below the fold
+  doesn't mount its thumbnail until scrolled near, so scrolling used to stall
+  on a fetch.
+- What is *not* done there is prefetching the whole 18-shader set, which would
+  pull ~156 KB for backgrounds a user may never see on a page that typically
+  needs one or two.
 
 ### Note on the earlier "slower" report
 `initialFrame` was ruled out as a cause by reading the Player source: it's used
