@@ -74,6 +74,10 @@ export default function ProjectThumbnail({ project }: { project: Project }) {
           component={MotionComposition}
           inputProps={inputProps}
           durationInFrames={Math.max(project.durationInFrames, 1)}
+          // Same frame the static thumbnail shows, so hovering continues from
+          // what you were already looking at rather than cutting to the blank
+          // opacity-0 first frame.
+          initialFrame={posterFrame}
           fps={project.fps}
           compositionWidth={width}
           compositionHeight={height}

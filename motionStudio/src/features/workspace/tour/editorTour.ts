@@ -49,7 +49,7 @@ export const EDITOR_TOUR_STEPS: DriveStep[] = [
     popover: {
       title: 'Everything about the selection',
       description:
-        'Content, colour, effects, motion and position. Note that motion pauses while an element is selected, so you can position it — the canvas tells you when that’s happening.',
+        'Content, colour, effects, motion and position. Headings with an arrow open and close — <strong>Motion starts closed</strong>, and that’s where the animation presets live. Motion also pauses while an element is selected so you can position it; the canvas says so when it does.',
       side: 'left',
       align: 'start',
     },

@@ -23,11 +23,18 @@ export default function TemplatePreview({ template }: { template: TemplateDefini
   // CanvasPanel's inputProps and PRESET_PREVIEW_ANIMATIONS.
   const inputProps = useMemo(() => ({ elements, assets: [] }), [elements]);
 
+  const duration = templateDurationInFrames(template);
+
   return (
     <Player
       component={MotionComposition}
       inputProps={inputProps}
-      durationInFrames={templateDurationInFrames(template)}
+      durationInFrames={duration}
+      // Never start at frame 0. Every template opens with an entrance effect,
+      // and those begin at opacity 0 — so frame 0 is a genuinely blank frame,
+      // which reads as a broken preview. Starting part-way in shows real
+      // content immediately; the loop still comes back around to the entrance.
+      initialFrame={Math.round(duration * 0.35)}
       fps={template.fps}
       compositionWidth={width}
       compositionHeight={height}
