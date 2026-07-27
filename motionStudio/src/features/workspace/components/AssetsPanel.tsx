@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
-import { Image, Video, Music, Upload, Search, FolderOpen, CloudUpload, X, Play, Sparkle, Loader2, FileWarning } from 'lucide-react';
+import { Music, Upload, Search, FolderOpen, X, Play, Sparkle, Loader2, FileWarning } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { useAssetEngine, isUrlUsable } from '@/engines/asset';
+import { useAssetEngine, isUrlUsable, assetTypeFromFile } from '@/engines/asset';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,38 +10,24 @@ import { api } from '@/lib/apiClient';
 import type { StockResult, StockType } from '@/lib/apiClient';
 import type { Asset, AssetType } from '@/engines/asset';
 
-type TabKey = 'images' | 'videos' | 'audio' | 'upload' | 'stock';
+type TabKey = 'library' | 'stock';
 
-/* which asset type each media tab shows, and its accept filter */
-const TAB_TYPE: Record<'images' | 'videos' | 'audio', { type: AssetType; accept: string }> = {
-  images: { type: 'image', accept: 'image/*' },
-  videos: { type: 'video', accept: 'video/*' },
-  audio:  { type: 'audio', accept: 'audio/*' },
-};
 
-const EMPTY_STATES = {
-  images: { icon: Image, title: 'No images yet', sub: 'Add images to bring your project to life' },
-  videos: { icon: Video, title: 'No videos yet', sub: 'Import video clips to use in your timeline' },
-  audio:  { icon: Music, title: 'No audio yet',  sub: 'Add music or sound effects to your project' },
-} as const;
-
-/* ── reusable empty state ── */
-function EmptyAssetState({
-  tab,
-  onBrowse,
-}: {
-  tab: keyof typeof EMPTY_STATES;
-  onBrowse: () => void;
-}) {
-  const { icon: Icon, title, sub } = EMPTY_STATES[tab];
+/* ── empty library ──
+   The old version was three near-identical "No images yet" cards, one per
+   media tab, and none of them mentioned Upload or Stock — the only two ways
+   to actually get content. This one names both routes. */
+function EmptyLibraryState({ onBrowse }: { onBrowse: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center flex-1 w-full gap-4 px-4 text-center">
+    <div className="flex flex-col items-center justify-center flex-1 w-full gap-4 px-4 py-10 text-center">
       <div className="w-10 h-10 rounded-studio-lg bg-studio-surface flex items-center justify-center shrink-0">
-        <Icon className="w-5 h-5 text-studio-text-faint" strokeWidth={1.5} />
+        <FolderOpen className="w-5 h-5 text-studio-text-faint" strokeWidth={1.5} />
       </div>
       <div className="flex flex-col gap-1">
-        <p className="text-[12px] font-medium text-studio-text-secondary">{title}</p>
-        <p className="text-[11px] text-studio-text-faint leading-relaxed">{sub}</p>
+        <p className="text-[12px] font-medium text-studio-text-secondary">No media yet</p>
+        <p className="text-[11px] text-studio-text-faint leading-relaxed">
+          Add your own files, or browse free stock in the Stock tab.
+        </p>
       </div>
       <button
         type="button"
@@ -142,102 +128,43 @@ function AssetCard({
   );
 }
 
-/* ── grid for a media tab ── */
-function AssetGrid({
+/* ── the library grid, with its two distinct empty states ── */
+function LibraryGrid({
   assets,
-  tab,
+  hasAnyAssets,
+  filtered,
   onBrowse,
   onAdd,
   onRemove,
 }: {
   assets: Asset[];
-  tab: keyof typeof EMPTY_STATES;
+  hasAnyAssets: boolean;
+  filtered: boolean;
   onBrowse: () => void;
   onAdd: (asset: Asset) => void;
   onRemove: (id: string) => void;
 }) {
-  if (assets.length === 0) return <EmptyAssetState tab={tab} onBrowse={onBrowse} />;
+  // "nothing here yet" and "nothing matches your filter" need different
+  // answers — offering a Browse button to someone who just mistyped a search
+  // is unhelpful.
+  if (assets.length === 0) {
+    if (hasAnyAssets && filtered) {
+      return (
+        <div className="flex flex-col items-center justify-center flex-1 gap-1.5 px-4 py-10 text-center">
+          <Search className="w-4 h-4 text-studio-text-faint" strokeWidth={1.5} />
+          <p className="text-[12px] text-studio-text-muted">No matching assets</p>
+          <p className="text-[11px] text-studio-text-faint">Try a different search or filter.</p>
+        </div>
+      );
+    }
+    return <EmptyLibraryState onBrowse={onBrowse} />;
+  }
+
   return (
     <div className="grid grid-cols-2 gap-2 px-3 pb-3">
       {assets.map((a) => (
         <AssetCard key={a.id} asset={a} onAdd={() => onAdd(a)} onRemove={() => onRemove(a.id)} />
       ))}
-    </div>
-  );
-}
-
-/* ── upload tab ── */
-function UploadTab({
-  onFiles,
-  onBrowse,
-}: {
-  onFiles: (files: File[]) => void;
-  onBrowse: (accept: string) => void;
-}) {
-  const [dragging, setDragging] = useState(false);
-
-  return (
-    <div className="flex flex-col flex-1 gap-3 px-3 py-4">
-      {/* Drop zone */}
-      <div
-        onDragEnter={() => setDragging(true)}
-        onDragLeave={() => setDragging(false)}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragging(false);
-          onFiles(Array.from(e.dataTransfer.files));
-        }}
-        onClick={() => onBrowse('image/*,video/*,audio/*')}
-        className={[
-          'flex flex-col items-center justify-center gap-3 rounded-studio-lg border-2 border-dashed py-8 px-4 text-center transition-colors duration-120 cursor-pointer',
-          dragging
-            ? 'border-studio-accent bg-studio-accent-subtle'
-            : 'border-studio-border hover:border-studio-border-strong hover:bg-studio-surface/40',
-        ].join(' ')}
-      >
-        <div className={[
-          'w-10 h-10 rounded-studio-lg flex items-center justify-center transition-colors duration-120',
-          dragging ? 'bg-studio-accent-subtle' : 'bg-studio-surface',
-        ].join(' ')}>
-          <CloudUpload className={[
-            'w-5 h-5 transition-colors duration-120',
-            dragging ? 'text-studio-accent' : 'text-studio-text-faint',
-          ].join(' ')} strokeWidth={1.5} />
-        </div>
-        <div className="flex flex-col gap-1">
-          <p className="text-[12px] font-medium text-studio-text-secondary">
-            {dragging ? 'Drop to upload' : 'Drop files here'}
-          </p>
-          <p className="text-[11px] text-studio-text-faint">Images, videos, and audio</p>
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-px bg-studio-border" />
-        <span className="text-[10px] text-studio-text-faint uppercase tracking-wider">or</span>
-        <div className="flex-1 h-px bg-studio-border" />
-      </div>
-
-      {/* File type buttons */}
-      <div className="flex flex-col gap-1.5">
-        {[
-          { icon: Image, label: 'Browse Images', accept: 'image/*' },
-          { icon: Video, label: 'Browse Videos', accept: 'video/*' },
-          { icon: Music, label: 'Browse Audio',  accept: 'audio/*' },
-        ].map(({ icon: Icon, label, accept }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => onBrowse(accept)}
-            className="flex items-center gap-2.5 h-8 px-3 rounded-studio-md bg-studio-surface border border-studio-border text-[12px] text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
-          >
-            <Icon className="w-3.5 h-3.5 text-studio-text-faint" strokeWidth={1.5} />
-            {label}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }
@@ -289,17 +216,40 @@ function StockTab({
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div className="flex flex-col gap-2 px-3 pt-1 pb-3 shrink-0">
+        {/* Stock needs an account, and the panel used to look fully usable
+            when signed out — you only found out after submitting, as red text
+            with no way to act on it. Say so up front instead. */}
+        {!token && (
+          <div className="rounded-studio-md border border-studio-border bg-studio-surface/60 px-2.5 py-2">
+            <p className="text-[11px] text-studio-text-muted leading-relaxed">
+              Sign in to search free Pexels photos and video.
+            </p>
+          </div>
+        )}
+
         <form
           onSubmit={(e) => { e.preventDefault(); runSearch(query, type); }}
-          className="relative"
+          className="flex items-center gap-1.5"
         >
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-studio-text-faint pointer-events-none" />
-          <Input
-            placeholder="Search Pexels..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="h-8 pl-8 text-[12px] bg-studio-surface border-studio-border text-studio-text placeholder:text-studio-text-faint rounded-studio-md focus-visible:ring-studio-accent focus-visible:border-studio-accent-border"
-          />
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-studio-text-faint pointer-events-none" />
+            <Input
+              placeholder="Search Pexels..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              disabled={!token}
+              className="h-8 pl-8 text-[12px] bg-studio-surface border-studio-border text-studio-text placeholder:text-studio-text-faint rounded-studio-md focus-visible:ring-studio-accent focus-visible:border-studio-accent-border disabled:opacity-50"
+            />
+          </div>
+          {/* Was Enter-only, with nothing on screen saying so. */}
+          <button
+            type="submit"
+            disabled={!token || !query.trim()}
+            title="Search"
+            className="h-8 w-8 shrink-0 flex items-center justify-center rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover disabled:opacity-40 disabled:hover:bg-studio-accent text-white transition-colors duration-120"
+          >
+            <Search className="w-3.5 h-3.5" />
+          </button>
         </form>
         <div className="grid grid-cols-2 gap-1.5">
           {(['photo', 'video'] as const).map((t) => (
@@ -389,7 +339,11 @@ export default function AssetsPanel() {
   const { addImage, addVideo, addAudio } = useCanvasEngine();
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<TabKey>('images');
+  const [activeTab, setActiveTab] = useState<TabKey>('library');
+  const [typeFilter, setTypeFilter] = useState<AssetType | 'all'>('all');
+  const [dragging, setDragging] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [rejected, setRejected] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   /* place an asset onto the canvas / timeline */
@@ -403,8 +357,9 @@ export default function AssetsPanel() {
   }
 
   const q = search.trim().toLowerCase();
-  const byType = (type: AssetType) =>
-    assets.filter((a) => a.type === type && (!q || a.name.toLowerCase().includes(q)));
+  const visibleAssets = assets.filter(
+    (a) => (typeFilter === 'all' || a.type === typeFilter) && (!q || a.name.toLowerCase().includes(q)),
+  );
 
   function openPicker(accept: string) {
     const input = inputRef.current;
@@ -414,10 +369,23 @@ export default function AssetsPanel() {
   }
 
   async function handleFiles(files: File[]) {
-    const created = await uploadFiles(files);
-    if (created.length > 0) {
-      const t = created[0].type;
-      setActiveTab(t === 'image' ? 'images' : t === 'video' ? 'videos' : 'audio');
+    // The engine silently skips files it can't type, so dropping a PDF used to
+    // do nothing at all — no message, no rejected list. Work out what won't be
+    // accepted up front so we can say so.
+    const unsupported = files.filter((f) => !assetTypeFromFile(f));
+    setRejected(unsupported.map((f) => f.name));
+
+    const supported = files.filter((f) => assetTypeFromFile(f));
+    if (supported.length === 0) return;
+
+    setBusy(true);
+    try {
+      await uploadFiles(supported);
+      // Deliberately does NOT switch tabs: it used to jump based on the first
+      // file's type, moving the panel out from under you mid-drop.
+      setActiveTab('library');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -426,7 +394,22 @@ export default function AssetsPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-studio-panel overflow-hidden">
+    <div
+      className="relative flex flex-col h-full bg-studio-panel overflow-hidden"
+      onDragEnter={(e) => { if (e.dataTransfer.types.includes('Files')) setDragging(true); }}
+      onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) e.preventDefault(); }}
+      onDragLeave={(e) => {
+        // Only clear when the pointer actually leaves the panel, not when it
+        // crosses between children (dragleave fires on every child boundary).
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false);
+      }}
+      onDrop={(e) => {
+        if (!e.dataTransfer.types.includes('Files')) return;
+        e.preventDefault();
+        setDragging(false);
+        handleFiles(Array.from(e.dataTransfer.files));
+      }}
+    >
       {/* hidden file input shared by all browse actions */}
       <input
         ref={inputRef}
@@ -446,67 +429,125 @@ export default function AssetsPanel() {
         </span>
       </div>
 
-      {/* Search */}
-      <div className="px-3 pt-3 pb-2 shrink-0">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-studio-text-faint pointer-events-none" />
-          <Input
-            placeholder="Search assets..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-8 pl-8 text-[12px] bg-studio-surface border-studio-border text-studio-text placeholder:text-studio-text-faint rounded-studio-md focus-visible:ring-studio-accent focus-visible:border-studio-accent-border"
-          />
-        </div>
+      {/* Adding media is the whole point of this panel on a new project, so it
+          gets a permanent control rather than being one of five 40px tabs the
+          user has to notice. */}
+      <div className="px-3 pt-3 shrink-0">
+        <button
+          type="button"
+          onClick={() => openPicker('image/*,video/*,audio/*')}
+          disabled={busy}
+          className="w-full h-9 flex items-center justify-center gap-1.5 rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover disabled:opacity-60 text-white text-[12px] font-medium transition-colors duration-120"
+        >
+          {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+          {busy ? 'Adding…' : 'Add media'}
+        </button>
+        <p className="mt-1.5 text-[10px] text-studio-text-faint text-center">
+          or drop files anywhere in this panel
+        </p>
       </div>
 
-      {/* Tabs */}
+      {rejected.length > 0 && (
+        <div className="mx-3 mt-2 shrink-0 rounded-studio-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2">
+          <p className="text-[10px] text-amber-300/90 leading-relaxed">
+            Couldn’t add {rejected.join(', ')} — unsupported file type.
+          </p>
+          <button
+            type="button"
+            onClick={() => setRejected([])}
+            className="mt-1 text-[10px] text-amber-300/70 hover:text-amber-200 underline underline-offset-2"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       <Tabs
         value={activeTab}
         onValueChange={(v) => setActiveTab(v as TabKey)}
         className="flex flex-col flex-1 min-h-0"
       >
-        <div className="px-3 pt-2 pb-3 shrink-0">
-          <TabsList className="w-full grid grid-cols-5 h-14! bg-studio-surface rounded-studio-xl p-1">
+        <div className="px-3 pt-3 pb-2 shrink-0">
+          <TabsList className="w-full grid grid-cols-2 h-8 bg-studio-surface rounded-studio-lg p-1">
             {([
-              { value: 'images', label: 'Images', icon: Image },
-              { value: 'videos', label: 'Videos', icon: Video },
-              { value: 'audio',  label: 'Audio',  icon: Music },
-              { value: 'stock',  label: 'Stock',  icon: Sparkle },
-              { value: 'upload', label: 'Upload', icon: Upload },
+              { value: 'library', label: 'Library', icon: FolderOpen },
+              { value: 'stock',   label: 'Stock',   icon: Sparkle },
             ] as const).map(({ value, label, icon: Icon }) => (
               <TabsTrigger
                 key={value}
                 value={value}
-                className="h-full flex flex-col items-center justify-center gap-1.5 rounded-studio-lg px-0 text-studio-text-faint transition-all duration-120 data-[state=active]:bg-studio-overlay data-[state=active]:text-studio-text data-[state=active]:shadow-[0_1px_4px_oklch(0_0_0/40%)]"
+                className="h-full flex items-center justify-center gap-1.5 rounded-studio-md text-[11px] font-medium text-studio-text-faint transition-all duration-120 data-[state=active]:bg-studio-overlay data-[state=active]:text-studio-text"
               >
-                <Icon className="w-4 h-4" strokeWidth={1.5} />
-                <span className="text-[11px] font-medium leading-none">{label}</span>
+                <Icon className="w-3.5 h-3.5" strokeWidth={1.5} />
+                {label}
               </TabsTrigger>
             ))}
           </TabsList>
         </div>
 
-        {/* Content */}
-        <TabsContent value="images" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-y-auto">
-          <AssetGrid assets={byType('image')} tab="images" onBrowse={() => openPicker(TAB_TYPE.images.accept)} onAdd={handleAdd} onRemove={removeAsset} />
-        </TabsContent>
+        <TabsContent value="library" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-hidden">
+          {/* Search and the type filter live INSIDE Library — they only ever
+              acted on it, but used to render over Stock and Upload too where
+              typing produced no feedback at all. */}
+          {assets.length > 0 && (
+            <div className="px-3 pb-2 shrink-0 flex flex-col gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-studio-text-faint pointer-events-none" />
+                <Input
+                  placeholder="Search assets..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-8 pl-8 text-[12px] bg-studio-surface border-studio-border text-studio-text placeholder:text-studio-text-faint rounded-studio-md focus-visible:ring-studio-accent focus-visible:border-studio-accent-border"
+                />
+              </div>
+              <div className="flex items-center gap-1">
+                {([
+                  { value: 'all',   label: 'All' },
+                  { value: 'image', label: 'Images' },
+                  { value: 'video', label: 'Videos' },
+                  { value: 'audio', label: 'Audio' },
+                ] as const).map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setTypeFilter(value)}
+                    className={[
+                      'flex-1 h-6 rounded-studio-sm text-[10px] font-medium transition-colors duration-120',
+                      typeFilter === value
+                        ? 'bg-studio-accent-subtle text-studio-accent'
+                        : 'text-studio-text-faint hover:text-studio-text hover:bg-studio-surface',
+                    ].join(' ')}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-        <TabsContent value="videos" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-y-auto">
-          <AssetGrid assets={byType('video')} tab="videos" onBrowse={() => openPicker(TAB_TYPE.videos.accept)} onAdd={handleAdd} onRemove={removeAsset} />
-        </TabsContent>
-
-        <TabsContent value="audio" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-y-auto">
-          <AssetGrid assets={byType('audio')} tab="audio" onBrowse={() => openPicker(TAB_TYPE.audio.accept)} onAdd={handleAdd} onRemove={removeAsset} />
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <LibraryGrid
+              assets={visibleAssets}
+              hasAnyAssets={assets.length > 0}
+              filtered={!!q || typeFilter !== 'all'}
+              onBrowse={() => openPicker('image/*,video/*,audio/*')}
+              onAdd={handleAdd}
+              onRemove={removeAsset}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="stock" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-hidden">
           <StockTab onImport={handleStockImport} />
         </TabsContent>
-
-        <TabsContent value="upload" className="flex-1 flex flex-col w-full mt-0 min-h-0 overflow-y-auto">
-          <UploadTab onFiles={handleFiles} onBrowse={openPicker} />
-        </TabsContent>
       </Tabs>
+
+      {/* Drop anywhere in the panel, not just on one tab's zone */}
+      {dragging && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-studio-accent-subtle/80 border-2 border-dashed border-studio-accent pointer-events-none">
+          <span className="text-[12px] font-medium text-studio-accent">Drop to add</span>
+        </div>
+      )}
     </div>
   );
 }
