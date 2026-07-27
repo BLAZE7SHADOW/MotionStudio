@@ -5,6 +5,32 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Fixed: dead blob URLs hung the in-browser export forever
+
+### Fixed
+- **Exporting a project whose media wasn't in S3 spun forever** on
+  `GET blob:… net::ERR_FILE_NOT_FOUND`, retrying the failed fetch endlessly
+  instead of failing. A project's stored asset `url` is a `blob:` minted by
+  whichever session imported the file; those die with the session, so a project
+  reopened later — or synced from another device — carries dead references, and
+  the previous code only substituted `storageUrl` when one happened to exist.
+- The web-render path now re-reads asset bytes from IndexedDB and mints a fresh
+  object URL at export time (the same thing `rehydrateAssets` does when opening
+  the editor), falling back to S3, and **revokes them afterwards**. If a
+  referenced file is genuinely gone it now throws a clear message naming the
+  asset instead of hanging — an unexplained hang is worse than an error.
+
+### Known trade-off
+- The main bundle grew from ~1,780 kB to ~2,148 kB (gzip 529 → 621 kB) because
+  `@remotion/media` is statically imported by the video/audio renderers, which
+  are on the editor's critical path — it can't be lazy-loaded without breaking
+  the guarantee that preview and export run the same components. Route-level
+  code splitting (landing vs editor) is the real fix and isn't done.
+
+Files: `src/engines/export/webRenderer.ts`
+
+---
+
 ## [2026-07-27] — Fixed: video and audio now render in the browser too
 
 ### Fixed
