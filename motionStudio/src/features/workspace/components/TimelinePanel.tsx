@@ -1,20 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { Play, Pause, SkipBack } from 'lucide-react';
+import { Play, Pause, SkipBack, Trash2 } from 'lucide-react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { createScale, frameToX, xToFrame, formatFrameLabel } from '@/engines/timeline';
-import type { Project, CanvasElement } from '@/engines/project';
+import type { Project } from '@/engines/project';
 import TimelineRuler from './timeline/TimelineRuler';
 import TimelineClip from './timeline/TimelineClip';
+import { clipLabel } from './timeline/clipLabel';
 
 const TRACK_HEADER_W = 140;
 const RULER_H = 28;
 const TRACK_ROW_H = 50;
-
-function clipLabel(el: CanvasElement): string {
-  if (el.type === 'text') return el.content.trim() || 'Text';
-  return el.type;
-}
 
 interface TimelinePanelProps {
   project: Project;
@@ -27,7 +23,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
   const isPlaying          = useEditorStore((s) => s.isPlaying);
   const setIsPlaying       = useEditorStore((s) => s.setIsPlaying);
-  const { updateElement }  = useCanvasEngine();
+  const { updateElement, removeElement } = useCanvasEngine();
 
   /* top layer (highest zIndex) shown as the top row — Figma/CapCut convention */
   const ordered = [...project.canvas.elements].sort((a, b) => b.zIndex - a.zIndex);
@@ -136,20 +132,34 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
             className="flex-1 overflow-y-auto overflow-x-hidden"
           >
             {ordered.map((el) => (
-              <button
+              <div
                 key={el.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedElement(el.id)}
+                onKeyDown={(e) => e.key === 'Enter' && setSelectedElement(el.id)}
                 className={[
-                  'w-full flex items-center px-3 border-b border-studio-border shrink-0 text-left transition-colors duration-120',
+                  'group w-full flex items-center gap-1 px-3 border-b border-studio-border shrink-0 text-left cursor-pointer transition-colors duration-120',
                   selectedElementId === el.id
                     ? 'bg-studio-surface text-studio-text'
                     : 'text-studio-text-muted hover:bg-studio-surface/50',
                 ].join(' ')}
                 style={{ height: TRACK_ROW_H }}
               >
-                <span className="text-[11px] truncate">{clipLabel(el)}</span>
-              </button>
+                <span className="text-[11px] truncate flex-1">{clipLabel(el)}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeElement(el.id);
+                    if (selectedElementId === el.id) setSelectedElement(null);
+                  }}
+                  title="Delete element"
+                  className="w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all duration-120"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
             ))}
           </div>
         </div>

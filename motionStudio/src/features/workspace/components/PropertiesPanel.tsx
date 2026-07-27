@@ -1,4 +1,4 @@
-import { MousePointer, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown, Sparkles, Maximize2 } from 'lucide-react';
+import { MousePointer, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown, Sparkles, Maximize2, Trash2 } from 'lucide-react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
@@ -734,7 +734,8 @@ function AudioProperties({ el, update }: { el: AudioElement; update: Update }) {
 /* ── main component ── */
 export default function PropertiesPanel() {
   const selectedElementId = useEditorStore((s) => s.selectedElementId);
-  const { elements, updateElement, reorderLayer, makeBackground } = useCanvasEngine();
+  const { elements, updateElement, reorderLayer, makeBackground, removeElement } = useCanvasEngine();
+  const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
 
   const selected = elements.find((el) => el.id === selectedElementId) ?? null;
 
@@ -744,6 +745,23 @@ export default function PropertiesPanel() {
         <span className="text-[11px] font-semibold text-studio-text-faint uppercase tracking-widest">
           Properties
         </span>
+
+        {/* Deleting used to be Delete/Backspace only — and that key is ignored
+            whenever focus sits in a field, which in this panel is almost
+            always. There was no clickable way to remove an element at all. */}
+        {selected && (
+          <button
+            type="button"
+            onClick={() => {
+              removeElement(selected.id);
+              setSelectedElement(null);
+            }}
+            title="Delete element (Del)"
+            className="ml-auto w-6 h-6 flex items-center justify-center rounded-studio-xs text-studio-text-faint hover:text-red-400 hover:bg-red-500/10 transition-colors duration-120"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       {selected === null ? (
