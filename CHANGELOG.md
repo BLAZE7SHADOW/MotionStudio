@@ -41,6 +41,11 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
   did: the video is complete but without effects, with a route to Cloud Render
   for one that isn't. Falling back silently would hand back exactly the
   degraded video the default was chosen to avoid.
+  If the canvas path fails too, the *original* web-renderer error is surfaced —
+  when both paths fail the beta renderer wasn't the cause (missing media fails
+  either way), so the fallback's error describes the problem worse.
+  Verified by forcing the renderer to throw: the fallback ran, the file
+  downloaded, and the notice appeared.
 
 ## [2026-07-27] — Session tokens stopped expiring mid-edit
 

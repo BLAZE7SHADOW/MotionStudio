@@ -137,7 +137,14 @@ export default function ExportDialog({ project }: { project: Project }) {
           // tells them what they actually got.
           console.warn('[export] web renderer failed, falling back to canvas:', webErr);
           setProgress(0);
-          result = await exportComposition(project, exportOptions);
+          try {
+            result = await exportComposition(project, exportOptions);
+          } catch {
+            // Both paths failed, which means the cause wasn't the beta renderer
+            // — missing media fails either way. Surface the original error; the
+            // fallback's version of it is a worse description of the problem.
+            throw webErr;
+          }
           setFellBackToCanvas(true);
         }
       } else {
