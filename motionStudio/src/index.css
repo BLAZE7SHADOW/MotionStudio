@@ -100,10 +100,15 @@
   --chart-4: oklch(0.370 0.007 285.823);
   --chart-5: oklch(0.274 0.006 286.033);
 
-  /* Font rendering */
+  /* Font rendering.
+     No `text-rendering: optimizeLegibility` here on purpose. It inherits to
+     every node, and @remotion/web-renderer copies computed styles onto a canvas
+     context during a browser export — where the value arrives lowercased and
+     Chrome rejects it, logging a warning per frame (a thousand-plus lines on a
+     medium clip). Chrome's default `auto` already applies kerning and standard
+     ligatures, so this only ever bought noise. */
   color-scheme: dark;
   font-synthesis: none;
-  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
