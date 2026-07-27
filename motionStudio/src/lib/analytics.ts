@@ -53,6 +53,9 @@ export const track = {
   editorBlockAdded: (props: { block: string }) =>
     posthog.capture('editor_block_added', props),
 
+  editorTourStarted: (props: { replay: boolean }) =>
+    posthog.capture('editor_tour_started', props),
+
   editorPreviewToggled: (playing: boolean) =>
     posthog.capture('editor_preview_toggled', { playing }),
 

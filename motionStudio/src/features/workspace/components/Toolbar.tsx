@@ -79,6 +79,7 @@ export default function Toolbar({ project }: ToolbarProps) {
       <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />
 
       {/* Insert tools */}
+      <span data-tour="insert" className="flex items-center gap-0.5">
       <TooltipHint label="Add text">
         <Button
           variant="ghost"
@@ -143,6 +144,7 @@ export default function Toolbar({ project }: ToolbarProps) {
           })}
         </PopoverContent>
       </Popover>
+      </span>
 
       <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />
 
@@ -152,6 +154,7 @@ export default function Toolbar({ project }: ToolbarProps) {
       {/* Preview toggle */}
       <div className="ml-auto flex items-center gap-2">
         <Button
+          data-tour="preview"
           variant="ghost"
           size="sm"
           title={isPlaying ? 'Stop preview' : 'Play preview'}
@@ -164,7 +167,7 @@ export default function Toolbar({ project }: ToolbarProps) {
 
         <Separator orientation="vertical" className="h-4 bg-studio-border-strong" />
 
-        <ExportDialog project={project} />
+        <span data-tour="export"><ExportDialog project={project} /></span>
 
         <Separator orientation="vertical" className="h-4 bg-studio-border-strong" />
 

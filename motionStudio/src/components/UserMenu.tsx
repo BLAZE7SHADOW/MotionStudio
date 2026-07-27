@@ -1,12 +1,16 @@
-import { LogOut, LogIn } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { LogOut, LogIn, HelpCircle } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/hooks/useAuth';
 import { track } from '@/lib/analytics';
+import { startEditorTour } from '@/features/workspace/tour/useEditorTour';
 
 export default function UserMenu() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { user, isAnonymous, loading, signInWithGoogle, signOut } = useAuth();
+  // This menu is shared with the dashboard, where there's no editor to tour.
+  const inEditor = pathname.startsWith('/editor');
 
   const handleSignOut = async () => {
     track.authSignoutClicked();
@@ -57,6 +61,19 @@ export default function UserMenu() {
           >
             <LogIn className="w-3.5 h-3.5" />
             Sign in with Google
+          </button>
+        )}
+
+        {/* Replay the walkthrough — otherwise it's strictly one-shot, and the
+            one time it runs is the moment you understand the app least. */}
+        {inEditor && (
+          <button
+            type="button"
+            onClick={() => startEditorTour(true)}
+            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm transition-colors"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            Replay tour
           </button>
         )}
 
