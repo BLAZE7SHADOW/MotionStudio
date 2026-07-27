@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -21,8 +21,7 @@ import { useProjectStore } from '@/engines/project';
 import type { AspectRatio } from '@/engines/project';
 import { track } from '@/lib/analytics';
 import type { TemplateDefinition } from '@/content/templates';
-import { instantiateTemplate, templateDurationInFrames, templateShaderPresets } from '@/content/templates';
-import { prefetchShaders } from '@/engines/rendering/components/renderers/ShaderRenderer';
+import { instantiateTemplate, templateDurationInFrames } from '@/content/templates';
 import TemplatePicker from './TemplatePicker';
 import TemplatePreview from './TemplatePreview';
 
@@ -37,12 +36,6 @@ const ASPECT_RATIO_OPTIONS: { value: AspectRatio; label: string; sub: string }[]
   { value: '1:1',  label: '1:1',  sub: 'Square · Instagram, Posts' },
 ];
 
-const PREVIEW_ASPECT: Record<AspectRatio, string> = {
-  '16:9': '16 / 9',
-  '9:16': '9 / 16',
-  '1:1': '1 / 1',
-};
-
 export default function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
   const navigate = useNavigate();
   const createProject = useProjectStore((s) => s.createProject);
@@ -53,14 +46,6 @@ export default function CreateProjectModal({ open, onClose }: CreateProjectModal
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
   const [fps, setFps] = useState(30);
 
-  // Warm every shader the templates use as soon as the dialog opens. Each is
-  // its own lazy chunk, so without this the first preview of each shader waits
-  // on a fetch — which is exactly why some templates appeared instantly and
-  // others lagged. Runs on idle, so it never competes with the preview being
-  // looked at right now.
-  useEffect(() => {
-    if (open) prefetchShaders(templateShaderPresets());
-  }, [open]);
 
   // A template carries its own format; only a blank project needs the controls.
   const isBlank = template === null;
@@ -120,12 +105,7 @@ export default function CreateProjectModal({ open, onClose }: CreateProjectModal
           <div className="overflow-y-auto px-5 py-4 flex flex-col gap-4">
             {template ? (
               <>
-                <div
-                  className="w-full max-h-64 mx-auto rounded-studio-md overflow-hidden border border-studio-border bg-studio-bg"
-                  style={{ aspectRatio: PREVIEW_ASPECT[template.aspectRatio] }}
-                >
-                  <TemplatePreview key={template.id} template={template} />
-                </div>
+                <TemplatePreview key={template.id} template={template} />
                 <div className="flex flex-col gap-0.5">
                   <p className="text-[13px] font-medium text-studio-text">{template.name}</p>
                   <p className="text-[12px] text-studio-text-muted">{template.description}</p>

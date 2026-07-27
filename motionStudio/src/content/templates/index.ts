@@ -1,4 +1,4 @@
-import type { CanvasElement, ShaderPreset } from '@/engines/project';
+import type { CanvasElement } from '@/engines/project';
 import type { TemplateDefinition, TemplateCategory } from './types';
 import { TEMPLATES } from './definitions';
 
@@ -15,17 +15,6 @@ export const CATEGORY_LABELS: Record<TemplateCategory, string> = {
 
 /** Display order for the picker — Basics last, since Blank lives beside them. */
 export const CATEGORY_ORDER: TemplateCategory[] = ['announce', 'dev', 'hook', 'offer', 'basic'];
-
-/** Every distinct shader the template set uses — derived, not hardcoded. */
-export function templateShaderPresets(): ShaderPreset[] {
-  const presets = new Set<ShaderPreset>();
-  for (const t of TEMPLATES) {
-    for (const el of t.elements) {
-      if (el.type === 'shader') presets.add(el.shader);
-    }
-  }
-  return [...presets];
-}
 
 export function getTemplate(id: string): TemplateDefinition | undefined {
   return TEMPLATES.find((t) => t.id === id);
