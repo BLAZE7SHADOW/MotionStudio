@@ -124,7 +124,7 @@ export default function CreateProjectModal({ open, onClose }: CreateProjectModal
                   className="w-full max-h-64 mx-auto rounded-studio-md overflow-hidden border border-studio-border bg-studio-bg"
                   style={{ aspectRatio: PREVIEW_ASPECT[template.aspectRatio] }}
                 >
-                  <TemplatePreview template={template} />
+                  <TemplatePreview key={template.id} template={template} />
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <p className="text-[13px] font-medium text-studio-text">{template.name}</p>

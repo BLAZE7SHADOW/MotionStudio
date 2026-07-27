@@ -5,6 +5,33 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Changed: simplified both preview surfaces
+
+The previous versions were over-built and still didn't work well. Replaced with
+the obvious approach.
+
+### Changed
+- **Template preview is now click-to-play.** A play button; nothing loads until
+  you press it, then it plays and loops. Removes the autoplay, the initial-frame
+  offset and the loading state — a preview that loads on demand can't feel slow
+  to load, because you asked for it.
+- **Dashboard thumbnails are a still frame, nothing more** (120 lines → 47).
+  Removed the IntersectionObserver and visibility gate, the hover swap between
+  `<Thumbnail>` and `<Player>`, and the loading placeholder. What remains: one
+  `<Thumbnail>` at 40% through, since frame 0 is blank while entrance effects
+  are still at opacity 0.
+- **Dropped the dashboard shader prefetch.** It only existed to cover mounts the
+  IntersectionObserver was deferring; with thumbnails mounting immediately it
+  was doing nothing. `projectShaderPresets` went with it.
+
+The template prefetch on dialog open is kept — it's what makes the play button
+respond immediately — but it is now the only prefetching left.
+
+Files: `src/features/dashboard/components/{TemplatePreview,ProjectThumbnail}.tsx`,
+`src/features/dashboard/DashboardPage.tsx`, `src/engines/project/index.ts`
+
+---
+
 ## [2026-07-27] — Performance: warm template shaders when the New Project dialog opens
 
 ### Changed
