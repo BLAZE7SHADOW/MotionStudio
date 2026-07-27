@@ -5,6 +5,40 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Added: experimental in-browser export that keeps effects
+
+### Added
+- **An opt-in "Include effects" checkbox on the Browser export tab**, backed by
+  `@remotion/web-renderer` — which turned out to already be installed, since it
+  ships with the pinned Remotion version. Unlike `canvasFrame.ts` (which
+  hand-draws text/image/video onto a 2D canvas and therefore drops every effect),
+  this runs the real `MotionComposition`, the same component the editor preview
+  and Lambda use.
+- **Known not to be full parity.** The web renderer emulates layout and styles
+  onto a canvas and supports a subset: no `background-clip: text`
+  (shimmer-sweep), no 3D transforms (perspective-marquee), no blend modes
+  (glass-code-block's frosted panel), no `<OffthreadVideo>` (video elements),
+  and `z-index` is ignored in favour of paint order — so elements are sorted by
+  `zIndex` before rendering. Shader behaviour is untested. Upstream flags the
+  package experimental. Hence opt-in, and Lambda remains the fidelity guarantee.
+- `@remotion/web-renderer` is **dynamically imported** — statically importing it
+  put ~180 kB (~53 kB gzipped) on the main bundle for a path most visitors never
+  use. It now builds its own chunk, matching how every effect and shader is
+  lazy-loaded.
+
+### Fixed
+- `MotionCompositionProps` changed from an `interface` to a `type` alias. An
+  interface can be augmented, so TypeScript won't accept it as
+  `Record<string, unknown>`, which Remotion's composition APIs require — the
+  same trap that once made `<Composition>` infer props as `unknown`
+  (ARCHITECTURE.md §6). Now documented at the definition.
+
+Files: `src/engines/export/webRenderer.ts` (new), `src/engines/export/index.ts`,
+`src/engines/rendering/components/MotionComposition.tsx`,
+`src/features/workspace/components/ExportDialog.tsx`
+
+---
+
 ## [2026-07-27] — Fixed: cloud render couldn't finish long videos; browser export silently drops effects
 
 ### Fixed
