@@ -103,6 +103,11 @@ That's the whole loop: **add → arrange → animate → preview → export.**
 ### Text
 Toolbar → **T**. A text box appears centered on the canvas.
 
+**While an element is selected its motion is paused** so you can position it —
+an entrance effect starts fully transparent, which would make the thing you're
+dragging invisible. A note on the canvas says so when it applies; press
+**Preview** to watch the motion play.
+
 ### Images, video, audio
 1. Open the **Assets** panel → **Upload** tab.
 2. **Drag files** onto the drop zone, or click **Browse Images / Videos / Audio**.
@@ -139,7 +144,7 @@ Supported: common image (png/jpg/gif/webp), video (mp4/webm/mov), and audio
 | Rotate | Drag the rotation handle above it |
 | Edit text | **Double-click** the text, type, then Esc or click away |
 | Deselect | Click empty canvas, or press **Esc** |
-| Delete | Select it, press **Delete** / **Backspace** |
+| Delete | The trash icon in the Properties panel header or on the timeline row — or select it and press **Delete** / **Backspace** |
 
 The percentage at the bottom of the canvas is the current zoom-to-fit scale.
 

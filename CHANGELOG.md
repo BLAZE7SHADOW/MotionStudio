@@ -5,6 +5,56 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Changed: editor usability pass
+
+A UI audit found several traps that made working features look broken.
+
+### Fixed
+- **Picking a text effect appeared to do nothing.** Selecting an element
+  strips its `animations` and `textEffect` from the preview — deliberate,
+  since an entrance effect starts at `opacity: 0` and the element you're
+  trying to drag would be invisible. But nothing said so, so the effect read
+  as not applying at all. A notice now appears on the canvas when the
+  selection genuinely has motion being withheld, pointing at Preview. Its
+  condition lives in a separate memo so it can't destabilise the `inputProps`
+  memo, which is intentionally stable (a fresh reference each frame resets
+  Player/WebGL state during playback).
+- **Nothing could be deleted without the keyboard.** Delete/Backspace was the
+  only route, and that key is ignored whenever focus is in a field — which in
+  the Properties panel is nearly always. Delete controls added to the
+  Properties header and every timeline track row.
+- `clipLabel` had drifted between the two timeline files: a clip showed a
+  block's registry name ("Terminal") while the track header printed the raw
+  discriminant ("block"). Now one shared function.
+
+### Changed
+- **The Assets panel is rebuilt around getting media in.** It opened on the
+  Images tab — empty on every new project — so a new user's first sight was
+  "No images yet", while Upload and Stock were 40px icons among five tabs in a
+  220px rail. Now a permanent **Add media** button, two tabs (Library, Stock),
+  a type filter inside Library, and drop-anywhere-in-the-panel.
+  - Search moved inside Library; it used to render over Stock and Upload where
+    typing produced no feedback at all.
+  - Unsupported files were skipped in silence — rejected names are now listed.
+  - Stock search was Enter-only with no button, and looked usable when signed
+    out, failing only after submit; it now says so up front and has a button.
+  - Uploading no longer yanks the active tab based on the first file's type.
+  - `UploadTab`, `EmptyAssetState` and `TAB_TYPE` deleted as unreachable.
+- **Real tooltips.** Every hint was a native `title` — ~1s delay, unstyled,
+  on controls that are 8-of-11 icon-only. `radix-ui` was already a dependency,
+  so a `Tooltip` primitive joins the existing popover/dialog, with a
+  `TooltipHint` wrapper and a 200ms delay. Undo/Redo shortcuts are now
+  legible, and Add Block explains what a block is.
+- Merged the two side-by-side controls that both went to `/dashboard`. The
+  timeline keeps its own transport — a play control beside the scrubber is a
+  different context, not a duplicate.
+
+Files: `src/features/workspace/components/{CanvasPanel,AssetsPanel,PropertiesPanel,TimelinePanel,Toolbar}.tsx`,
+`src/features/workspace/components/timeline/clipLabel.ts` (new),
+`src/components/ui/tooltip.tsx` (new)
+
+---
+
 ## [2026-07-27] — Added: missing-media indicator in the Assets panel
 
 ### Added
