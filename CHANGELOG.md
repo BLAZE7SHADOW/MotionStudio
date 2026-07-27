@@ -5,6 +5,42 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Fixed: dev-server API calls, frozen template previews; added viewer controls
+
+### Fixed
+- **Every API call failed on the dev server** with
+  `Unexpected token '<', "<!doctype "... is not valid JSON`. `/api` is served
+  by Vercel functions that don't exist under `vite dev`, so requests fell
+  through to the SPA catch-all and got `index.html` back. It presented as a
+  stock-search bug but hit quota, render and contact equally; production was
+  correct throughout (it returns proper JSON, including a 401 when unauthed).
+  Added a dev proxy to the deployment, overridable via `VITE_API_PROXY` for
+  anyone running `vercel dev` to work on the API itself.
+- `apiClient` now checks the content type before parsing, so a non-JSON
+  response names the actual problem instead of failing inside `JSON.parse`
+  with a message about a doctype.
+- **Template previews in the New Project dialog sat frozen.** `inputProps` was
+  built inline, so it was a fresh object each render and Player read the
+  identity change as new data and snapped back to frame 0 continuously. Now
+  memoised. Third time this exact trap has appeared here — `CanvasPanel`'s
+  `inputProps` and `PRESET_PREVIEW_ANIMATIONS` both already carry comments
+  about it.
+
+### Added
+- **Fullscreen and mute controls on the canvas**, beside the zoom readout,
+  driving the Player's own `requestFullscreen`/`mute` methods. Preview could
+  previously only play inline, and a project with sound had no way to silence
+  it while working. Mute only appears when something can actually produce
+  audio — an audio clip, or a video whose track plays through the Player.
+  `allowFullscreen` is now on; double-click-to-fullscreen stays off because
+  that gesture edits text.
+
+Files: `vite.config.ts`, `src/lib/apiClient.ts`,
+`src/features/dashboard/components/TemplatePreview.tsx`,
+`src/features/workspace/components/CanvasPanel.tsx`
+
+---
+
 ## [2026-07-27] — Added: guided first-run walkthrough of the editor
 
 ### Added
