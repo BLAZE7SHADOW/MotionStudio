@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { getCompositionDimensions } from '@/engines/project';
-import { exportComposition, downloadBlob, isExportSupported } from '@/engines/export';
+import { exportComposition, downloadBlob, isExportSupported, exportViaWebRenderer } from '@/engines/export';
 import type { Project } from '@/engines/project';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/apiClient';
@@ -52,6 +52,9 @@ export default function ExportDialog({ project }: { project: Project }) {
   const [quota, setQuota] = useState<QuotaResult | null>(null);
   const [cloudStatus, setCloudStatus] = useState<'idle' | 'rendering' | 'done' | 'error'>('idle');
   const [cloudProgress, setCloudProgress] = useState(0);
+  // Experimental: render the real composition in-browser instead of hand-drawing
+  // to canvas, so text effects survive. Opt-in while we find out what it drops.
+  const [useWebRenderer, setUseWebRenderer] = useState(false);
   const [cloudError, setCloudError] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
@@ -108,11 +111,14 @@ export default function ExportDialog({ project }: { project: Project }) {
     track.exportBrowserStarted({ resolution: resolution.id, quality: quality.id, bps: quality.bps });
     const startedAt = Date.now();
     try {
-      const { blob, extension } = await exportComposition(project, {
+      const exportOptions = {
         resolutionScale: resolution.scale,
         videoBitsPerSecond: quality.bps,
-        onProgress: (frame, total) => setProgress(Math.round((frame / total) * 100)),
-      });
+        onProgress: (frame: number, total: number) => setProgress(Math.round((frame / total) * 100)),
+      };
+      const { blob, extension } = useWebRenderer
+        ? await exportViaWebRenderer(project, exportOptions)
+        : await exportComposition(project, exportOptions);
       downloadBlob(blob, `${project.name || 'video'}.${extension}`);
       track.exportBrowserCompleted(Date.now() - startedAt);
     } catch (e) {
@@ -293,11 +299,34 @@ export default function ExportDialog({ project }: { project: Project }) {
               )}
               {browserError && <p className="text-[11px] text-red-400">{browserError}</p>}
 
+              {/* Experimental path: Remotion's own web renderer runs the real
+                  composition, so effects survive. Opt-in until we know what it
+                  drops (it can't do background-clip:text, 3D transforms,
+                  blend modes or OffthreadVideo). */}
+              <label className="flex items-start gap-2 rounded-studio-md border border-studio-border bg-studio-surface/40 px-2.5 py-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useWebRenderer}
+                  onChange={(e) => setUseWebRenderer(e.target.checked)}
+                  className="mt-0.5 accent-studio-accent"
+                />
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-[11px] font-medium text-studio-text">
+                    Include effects (experimental)
+                  </span>
+                  <span className="text-[10px] text-studio-text-faint leading-relaxed">
+                    Renders the real composition instead of a flat canvas, so text
+                    effects come through. Slower, and some things may still differ
+                    from Cloud Render.
+                  </span>
+                </span>
+              </label>
+
               {/* Browser export paints frames onto a 2D canvas rather than
                   running the React composition, so anything React-rendered is
                   missing from the file. Saying so is better than shipping a
                   video that silently lost half its content. */}
-              {usesUnsupportedFeatures && (
+              {usesUnsupportedFeatures && !useWebRenderer && (
                 <div className="rounded-studio-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2">
                   <p className="text-[11px] text-amber-300/90 leading-relaxed">
                     This project uses {unsupportedSummary}, which browser export can't

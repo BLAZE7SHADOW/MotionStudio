@@ -2,11 +2,17 @@ import { AbsoluteFill, Sequence } from 'remotion';
 import type { CanvasElement, Asset } from '../../project/types';
 import ElementRenderer from './ElementRenderer';
 
-export interface MotionCompositionProps {
+/**
+ * A `type` alias, not an `interface`, on purpose: an interface can be augmented
+ * later so TypeScript won't treat it as assignable to `Record<string, unknown>`,
+ * which is what Remotion's composition APIs require. Same trap that made
+ * `<Composition>` infer props as `unknown` (see ARCHITECTURE.md §6).
+ */
+export type MotionCompositionProps = {
   elements: CanvasElement[];
   assets: Asset[];
   background?: string;
-}
+};
 
 /**
  * The Remotion composition root.
