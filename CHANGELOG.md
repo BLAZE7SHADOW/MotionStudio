@@ -5,6 +5,49 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Fixed: Add Block button; collapsible Properties; /contact rebuilt
+
+### Fixed
+- **The Add Block button did nothing.** Wrapping it in `TooltipHint` broke the
+  control outright: `PopoverTrigger`'s `asChild` cloned `TooltipHint` with the
+  trigger's props and ref, and `TooltipHint` — a plain component — dropped
+  them, so the click never reached the button. A regression from the tooltip
+  pass. Both triggers now chain `asChild` onto the same Button, and the trap is
+  documented on `TooltipHint` itself.
+
+### Changed
+- **Motion, Transform and Layer are now collapsible.** The headline reason
+  isn't scrolling: `AnimationSection` renders an `<AnimationPreview>` per
+  animation preset and each is a full Remotion `<Player>`, so selecting any
+  element mounted **seven of them looping at once**, on top of the effect
+  preview and the canvas. Collapsing Motion unmounts all seven.
+  - The secondary reason still holds: a text element renders ~1000px of
+    controls into a panel that gets `100vh − 268px` (~630px on a 13" laptop),
+    so Transform and Layer sat permanently below the fold.
+  - **The defaults carry the value, not the mechanism** — a collapsed section
+    is hidden too. Motion starts closed (it's the expensive one, and presets
+    are a one-time choice); the rest start open. State persists per section.
+  - Only the three sections that benefit were converted. `Section` renders a
+    plain header when given no children, so the other five call sites are
+    untouched — no need to re-nest all nine.
+- **`/contact` rebuilt as the landing page's old contact section** now that the
+  landing carries only a credit band: name and role, the portfolio as a
+  gradient pill showing the real domain, click-to-copy email, brand-coloured
+  socials, and the message form.
+  - Drops the bio, avatar, location, availability status and résumé link. This
+    is "how to reach the person who made this" for someone using a product,
+    not a CV.
+  - `profile.ts` trimmed to what's actually rendered. It had been lifted whole
+    from a portfolio site and carried seven unused fields — two of which
+    pointed at files that were never added (an avatar image and a résumé PDF)
+    and would have 404'd had anything rendered them.
+
+Files: `src/features/workspace/components/{Toolbar,PropertiesPanel}.tsx`,
+`src/components/ui/tooltip.tsx`, `src/features/contact/ContactPage.tsx`,
+`src/content/profile.ts`
+
+---
+
 ## [2026-07-27] — Changed: landing page reworked around the product
 
 The page pitched twice, then pointed away from itself.
