@@ -3,6 +3,7 @@ import { Undo2, Redo2, Clapperboard, Type, Sparkles, Play, Pause, SquareTerminal
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { TooltipProvider, TooltipHint } from '@/components/ui/tooltip';
 import { BLOCK_PRESETS } from '@/engines/project';
 import { getBlock } from '@/content/blocks/registry';
 import type { Project } from '@/engines/project';
@@ -30,26 +31,19 @@ export default function Toolbar({ project }: ToolbarProps) {
   const canRedo = useProjectStore((s) => s.future.length > 0);
 
   return (
+    <TooltipProvider>
     <div className="h-11 border-b border-studio-border bg-studio-panel flex items-center px-3 gap-0.5 shrink-0">
-      {/* Back to the project list. Edits are already autosaved (2 s debounce +
-          localStorage persist), so leaving mid-edit is safe. */}
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Back to projects"
-        onClick={() => navigate('/dashboard')}
-        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
-      >
-        <ArrowLeft className="w-4 h-4" />
-      </Button>
-
-      {/* Logo — also goes back to the project list */}
+      {/* One way back, not two — this and the logo were separate controls
+          doing the identical thing, side by side. The logo carries the arrow
+          now. Edits are already autosaved (2 s debounce + localStorage), so
+          leaving mid-edit is safe. */}
       <button
         type="button"
         onClick={() => navigate('/dashboard')}
         title="Back to projects"
-        className="flex items-center gap-2 px-1.5 mr-2 rounded-studio-sm hover:bg-studio-surface transition-colors duration-[120ms] cursor-pointer"
+        className="group flex items-center gap-2 pl-1.5 pr-2.5 py-1 mr-2 rounded-studio-sm hover:bg-studio-surface transition-colors duration-[120ms] cursor-pointer"
       >
+        <ArrowLeft className="w-3.5 h-3.5 text-studio-text-faint group-hover:text-studio-text transition-colors" />
         <div className="w-5 h-5 rounded-[4px] bg-studio-accent flex items-center justify-center">
           <Clapperboard className="w-3 h-3 text-white" />
         </div>
@@ -59,64 +53,69 @@ export default function Toolbar({ project }: ToolbarProps) {
       <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />
 
       {/* History */}
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Undo (⌘Z)"
-        onClick={() => { track.editorUndo(); undo(); }}
-        disabled={!canUndo}
-        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm disabled:opacity-30 disabled:pointer-events-none"
-      >
-        <Undo2 className="w-[15px] h-[15px]" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Redo (⌘⇧Z)"
-        onClick={() => { track.editorRedo(); redo(); }}
-        disabled={!canRedo}
-        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm disabled:opacity-30 disabled:pointer-events-none"
-      >
-        <Redo2 className="w-[15px] h-[15px]" />
-      </Button>
+      <TooltipHint label="Undo" shortcut="⌘Z">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => { track.editorUndo(); undo(); }}
+          disabled={!canUndo}
+          className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm disabled:opacity-30 disabled:pointer-events-none"
+        >
+          <Undo2 className="w-[15px] h-[15px]" />
+        </Button>
+      </TooltipHint>
+      <TooltipHint label="Redo" shortcut="⌘⇧Z">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => { track.editorRedo(); redo(); }}
+          disabled={!canRedo}
+          className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm disabled:opacity-30 disabled:pointer-events-none"
+        >
+          <Redo2 className="w-[15px] h-[15px]" />
+        </Button>
+      </TooltipHint>
 
       <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />
 
       {/* Insert tools */}
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Add Text"
-        onClick={() => { track.editorTextAdded(); const el = addText(); if (el) setSelectedElement(el.id); }}
-        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
-      >
-        <Type className="w-3.75 h-3.75" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Add Background"
-        onClick={() => {
-          track.editorShaderAdded({ shader: 'shader-mesh-gradient' });
-          const el = addShader('shader-mesh-gradient');
-          if (el) setSelectedElement(el.id);
-        }}
-        className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
-      >
-        <Sparkles className="w-3.75 h-3.75" />
-      </Button>
+      <TooltipHint label="Add text">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => { track.editorTextAdded(); const el = addText(); if (el) setSelectedElement(el.id); }}
+          className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
+        >
+          <Type className="w-3.75 h-3.75" />
+        </Button>
+      </TooltipHint>
+      <TooltipHint label="Add animated background">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            track.editorShaderAdded({ shader: 'shader-mesh-gradient' });
+            const el = addShader('shader-mesh-gradient');
+            if (el) setSelectedElement(el.id);
+          }}
+          className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
+        >
+          <Sparkles className="w-3.75 h-3.75" />
+        </Button>
+      </TooltipHint>
 
       {/* Structured blocks — terminal, code, pipeline, confetti */}
       <Popover>
         <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            title="Add Block"
-            className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
-          >
-            <SquareTerminal className="w-3.75 h-3.75" />
-          </Button>
+          <TooltipHint label="Add a block — terminal, code, steps, confetti">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
+            >
+              <SquareTerminal className="w-3.75 h-3.75" />
+            </Button>
+          </TooltipHint>
         </PopoverTrigger>
         <PopoverContent
           align="start"
@@ -172,5 +171,6 @@ export default function Toolbar({ project }: ToolbarProps) {
         <UserMenu />
       </div>
     </div>
+    </TooltipProvider>
   );
 }
