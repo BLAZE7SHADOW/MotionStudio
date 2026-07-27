@@ -234,7 +234,7 @@ Pick one from the dropdown, grouped by style:
   Inline / Marker Highlight…
 - **Tech / Glitch** — Typewriter, Matrix Decode, RGB Glitch.
 
-A live loop preview shows above the picker once an effect is selected, so you
+A live looping preview shows above the picker once an effect is selected, so you
 can see how it moves before committing to it — same idea as the shader
 preview in §7b.
 

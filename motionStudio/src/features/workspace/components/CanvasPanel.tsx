@@ -284,7 +284,12 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
             onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
-            className="relative"
+            // `isolate` is load-bearing: react-moveable gives its control box
+            // `z-index: 3000`, and Moveable renders into this container. Without
+            // a stacking context here that 3000 competes at the document root
+            // and paints the selection handles *over* modals, which sit at
+            // z-50. Isolating confines it to the stage.
+            className="relative isolate"
             style={{
               width: displayW,
               height: displayH,

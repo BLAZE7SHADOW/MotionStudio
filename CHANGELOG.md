@@ -5,6 +5,24 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Property previews play again; selection handles stay under modals
+
+### Fixed
+- **The text effect, shader and animation previews sat frozen on their first
+  frame.** All three passed `inputProps={{ ... }}` as an object literal, so
+  every re-render of the Properties panel looked like new data to the Player and
+  reset it to frame 0 — and that panel re-renders on any store change. Since the
+  previews exist precisely to answer "what does this effect *do*", a still frame
+  made them worse than useless. All three now memoise `inputProps` and drive
+  playback from a `PlayerRef` rather than trusting `autoPlay`.
+  `AnimationPreview` memoises on the array's serialised contents, since callers
+  build the array inline and a reference-keyed memo would never hit.
+  This is the fourth time this exact bug has shipped in this codebase.
+- **Selection handles painted over the export dialog.** `react-moveable` gives
+  its control box `z-index: 3000`; modals sit at `z-50`. With no stacking
+  context between them, the 3000 competed at the document root and won. The
+  stage now carries `isolate`, confining Moveable's z-index to the canvas.
+
 ## [2026-07-27] — Browser export keeps effects by default
 
 ### Changed
