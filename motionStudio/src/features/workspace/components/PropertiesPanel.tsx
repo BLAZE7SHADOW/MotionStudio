@@ -669,6 +669,18 @@ function BlockProperties({
               />
             )}
 
+            {field.type === 'select' && (
+              <select
+                value={String(value(field.key))}
+                onChange={(e) => setProp(field.key, e.target.value)}
+                className="h-7 w-full rounded-studio-sm bg-studio-surface border border-studio-border text-[12px] text-studio-text px-2 focus:outline-none focus:border-studio-accent-border"
+              >
+                {field.options?.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            )}
+
             {field.type === 'color' && (
               <div className="flex items-center gap-2">
                 <div

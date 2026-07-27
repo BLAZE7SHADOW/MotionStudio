@@ -429,7 +429,7 @@ export const TEMPLATES: TemplateDefinition[] = [
       text({ content: 'How it works', x: 160, y: 280, width: 1600, height: 200, fontSize: 108, zIndex: 1, durationInFrames: S10, effect: 'per-character-rise' }),
       block({
         preset: 'progress-steps',
-        x: 210, y: 600, width: 1500, height: 260,
+        x: 260, y: 580, width: 1400, height: 320,
         zIndex: 2, startFrame: 60, durationInFrames: S10 - 60,
         props: { steps: 'Connect\nGenerate\nShip', activeColor: GREEN, textColor: INK },
       }),

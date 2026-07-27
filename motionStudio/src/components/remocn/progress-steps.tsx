@@ -14,6 +14,12 @@ export interface ProgressStepsProps {
   activeColor?: string;
   inactiveColor?: string;
   textColor?: string;
+  /** Length of the whole track in composition pixels. */
+  trackLength?: number;
+  /** Radius of a step node in composition pixels. */
+  nodeRadius?: number;
+  /** Label size in composition pixels. */
+  labelSize?: number;
   stepDuration?: number;
   speed?: number;
   className?: string;
@@ -25,6 +31,12 @@ export function ProgressSteps({
   activeColor = "#22c55e",
   inactiveColor = "#27272a",
   textColor = "white",
+  // Sized for a 1920x1080 composition. The old defaults (920 / 22 / 15) were
+  // built for a small preview box and rendered as a hairline with unreadable
+  // labels once placed on a real canvas.
+  trackLength: trackLengthProp,
+  nodeRadius = 40,
+  labelSize = 40,
   stepDuration = 30,
   speed = 1,
   className,
@@ -33,9 +45,14 @@ export function ProgressSteps({
   const { fps } = useVideoConfig();
 
   const isHorizontal = orientation === "horizontal";
-  const trackLength = isHorizontal ? 920 : 520;
+  const trackLength = trackLengthProp ?? (isHorizontal ? 1200 : 700);
   const segmentLength = trackLength / Math.max(steps.length - 1, 1);
-  const nodeRadius = 22;
+
+  // Everything else is derived from the node size, so one control resizes the
+  // whole component coherently instead of leaving the parts out of proportion.
+  const strokeWidth = Math.max(2, Math.round(nodeRadius * 0.18));
+  const gap = Math.round(nodeRadius * 0.6);
+  const checkSize = Math.round(nodeRadius * 1.0);
 
   return (
     <div
@@ -70,8 +87,8 @@ export function ProgressSteps({
             overflow: "visible",
             pointerEvents: "none",
           }}
-          width={isHorizontal ? trackLength : 4}
-          height={isHorizontal ? 4 : trackLength}
+          width={isHorizontal ? trackLength : strokeWidth}
+          height={isHorizontal ? strokeWidth : trackLength}
         >
           {steps.slice(0, -1).map((_, i) => {
             const lineStart = (i + 1) * stepDuration;
@@ -81,15 +98,16 @@ export function ProgressSteps({
               [segmentLength, 0],
               { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
             );
+            const mid = strokeWidth / 2;
             return (
               <line
                 key={i}
-                x1={isHorizontal ? i * segmentLength : 2}
-                y1={isHorizontal ? 2 : i * segmentLength}
-                x2={isHorizontal ? (i + 1) * segmentLength : 2}
-                y2={isHorizontal ? 2 : (i + 1) * segmentLength}
+                x1={isHorizontal ? i * segmentLength : mid}
+                y1={isHorizontal ? mid : i * segmentLength}
+                x2={isHorizontal ? (i + 1) * segmentLength : mid}
+                y2={isHorizontal ? mid : (i + 1) * segmentLength}
                 stroke={activeColor}
-                strokeWidth={4}
+                strokeWidth={strokeWidth}
                 strokeLinecap="round"
                 strokeDasharray={segmentLength}
                 strokeDashoffset={fillProgress}
@@ -97,19 +115,22 @@ export function ProgressSteps({
             );
           })}
           {/* Background track */}
-          {steps.slice(0, -1).map((_, i) => (
-            <line
-              key={`bg-${i}`}
-              x1={isHorizontal ? i * segmentLength : 2}
-              y1={isHorizontal ? 2 : i * segmentLength}
-              x2={isHorizontal ? (i + 1) * segmentLength : 2}
-              y2={isHorizontal ? 2 : (i + 1) * segmentLength}
-              stroke={inactiveColor}
-              strokeWidth={4}
-              strokeLinecap="round"
-              style={{ opacity: 0.6 }}
-            />
-          ))}
+          {steps.slice(0, -1).map((_, i) => {
+            const mid = strokeWidth / 2;
+            return (
+              <line
+                key={`bg-${i}`}
+                x1={isHorizontal ? i * segmentLength : mid}
+                y1={isHorizontal ? mid : i * segmentLength}
+                x2={isHorizontal ? (i + 1) * segmentLength : mid}
+                y2={isHorizontal ? mid : (i + 1) * segmentLength}
+                stroke={inactiveColor}
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+                style={{ opacity: 0.6 }}
+              />
+            );
+          })}
         </svg>
 
         {steps.map((step, i) => {
@@ -141,7 +162,7 @@ export function ProgressSteps({
                 display: "flex",
                 flexDirection: isHorizontal ? "column" : "row",
                 alignItems: "center",
-                gap: 14,
+                gap,
                 width: isHorizontal ? segmentLength : "auto",
                 height: isHorizontal ? "auto" : segmentLength,
                 marginRight:
@@ -157,18 +178,18 @@ export function ProgressSteps({
                   height: nodeRadius * 2,
                   borderRadius: 999,
                   background: fill,
-                  border: `2px solid ${activeColor}`,
+                  border: `${strokeWidth}px solid ${activeColor}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   transform: `scale(${scale})`,
                   transformOrigin: "center",
-                  boxShadow: `0 0 0 6px ${activeColor}1a`,
+                  boxShadow: `0 0 0 ${Math.round(nodeRadius * 0.27)}px ${activeColor}1a`,
                 }}
               >
                 <svg
-                  width="20"
-                  height="20"
+                  width={checkSize}
+                  height={checkSize}
                   viewBox="0 0 24 24"
                   fill="none"
                   style={{ opacity: showCheck }}
@@ -184,13 +205,13 @@ export function ProgressSteps({
               </div>
               <span
                 style={{
-                  fontSize: 15,
+                  fontSize: labelSize,
                   fontWeight: 500,
                   color: textColor,
                   letterSpacing: "-0.01em",
                   whiteSpace: "nowrap",
                   position: isHorizontal ? "absolute" : "static",
-                  top: isHorizontal ? nodeRadius * 2 + 14 : undefined,
+                  top: isHorizontal ? nodeRadius * 2 + gap : undefined,
                 }}
               >
                 {step.label}

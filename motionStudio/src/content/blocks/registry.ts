@@ -6,7 +6,9 @@ import type { BlockPreset, BlockProps } from '@/engines/project';
 export interface BlockField {
   key: string;
   label: string;
-  type: 'text' | 'textarea' | 'number' | 'color';
+  type: 'text' | 'textarea' | 'number' | 'color' | 'select';
+  /** Choices for a `select` field. */
+  options?: { value: string; label: string }[];
   /** Shown under a textarea to explain a line-based format. */
   hint?: string;
 }
@@ -100,15 +102,33 @@ export const BLOCKS: Record<BlockPreset, BlockDefinition> = {
     label: 'Progress steps',
     description: 'A pipeline whose steps light up in sequence.',
     naturalLength: 150,
-    defaultSize: { width: 1400, height: 260 },
+    defaultSize: { width: 1400, height: 320 },
+    // Geometry is in composition pixels, so these are sized against a
+    // 1920x1080 frame. The component's own fallbacks were built for a small
+    // preview box and are far too small to read on a real canvas.
     defaults: {
       steps: 'Connect\nProcess\nDeploy',
       orientation: 'horizontal',
       activeColor: '#22c55e',
       textColor: '#ffffff',
+      trackLength: 1200,
+      nodeRadius: 40,
+      labelSize: 40,
     },
     fields: [
       { key: 'steps', label: 'Steps', type: 'textarea', hint: 'One step per line.' },
+      {
+        key: 'orientation',
+        label: 'Direction',
+        type: 'select',
+        options: [
+          { value: 'horizontal', label: 'Horizontal' },
+          { value: 'vertical', label: 'Vertical' },
+        ],
+      },
+      { key: 'trackLength', label: 'Track length', type: 'number', hint: 'How far the pipeline spans, in composition pixels.' },
+      { key: 'nodeRadius', label: 'Node size', type: 'number' },
+      { key: 'labelSize', label: 'Label size', type: 'number' },
       { key: 'activeColor', label: 'Active colour', type: 'color' },
       { key: 'textColor', label: 'Text colour', type: 'color' },
     ],
@@ -118,6 +138,9 @@ export const BLOCKS: Record<BlockPreset, BlockDefinition> = {
       orientation: p.orientation,
       activeColor: p.activeColor,
       textColor: p.textColor,
+      trackLength: p.trackLength,
+      nodeRadius: p.nodeRadius,
+      labelSize: p.labelSize,
     }),
   },
 
