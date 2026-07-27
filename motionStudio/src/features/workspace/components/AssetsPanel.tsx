@@ -435,6 +435,7 @@ export default function AssetsPanel() {
       <div className="px-3 pt-3 shrink-0">
         <button
           type="button"
+          data-tour="add-media"
           onClick={() => openPicker('image/*,video/*,audio/*')}
           disabled={busy}
           className="w-full h-9 flex items-center justify-center gap-1.5 rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover disabled:opacity-60 text-white text-[12px] font-medium transition-colors duration-120"
@@ -476,6 +477,7 @@ export default function AssetsPanel() {
               <TabsTrigger
                 key={value}
                 value={value}
+                data-tour={`${value}-tab`}
                 className="h-full flex items-center justify-center gap-1.5 rounded-studio-md text-[11px] font-medium text-studio-text-faint transition-all duration-120 data-[state=active]:bg-studio-overlay data-[state=active]:text-studio-text"
               >
                 <Icon className="w-3.5 h-3.5" strokeWidth={1.5} />

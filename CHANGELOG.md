@@ -5,6 +5,28 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Tour covers the assets panel and text effects
+
+### Added
+- **Three more tour steps** (10 → 13): **Add media** (uploads, drag-and-drop
+  anywhere in the panel, and that uploads are what let Cloud Render see your
+  files), **Stock** (free Pexels search), and the **Effects** section, where the
+  34 text effects and their live previews live.
+- `data-tour` anchors for those: `add-media` and a generated `{tab}-tab` in
+  `AssetsPanel`, and an optional `tourId` prop on the Properties panel's
+  `Section`.
+
+### Changed
+- **Tour steps now resolve against the live DOM.** `buildEditorTourSteps()`
+  drops any step whose anchor isn't currently rendered. The Effects section only
+  exists while a text element is selected, and the first run happens on an empty
+  canvas — a step pointing at a missing element would have left a popover
+  floating over nothing. A useful side effect: **replaying the tour with text
+  selected shows more than the first run did.** It also means a future panel
+  rename degrades to a shorter tour rather than a broken one.
+- Tightened the **Your media** and **Properties** step copy, which now overlaps
+  the new dedicated steps.
+
 ## [2026-07-27] — Property previews play again; selection handles stay under modals
 
 ### Fixed

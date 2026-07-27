@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { EDITOR_TOUR_STEPS, TOUR_SEEN_KEY } from './editorTour';
+import { buildEditorTourSteps, TOUR_SEEN_KEY } from './editorTour';
 import { track } from '@/lib/analytics';
 
 /**
@@ -32,9 +32,12 @@ export async function startEditorTour(replay = false): Promise<void> {
 
     track.editorTourStarted({ replay });
 
+    const steps = buildEditorTourSteps();
+    if (steps.length === 0) { running = false; return; }
+
     driver({
       showProgress: true,
-      steps: EDITOR_TOUR_STEPS,
+      steps,
       nextBtnText: 'Next',
       prevBtnText: 'Back',
       doneBtnText: 'Got it',

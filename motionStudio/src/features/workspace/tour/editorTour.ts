@@ -13,7 +13,7 @@ import type { DriveStep } from 'driver.js';
  */
 export const TOUR_SEEN_KEY = 'ms_editor_tour_seen';
 
-export const EDITOR_TOUR_STEPS: DriveStep[] = [
+const ALL_STEPS: DriveStep[] = [
   {
     element: '[data-tour="insert"]',
     popover: {
@@ -59,7 +59,27 @@ export const EDITOR_TOUR_STEPS: DriveStep[] = [
     popover: {
       title: 'Your media',
       description:
-        'Add your own files or search free stock. Drop files anywhere in this panel. Click a tile to place it, or drag it onto the canvas.',
+        'Everything available to this project lives here. Click a tile to place it on the canvas, or drag it where you want it. Two ways to fill it up — next two steps.',
+      side: 'right',
+      align: 'start',
+    },
+  },
+  {
+    element: '[data-tour="add-media"]',
+    popover: {
+      title: 'Bring in your own files',
+      description:
+        'Images, video and audio. You can also <strong>drop files anywhere in this panel</strong>. Anything unsupported is named rather than silently ignored. Uploads go to cloud storage in the background, which is what lets Cloud Render see them.',
+      side: 'right',
+      align: 'start',
+    },
+  },
+  {
+    element: '[data-tour="stock-tab"]',
+    popover: {
+      title: 'Free stock footage',
+      description:
+        'Search millions of free photos and videos from Pexels, and place one straight onto the canvas — no account with them, no downloads, no attribution to manage.',
       side: 'right',
       align: 'start',
     },
@@ -79,7 +99,17 @@ export const EDITOR_TOUR_STEPS: DriveStep[] = [
     popover: {
       title: 'Everything about the selection',
       description:
-        'Content, colour, effects, motion and position. Headings with an arrow open and close — <strong>Motion starts closed</strong>, and that’s where the animation presets live. Motion also pauses while an element is selected so you can position it; the canvas says so when it does.',
+        'Whatever is selected, this panel controls it — content, colour, size, position, timing. Headings with an arrow open and close, and <strong>Motion starts closed</strong>: that’s where the animation presets live. Motion also pauses while something is selected so you can position it, and the canvas tells you when that’s happening.',
+      side: 'left',
+      align: 'start',
+    },
+  },
+  {
+    element: '[data-tour="effects-section"]',
+    popover: {
+      title: '34 text effects',
+      description:
+        'Typewriter, per-character rise, shimmer sweep, marker highlight and thirty more — each one a real animation, previewed live right here before you commit to it. This is where a plain title becomes something worth watching.',
       side: 'left',
       align: 'start',
     },
@@ -115,3 +145,19 @@ export const EDITOR_TOUR_STEPS: DriveStep[] = [
     },
   },
 ];
+
+/**
+ * The steps whose anchors are actually on screen right now.
+ *
+ * Some panels only exist in context — the Effects section renders only while a
+ * text element is selected, and the tour's first run happens on an empty
+ * canvas. Pointing driver.js at a missing element gives a popover floating over
+ * nothing, so the list is resolved against the live DOM instead. Replaying the
+ * tour with a text element selected therefore shows more than the first run
+ * did, which is the right way round.
+ */
+export function buildEditorTourSteps(): DriveStep[] {
+  return ALL_STEPS.filter(
+    (step) => typeof step.element === 'string' && document.querySelector(step.element),
+  );
+}

@@ -36,11 +36,17 @@ editor later on a bigger screen.
 That's the whole loop: **add → arrange → animate → preview → export.**
 
 **A short walkthrough runs the first time you open the editor**, pointing out
-the parts that aren't obvious — including the three that are easy to miss
-entirely: the **animated background** button, the **blocks** menu (terminal,
-code panel, progress steps, confetti), and the **project settings** readout in
-the toolbar, which is a button that reshapes the project. You can replay it any
-time from the account menu in the top-right → **Replay tour**.
+the parts that aren't obvious — the **animated background** button, the
+**blocks** menu (terminal, code panel, progress steps, confetti), the
+**project settings** readout in the toolbar (which is a button that reshapes the
+project), **Add media** and **Stock**, and the **Effects** section where the 34
+text effects live.
+
+The tour only shows steps whose panel is actually on screen. The Effects section
+exists only while a text element is selected, so **replaying the tour with some
+text selected shows more than the first run did** — worth doing once you have
+something on the canvas. Replay it any time from the account menu in the
+top-right → **Replay tour**.
 
 ---
 

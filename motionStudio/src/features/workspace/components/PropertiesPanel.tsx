@@ -214,9 +214,13 @@ function readClosedSections(): string[] {
 function Section({
   title,
   children,
+  tourId,
 }: {
   title: string;
   children?: React.ReactNode;
+  /** Anchors a tour step to this section. Sections only exist while a matching
+      element is selected, so the tour resolves these against the live DOM. */
+  tourId?: string;
 }) {
   const [closed, setClosed] = useState(() => readClosedSections().includes(title));
 
@@ -240,7 +244,7 @@ function Section({
   // chevron never suggests something can open when nothing would.
   if (!children) {
     return (
-      <div className="px-4 py-2 border-b border-studio-border shrink-0">
+      <div data-tour={tourId} className="px-4 py-2 border-b border-studio-border shrink-0">
         <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">
           {title}
         </span>
@@ -540,7 +544,7 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
 
       {/* ── Effects: text animation + general motion, one umbrella so the two
              systems read as related instead of as unrelated features ── */}
-      <Section title="Effects" />
+      <Section title="Effects" tourId="effects-section" />
       <div className="flex flex-col gap-3 px-4 py-3">
         <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">Text Animation</span>
         {el.textEffect && <TextEffectPreview effect={el.textEffect} color={el.color} />}
