@@ -32,6 +32,10 @@ editor later on a bigger screen.
 
 That's the whole loop: **add → arrange → animate → preview → export.**
 
+**A short walkthrough runs the first time you open the editor**, pointing out
+the parts that aren't obvious. You can replay it any time from the account menu
+in the top-right → **Replay tour**.
+
 ---
 
 ## 2. The interface

@@ -5,6 +5,35 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Added: guided first-run walkthrough of the editor
+
+### Added
+- **A seven-step tour** over the real editor controls — insert tools, assets,
+  canvas, properties, timeline, preview, export — running once on first editor
+  open. Built on `driver.js`.
+- Its actual purpose is the gestures that can't be discovered by looking:
+  **double-click text to edit it**, **drag a clip's edge (not its body) to
+  trim**, and that **motion pauses while an element is selected**. Every one of
+  those had a first-time user reasonably conclude something was broken.
+- Steps anchor on `data-tour` attributes rather than class names, so restyling
+  a panel can't silently break the tour. Verified every step resolves to a real
+  anchor.
+- `driver.js` plus both stylesheets load **dynamically** — a once-per-user
+  event has no business in the main bundle. It builds as its own chunk,
+  ~7.2 kB gzipped, fetched only when the tour actually runs.
+- **Replayable** from the account menu — otherwise it's strictly one-shot, and
+  the one time it runs is the moment you understand the app least. The entry
+  only appears inside the editor, since that menu is shared with the dashboard.
+- Restyled to the `--studio-*` tokens: driver.js ships a white popover which
+  would read as a third-party overlay pasted onto a dark app.
+- New `editor_tour_started` event, flagged with whether it was a replay.
+
+Files: `src/features/workspace/tour/{editorTour.ts,useEditorTour.ts,tour.css}` (new),
+`src/features/workspace/components/{EditorLayout,Toolbar}.tsx`,
+`src/components/UserMenu.tsx`, `src/lib/analytics.ts`
+
+---
+
 ## [2026-07-27] — Changed: editor usability pass
 
 A UI audit found several traps that made working features look broken.
