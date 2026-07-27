@@ -19,7 +19,37 @@ export const EDITOR_TOUR_STEPS: DriveStep[] = [
     popover: {
       title: 'Start here',
       description:
-        'Add text, an animated background, or a block — a terminal, code panel, progress steps or confetti.',
+        'Everything you place on the canvas starts from these three buttons. <strong>T</strong> adds text — the next two are worth a closer look.',
+      side: 'bottom',
+      align: 'start',
+    },
+  },
+  {
+    element: '[data-tour="shader"]',
+    popover: {
+      title: 'Animated backgrounds',
+      description:
+        'Drops in a living background — 18 shader presets, from soft mesh gradients to noise and warp. Swap the preset and tune its speed and opacity in Properties. This is the fastest way to stop a video looking like plain text on black.',
+      side: 'bottom',
+      align: 'start',
+    },
+  },
+  {
+    element: '[data-tour="blocks"]',
+    popover: {
+      title: 'Blocks — things text can’t do',
+      description:
+        'A <strong>terminal</strong> that types commands, a <strong>code panel</strong> that reveals your code line by line, <strong>progress steps</strong>, and <strong>confetti</strong>. Pick one, then edit its content in Properties — a code block takes your real code, a terminal takes one line per command.',
+      side: 'bottom',
+      align: 'start',
+    },
+  },
+  {
+    element: '[data-tour="project-settings"]',
+    popover: {
+      title: 'Project settings',
+      description:
+        'That aspect ratio · fps · length readout is a button. Open it to reshape the project at any time — switch to 9:16 for Reels, change the frame rate, or make the video longer. <strong>Nothing is locked in at creation.</strong>',
       side: 'bottom',
       align: 'start',
     },

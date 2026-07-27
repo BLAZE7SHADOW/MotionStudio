@@ -92,6 +92,7 @@ export default function Toolbar({ project }: ToolbarProps) {
       </TooltipHint>
       <TooltipHint label="Add animated background">
         <Button
+          data-tour="shader"
           variant="ghost"
           size="icon"
           onClick={() => {
@@ -116,6 +117,7 @@ export default function Toolbar({ project }: ToolbarProps) {
           <TooltipTrigger asChild>
             <PopoverTrigger asChild>
               <Button
+                data-tour="blocks"
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
@@ -159,7 +161,9 @@ export default function Toolbar({ project }: ToolbarProps) {
       <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />
 
       {/* Project settings — live aspect ratio + fps indicator */}
-      <ProjectSettingsPopover project={project} />
+      <span data-tour="project-settings" className="flex items-center">
+        <ProjectSettingsPopover project={project} />
+      </span>
 
       {/* Preview toggle */}
       <div className="ml-auto flex items-center gap-2">

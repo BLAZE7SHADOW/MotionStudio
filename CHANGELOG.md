@@ -5,6 +5,27 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Tour covers shaders, blocks and project settings
+
+### Added
+- **Three more tour steps**, taking the editor walkthrough from seven to ten.
+  All three point at features that already shipped but that a first-time user
+  had no reason to click:
+  - **Animated backgrounds** — the sparkle button. 18 shader presets, and the
+    single fastest way to stop a video looking like plain text on black.
+  - **Blocks** — the terminal/code/steps/confetti menu. It's an icon-only
+    button whose popover is the only place the four blocks are named.
+  - **Project settings** — the `16:9 · 30 fps · 10s` readout reads as a status
+    label, but it's a button, and it's the only way to change aspect ratio,
+    frame rate or length after creation. The step says so explicitly: nothing
+    is locked in at creation.
+- `data-tour` anchors for those three controls (`shader`, `blocks`,
+  `project-settings`).
+
+### Changed
+- The opening tour step no longer lists what the shader and block buttons do,
+  since each now gets its own step; it just orients you to the insert cluster.
+
 ## [2026-07-27] — Legible progress steps, and a real first-run dashboard
 
 ### Fixed

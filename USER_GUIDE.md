@@ -36,8 +36,11 @@ editor later on a bigger screen.
 That's the whole loop: **add → arrange → animate → preview → export.**
 
 **A short walkthrough runs the first time you open the editor**, pointing out
-the parts that aren't obvious. You can replay it any time from the account menu
-in the top-right → **Replay tour**.
+the parts that aren't obvious — including the three that are easy to miss
+entirely: the **animated background** button, the **blocks** menu (terminal,
+code panel, progress steps, confetti), and the **project settings** readout in
+the toolbar, which is a button that reshapes the project. You can replay it any
+time from the account menu in the top-right → **Replay tour**.
 
 ---
 
