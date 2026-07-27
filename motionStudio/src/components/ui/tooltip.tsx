@@ -57,7 +57,15 @@ function TooltipContent({
   )
 }
 
-/** The common case: an icon button plus a label. */
+/**
+ * The common case: an icon button plus a label.
+ *
+ * NOT usable inside another `asChild` trigger (a PopoverTrigger, say) — that
+ * parent would clone *this* component with its props and ref, and they'd stop
+ * here instead of reaching the button, leaving the control dead. Compose the
+ * primitives directly in that case so both `asChild` layers land on the same
+ * element.
+ */
 function TooltipHint({
   label,
   shortcut,

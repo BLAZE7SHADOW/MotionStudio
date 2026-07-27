@@ -3,7 +3,7 @@ import { Undo2, Redo2, Clapperboard, Type, Sparkles, Play, Pause, SquareTerminal
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { TooltipProvider, TooltipHint } from '@/components/ui/tooltip';
+import { TooltipProvider, TooltipHint, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { BLOCK_PRESETS } from '@/engines/project';
 import { getBlock } from '@/content/blocks/registry';
 import type { Project } from '@/engines/project';
@@ -107,17 +107,27 @@ export default function Toolbar({ project }: ToolbarProps) {
 
       {/* Structured blocks — terminal, code, pipeline, confetti */}
       <Popover>
-        <PopoverTrigger asChild>
-          <TooltipHint label="Add a block — terminal, code, steps, confetti">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
-            >
-              <SquareTerminal className="w-3.75 h-3.75" />
-            </Button>
-          </TooltipHint>
-        </PopoverTrigger>
+        {/* Both triggers must chain `asChild` down to the same Button.
+            Wrapping the Button in TooltipHint instead broke this control
+            outright: PopoverTrigger cloned TooltipHint with the trigger's
+            props and ref, and TooltipHint — a plain component — dropped them,
+            so the click never reached the button. */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
+              >
+                <SquareTerminal className="w-3.75 h-3.75" />
+              </Button>
+            </PopoverTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            Add a block — terminal, code, steps, confetti
+          </TooltipContent>
+        </Tooltip>
         <PopoverContent
           align="start"
           className="w-56 p-1.5 bg-studio-panel border-studio-border-strong rounded-studio-lg"
