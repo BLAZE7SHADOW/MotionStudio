@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Type, Sparkles, EyeOff } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Type, Sparkles, EyeOff, Maximize, Volume2, VolumeX } from 'lucide-react';
 import Moveable from 'react-moveable';
 import { Player } from '@remotion/player';
 import type { PlayerRef } from '@remotion/player';
@@ -217,6 +217,23 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     [playerElements, project?.assets]
   );
 
+  /* Audio only exists if something can produce it — an audio clip, or a video
+     whose track plays through the same Player. No point offering a mute
+     control on a composition that's silent by construction. */
+  const hasSound = useMemo(
+    () => elements.some((el) => el.type === 'audio' || el.type === 'video'),
+    [elements],
+  );
+  const [muted, setMuted] = useState(false);
+  const toggleMuted = useCallback(() => {
+    const p = playerRef.current;
+    if (!p) return;
+    const next = !p.isMuted();
+    if (next) p.mute();
+    else p.unmute();
+    setMuted(next);
+  }, []);
+
   /* Whether the selection is currently being shown WITHOUT motion it actually
      has — the condition the on-canvas notice explains. Kept separate from the
      memo above so adding it can't change that memo's identity, which would
@@ -297,7 +314,9 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
               loop={false}
               clickToPlay={false}
               doubleClickToFullscreen={false}
-              allowFullscreen={false}
+              // Enabled so the fullscreen control below can call requestFullscreen();
+              // double-click stays off because it's how you edit text.
+              allowFullscreen
             />
 
             {/* Drop-target highlight */}
@@ -450,11 +469,35 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
             )}
           </div>
 
-          {/* Zoom indicator */}
-          <div className="flex items-center gap-1.5 px-2.5 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm pointer-events-none select-none">
-            <span className="text-[11px] font-medium text-studio-text-faint tabular-nums">
-              {Math.round(scale * 100)}%
-            </span>
+          {/* Viewer controls + zoom readout */}
+          <div className="flex items-center gap-1.5">
+            {/* Only worth showing when there's something to hear. Video counts:
+                its audio track plays through the same Player. */}
+            {hasSound && (
+              <button
+                type="button"
+                onClick={toggleMuted}
+                title={muted ? 'Unmute' : 'Mute'}
+                className="flex items-center justify-center w-6 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120"
+              >
+                {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => playerRef.current?.requestFullscreen()}
+              title="Fullscreen preview"
+              className="flex items-center justify-center w-6 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120"
+            >
+              <Maximize className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="flex items-center gap-1.5 px-2.5 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm pointer-events-none select-none">
+              <span className="text-[11px] font-medium text-studio-text-faint tabular-nums">
+                {Math.round(scale * 100)}%
+              </span>
+            </div>
           </div>
         </>
       )}
