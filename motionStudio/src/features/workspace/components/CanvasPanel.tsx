@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Type, Sparkles } from 'lucide-react';
+import { Type, Sparkles, EyeOff } from 'lucide-react';
 import Moveable from 'react-moveable';
 import { Player } from '@remotion/player';
 import type { PlayerRef } from '@remotion/player';
@@ -217,6 +217,17 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     [playerElements, project?.assets]
   );
 
+  /* Whether the selection is currently being shown WITHOUT motion it actually
+     has — the condition the on-canvas notice explains. Kept separate from the
+     memo above so adding it can't change that memo's identity, which would
+     churn the Player every frame during playback. */
+  const motionHiddenOnSelection = useMemo(() => {
+    if (isPlaying || !selectedElementId || editingElementId) return false;
+    const el = elements.find((e) => e.id === selectedElementId);
+    if (!el) return false;
+    return (el.animations?.length ?? 0) > 0 || (el.type === 'text' && !!el.textEffect);
+  }, [elements, selectedElementId, editingElementId, isPlaying]);
+
   /* drop an asset from the panel → place it where it lands (in composition space) */
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
@@ -299,6 +310,22 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
                   backgroundColor: 'oklch(0.627 0.265 298.232 / 10%)',
                 }}
               />
+            )}
+
+            {/* The selected element is drawn in its base pose — see the
+                playerElements memo. That's necessary (an entrance effect
+                starts at opacity 0, so the thing you're trying to drag would
+                be invisible), but silently showing a static element makes a
+                working effect look broken. Say so instead. */}
+            {motionHiddenOnSelection && (
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+                <div className="flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-black/70 border border-white/15 backdrop-blur-sm">
+                  <EyeOff className="w-3 h-3 text-white/60" />
+                  <span className="text-[11px] text-white/80 select-none">
+                    Motion paused while selected — press Preview to see it
+                  </span>
+                </div>
+              </div>
             )}
 
             {elements.length === 0 && (
