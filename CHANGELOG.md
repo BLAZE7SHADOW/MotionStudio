@@ -5,6 +5,44 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Session tokens stopped expiring mid-edit
+
+### Fixed
+- **Uploads and quota returned 401 "Invalid session" after a long editing
+  session.** Every API caller passed a token that `useAuth` captured at mount
+  and refreshed only when Supabase happened to emit an auth event. Supabase
+  access tokens last about an hour, so a long session sent an expired JWT and
+  `/api/quota`, `/api/upload-url` and cloud render all failed at once.
+  - New `lib/authToken.ts` resolves the token **at request time**, refreshing it
+    a minute before expiry, and `apiFetch` retries once against a forced refresh
+    if a 401 comes back anyway (clock skew, or a session rotated in another tab).
+  - `api.*` no longer takes a `token` argument at all, so the stale value can't
+    be reintroduced by a call site. `useAuth`'s `token` is documented as a
+    presence signal for UI gating only.
+  - The asset upload path had a comment claiming it read the token "fresh" via
+    `getSession()` — but `getSession()` returns the *stored* token whether or not
+    it has expired. Fresh read, stale token; that was the bug.
+- **A thousand-plus console warnings during a browser export.**
+  `text-rendering: optimizeLegibility` was set on `:root` and so inherited
+  everywhere; `@remotion/web-renderer` copies computed styles onto a canvas
+  context, where the value arrives lowercased and Chrome rejects it — once per
+  frame. Dropped it; Chrome's default `auto` already does kerning and standard
+  ligatures. (A remaining `CanvasFontStretch '100%'` warning is upstream in the
+  beta web renderer — Chrome serialises `font-stretch: normal` as a percentage,
+  which its canvas API won't take. Cosmetic, and not ours to fix.)
+- **The browser tab claimed effects "are not included" even with the effects
+  renderer switched on.** That line is now conditional.
+
+### Changed
+- **Browser-export copy.** The warning leads with the consequence rather than
+  the mechanism — "Your text effects and blocks won't appear in this file" —
+  says the export still succeeds, and then offers *both* remedies: the effects
+  toggle, or Cloud Render. It previously named only Cloud Render, sending people
+  to a quota-limited path when a free one was one checkbox away.
+- **"Include effects (experimental)" is now "Include effects" with a Beta
+  badge**, and names what still differs (gradient-filled text, 3D transforms,
+  blend modes) instead of the vague "some things may still differ".
+
 ## [2026-07-27] — Tour covers shaders, blocks and project settings
 
 ### Added

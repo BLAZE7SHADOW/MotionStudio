@@ -90,7 +90,7 @@ export default function ExportDialog({ project }: { project: Project }) {
   // fetch quota whenever auth changes
   useEffect(() => {
     if (!token) { setQuota(null); return; }
-    api.getQuota(token).then(setQuota).catch(() => setQuota(null));
+    api.getQuota().then(setQuota).catch(() => setQuota(null));
   }, [token]);
 
   // reset cloud state on sign-out
@@ -156,7 +156,7 @@ export default function ExportDialog({ project }: { project: Project }) {
     };
 
     try {
-      const { renderId } = await api.startRender(token, inputProps);
+      const { renderId } = await api.startRender(inputProps);
 
       // Poll from here rather than holding the request open server-side — a
       // serverless function gets killed at the platform timeout, which used to
@@ -167,7 +167,7 @@ export default function ExportDialog({ project }: { project: Project }) {
           throw new Error('Render is taking unusually long — check back shortly.');
         }
         await new Promise((r) => setTimeout(r, 3000));
-        const status = await api.getRenderStatus(token, renderId);
+        const status = await api.getRenderStatus(renderId);
 
         if (status.status === 'error') throw new Error(status.error);
         if (status.status === 'done') {
@@ -175,7 +175,7 @@ export default function ExportDialog({ project }: { project: Project }) {
           setCloudProgress(1);
           setCloudStatus('done');
           track.exportCloudCompleted();
-          api.getQuota(token).then(setQuota).catch(() => null);
+          api.getQuota().then(setQuota).catch(() => null);
           return;
         }
         setCloudProgress(status.progress);
@@ -310,14 +310,20 @@ export default function ExportDialog({ project }: { project: Project }) {
                   onChange={(e) => setUseWebRenderer(e.target.checked)}
                   className="mt-0.5 accent-studio-accent"
                 />
-                <span className="flex flex-col gap-0.5">
-                  <span className="text-[11px] font-medium text-studio-text">
-                    Include effects (experimental)
+                <span className="flex flex-col gap-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-medium text-studio-text">
+                      Include effects
+                    </span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-studio-sm bg-studio-accent-subtle text-studio-accent border border-studio-accent-border">
+                      Beta
+                    </span>
                   </span>
                   <span className="text-[10px] text-studio-text-faint leading-relaxed">
-                    Renders the real composition instead of a flat canvas, so text
-                    effects come through. Slower, and some things may still differ
-                    from Cloud Render.
+                    Renders the real composition rather than a flattened canvas, so
+                    text effects, backgrounds and blocks are kept. Expect a slower
+                    export, and a few things still differ from Cloud Render —
+                    gradient-filled text, 3D transforms and blend modes.
                   </span>
                 </span>
               </label>
@@ -329,23 +335,34 @@ export default function ExportDialog({ project }: { project: Project }) {
               {usesUnsupportedFeatures && !useWebRenderer && (
                 <div className="rounded-studio-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2">
                   <p className="text-[11px] text-amber-300/90 leading-relaxed">
-                    This project uses {unsupportedSummary}, which browser export can't
-                    render — they'll be missing from the file. Use{' '}
+                    <strong className="font-medium">
+                      Your {unsupportedSummary} won't appear in this file.
+                    </strong>{' '}
+                    A standard browser export flattens each frame onto a plain
+                    canvas, so anything the composition animates is dropped — the
+                    video will render, just without them.
+                  </p>
+                  <p className="text-[11px] text-amber-300/90 leading-relaxed mt-1.5">
+                    To keep them, tick <strong className="font-medium">Include
+                    effects</strong> above, or use{' '}
                     <button
                       type="button"
                       onClick={() => { track.exportTabChanged('cloud'); setTab('cloud'); }}
                       className="underline underline-offset-2 hover:text-amber-200"
                     >
                       Cloud Render
-                    </button>{' '}
-                    to keep them.
+                    </button>
+                    , which always matches the editor exactly.
                   </p>
                 </div>
               )}
 
               <p className="text-[10px] text-studio-text-faint leading-relaxed">
-                Renders in your browser — audio included. Requires Chrome or Edge.
-                Text effects, backgrounds and blocks are not included.
+                Renders on this device — audio included, nothing uploaded, no quota
+                used. Requires Chrome or Edge.{' '}
+                {useWebRenderer
+                  ? 'Effects are included via the beta renderer.'
+                  : 'Text effects, backgrounds and blocks are not included.'}
               </p>
             </>
           )}

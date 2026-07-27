@@ -374,10 +374,18 @@ Renders entirely inside your browser — no server, no terminal.
 3. Click **Export & download** — a progress bar fills while every frame is rendered
    offline, then the finished MP4 downloads automatically.
 
+**Include effects (Beta).** By default this path flattens each frame onto a plain
+canvas, so text effects, animated backgrounds and blocks are dropped — the video
+still renders, just without them, and the dialog warns you when your project
+actually uses any. Tick **Include effects** to render the real composition and
+keep them. It's slower, and a few things still differ from Cloud Render:
+gradient-filled text, 3D transforms and blend modes.
+
 Under the hood: every frame is drawn to an off-screen canvas in exact order, source
 videos are seeked frame-by-frame, all audio is mixed sample-exact
 (`OfflineAudioContext`), and the browser's hardware encoder (WebCodecs / H.264)
-compresses it. **Requires Chrome or Edge** — Safari doesn't support WebCodecs yet.
+compresses it. Nothing is uploaded and no quota is used. **Requires Chrome or
+Edge** — Safari doesn't support WebCodecs yet.
 
 ### Cloud Render tab (any device, quota-based)
 Renders on AWS instead of your machine — works in any browser, uses no local CPU,
