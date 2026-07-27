@@ -14,7 +14,9 @@ function humanizeError(message: string): string {
   if (message.includes('Email not confirmed')) return 'Please confirm your email first — check your inbox.';
   if (message.includes('Password should be at least')) return 'Password must be at least 6 characters.';
   if (message.includes('Unable to validate email')) return 'Enter a valid email address.';
-  if (message.includes('Anonymous sign-ins are disabled')) return 'Guest sign-in is not enabled yet — enable Anonymous Sign-In in your Supabase dashboard.';
+  // Was: "enable Anonymous Sign-In in your Supabase dashboard" — a note to the
+  // operator, shown to the visitor, naming internal infrastructure.
+  if (message.includes('Anonymous sign-ins are disabled')) return 'Guest access is unavailable right now — sign in with Google or email instead.';
   return message;
 }
 
