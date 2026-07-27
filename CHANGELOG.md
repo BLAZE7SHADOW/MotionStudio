@@ -5,6 +5,34 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Fixed: CORS-tainted media in both browser export paths
+
+### Fixed
+- **Remote (S3) images broke in-browser rendering with a CORS error**, despite
+  the bucket being configured correctly — it does return
+  `Access-Control-Allow-Origin: *` when an `Origin` header is sent. The real
+  cause was **cache poisoning**: S3's *non*-CORS response carries no `Vary`
+  header, so once the browser cached a plain `<img>` load (the dashboard
+  thumbnail, or the editor canvas), it reused that ACAO-less response for the
+  renderer's later CORS request and the fetch was blocked. Fixed by requesting
+  remote assets consistently as CORS requests — `crossOrigin="anonymous"` on
+  `ImageRenderer`'s `<Img>` — so only the CORS-flavoured response is ever
+  cached. **You may need one hard refresh** to evict an already-poisoned entry.
+- **The same bug silently broke the original browser export.** `prepareSources`
+  in `exporter.ts` built `new Image()` / `<video>` without `crossOrigin`, so any
+  cloud-synced asset tainted the export canvas and encoding would fail with a
+  SecurityError. It set `src` first too — `crossOrigin` has to be assigned
+  *before* `src` or the non-CORS fetch has already begun. Both fixed.
+- **`renderMediaOnWeb()` requires a licence key.** Now read from
+  `VITE_REMOTION_LICENSE_KEY`, defaulting to `free-license`. Kept as config
+  rather than hardcoded, since asserting licence eligibility is a legal claim —
+  verify at https://remotion.dev/license.
+
+Files: `src/engines/rendering/components/renderers/ImageRenderer.tsx`,
+`src/engines/export/exporter.ts`, `src/engines/export/webRenderer.ts`
+
+---
+
 ## [2026-07-27] — Added: experimental in-browser export that keeps effects
 
 ### Added

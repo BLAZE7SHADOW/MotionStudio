@@ -74,6 +74,11 @@ export async function exportViaWebRenderer(
     container: 'mp4',
     scale: options.resolutionScale,
     videoBitrate: options.videoBitsPerSecond,
+    // Remotion requires a licence key for web rendering. `free-license` covers
+    // individuals and small companies — see https://remotion.dev/license and
+    // confirm you qualify; set VITE_REMOTION_LICENSE_KEY if you hold a paid
+    // one. This is a licensing claim, so it's config rather than hardcoded.
+    licenseKey: import.meta.env.VITE_REMOTION_LICENSE_KEY ?? 'free-license',
     onProgress: ({ progress }) => {
       options.onProgress?.(
         Math.round(progress * project.durationInFrames),

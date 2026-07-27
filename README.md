@@ -86,8 +86,11 @@ Frontend env (`motionStudio/.env.local`):
 ```
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
-VITE_POSTHOG_KEY=          # optional
-VITE_POSTHOG_HOST=         # optional
+VITE_POSTHOG_KEY=            # optional
+VITE_POSTHOG_HOST=           # optional
+VITE_REMOTION_LICENSE_KEY=   # optional — defaults to "free-license" for the
+                             # experimental in-browser effects export. Check
+                             # https://remotion.dev/license that you qualify.
 ```
 
 API env (Vercel project settings — only needed for cloud renders / stock search):

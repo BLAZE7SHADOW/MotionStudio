@@ -13,6 +13,13 @@ export default function ImageRenderer({ el, url }: { el: ImageElement; url: stri
     <div style={imageElementStyle(el, 1, { localFrame, fps })}>
       <Img
         src={url}
+        // Remote assets must be fetched as CORS requests EVERY time. S3 only
+        // returns Access-Control-Allow-Origin when an Origin header is sent,
+        // and its non-CORS response carries no `Vary`, so one plain <img> load
+        // poisons the browser cache: the renderer's later CORS request reuses
+        // that ACAO-less response and fails. Being consistent avoids that, and
+        // is also what keeps the export canvas untainted.
+        crossOrigin={url.startsWith('http') ? 'anonymous' : undefined}
         style={{ width: '100%', height: '100%', objectFit: el.objectFit ?? 'cover' }}
       />
     </div>

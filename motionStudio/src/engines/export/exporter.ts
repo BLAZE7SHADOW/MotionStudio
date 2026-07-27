@@ -65,13 +65,21 @@ async function prepareSources(project: Project): Promise<DrawSources> {
     project.assets
       .filter((a) => usedIds.has(a.id))
       .map(async (asset) => {
+        // crossOrigin MUST be set before src, or the browser has already
+        // started a non-CORS fetch. Without it a remote (S3) asset taints the
+        // export canvas and encoding fails with a SecurityError — and it also
+        // poisons the cache for any later CORS request for the same file.
+        const remote = asset.url.startsWith('http');
+
         if (asset.type === 'image') {
           const img = new Image();
+          if (remote) img.crossOrigin = 'anonymous';
           img.src = asset.url;
           await new Promise((r) => { img.onload = r; img.onerror = r; });
           images.set(asset.id, img);
         } else if (asset.type === 'video') {
           const v = document.createElement('video');
+          if (remote) v.crossOrigin = 'anonymous';
           v.src = asset.url;
           v.muted = true;
           v.playsInline = true;
