@@ -5,6 +5,28 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Getting-started strip on a sparse dashboard
+
+### Added
+- **A compact getting-started strip under the project grid, shown while the user
+  has fewer than five projects.** Two or three cards in a wide grid reads as
+  abandoned rather than new, and that is exactly the point where someone is
+  still learning the flow — or returning after a fortnight having forgotten it.
+  It carries the same three steps as the empty state (template → edit text →
+  export) plus a shortcut to open a demo project.
+  - Deliberately *not* the full empty state: next to real projects a hero-sized
+    onboarding block would talk over the thing the user came for.
+  - Dismissible, and it retires on its own at five projects. Someone with four
+    projects who knows the app shouldn't have to scroll past it forever.
+
+### Changed
+- **Extracted the shared onboarding content into
+  `components/gettingStarted.ts`** — the step copy, the demo template id, and a
+  `useQuickDemo()` hook holding the create-and-open logic. The empty state and
+  the strip say the same thing at different sizes; duplicating it would have let
+  the onboarding contradict itself depending on how many projects you happen to
+  have. `EmptyState` lost its own copy of the demo handler as a result.
+
 ## [2026-07-27] — Tour covers the assets panel and text effects
 
 ### Added

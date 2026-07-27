@@ -91,6 +91,11 @@ top-right → **Replay tour**.
   three-step summary of how a video gets made, and two ways in: **Try a demo
   project** (creates a filled-in project and opens the editor immediately) or
   **New Project** (the full template picker).
+- **While you still have only a few projects** (fewer than five), a compact
+  version of that three-step summary sits under the grid, with a shortcut to
+  open a demo project. It's there as a refresher if you come back after a while
+  and don't remember the flow. Dismiss it with the **×** and it won't return; it
+  also disappears on its own once you have five projects.
 - **Open**: click a project card on the Dashboard. Each card shows a real frame
   of that project, and animates when you hover it — so you can tell your
   projects apart at a glance instead of reading names.

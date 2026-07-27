@@ -8,6 +8,7 @@ import DashboardHeader from './components/DashboardHeader';
 import ProjectGrid from './components/ProjectGrid';
 import EmptyState from './components/EmptyState';
 import CreateProjectModal from './components/CreateProjectModal';
+import GettingStartedStrip, { GETTING_STARTED_THRESHOLD } from './components/GettingStartedStrip';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -50,6 +51,9 @@ export default function DashboardPage() {
                 </span>
               </div>
               <ProjectGrid projects={projects} />
+              {/* A sparse grid reads as abandoned rather than new, and that's
+                  exactly when someone is still learning the flow. */}
+              {projects.length < GETTING_STARTED_THRESHOLD && <GettingStartedStrip />}
             </>
           )}
         </main>

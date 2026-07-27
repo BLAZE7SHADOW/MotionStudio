@@ -1,70 +1,14 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LayoutTemplate, Type, Download, Zap, Plus, Loader2 } from 'lucide-react';
-import { useProjectStore } from '@/engines/project';
-import { getTemplate, instantiateTemplate, templateDurationInFrames } from '@/content/templates';
-import { track } from '@/lib/analytics';
+import { Zap, Plus, Loader2 } from 'lucide-react';
 import TemplatePreview from './TemplatePreview';
-
-/** The template the Quick demo button opens — generic enough for any first-timer. */
-const DEMO_TEMPLATE_ID = 'feature-shipped';
-
-const STEPS = [
-  {
-    icon: LayoutTemplate,
-    title: 'Start from a template',
-    body: 'Pick one of 21 ready-made scenes. It arrives with a background, animated text and timing already set — nothing starts blank.',
-  },
-  {
-    icon: Type,
-    title: 'Swap in your words',
-    body: 'Double-click any text on the canvas to edit it. Change the effect, colour and timing from the Properties panel on the right.',
-  },
-  {
-    icon: Download,
-    title: 'Export it',
-    body: 'Hit Export for an MP4. Render in your browser for a quick draft, or in the cloud when you want full quality.',
-  },
-];
+import { STEPS, useQuickDemo } from './gettingStarted';
 
 interface EmptyStateProps {
   onNewProject: () => void;
 }
 
 export default function EmptyState({ onNewProject }: EmptyStateProps) {
-  const navigate = useNavigate();
-  const createProject = useProjectStore((s) => s.createProject);
-  const [creating, setCreating] = useState(false);
-
-  const demo = getTemplate(DEMO_TEMPLATE_ID);
-
-  /**
-   * Skip the picker entirely: build the demo project and drop the user
-   * straight into the editor. A first-timer shouldn't have to decide anything
-   * before they've seen what the editor even looks like.
-   */
-  function handleQuickDemo() {
-    if (!demo || creating) return;
-    setCreating(true);
-
-    const project = createProject({
-      name: 'My first video',
-      aspectRatio: demo.aspectRatio,
-      fps: demo.fps,
-      elements: instantiateTemplate(demo),
-      durationInFrames: templateDurationInFrames(demo),
-    });
-
-    track.projectCreated({
-      aspect_ratio: demo.aspectRatio,
-      fps: demo.fps,
-      template_id: demo.id,
-      template_category: demo.category,
-    });
-
-    navigate(`/editor/${project.id}`);
-  }
+  const { demo, creating, start: handleQuickDemo } = useQuickDemo();
 
   return (
     <div className="flex-1 flex flex-col items-center py-14">
