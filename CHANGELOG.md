@@ -5,6 +5,34 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Fixed: the editor itself hung on unavailable media
+
+### Fixed
+- **The retry storm came from the editor preview, not the export.** Fixing the
+  export path didn't stop it: `rehydrateAssets` returned an asset *unchanged*
+  when it found neither local bytes in IndexedDB nor a `storageUrl`, leaving a
+  dead `blob:` URL in the project. The preview `<Player>` then mounted
+  `<Video src="blob:…">`, and `@remotion/media` treats a failed fetch as
+  retryable — so it hammered a URL that can never resolve, forever, before the
+  user even pressed Export. The older `<OffthreadVideo>` failed quietly, which
+  is why this only appeared after that swap.
+- `rehydrateAssets` now blanks the URL of an asset it can't resolve (and logs
+  which one), and `ElementRenderer` skips any element whose asset has no usable
+  URL. Rendering nothing is deliberate — a dead `src` hangs the composition.
+- Export still refuses rather than silently producing a video missing content:
+  the unusable-asset check now catches blanked URLs as well as stale blobs.
+
+### Not done
+- Missing media currently just vanishes from the canvas with a console warning;
+  there's no in-editor indicator telling you *which* asset needs re-uploading.
+  The Assets panel is the obvious home for that.
+
+Files: `src/engines/asset/rehydrate.ts`,
+`src/engines/rendering/components/ElementRenderer.tsx`,
+`src/engines/export/webRenderer.ts`
+
+---
+
 ## [2026-07-27] — Fixed: dead blob URLs hung the in-browser export forever
 
 ### Fixed

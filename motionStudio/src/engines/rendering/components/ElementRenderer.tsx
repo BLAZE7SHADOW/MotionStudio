@@ -20,17 +20,20 @@ export default function ElementRenderer({
   switch (el.type) {
     case 'text':
       return <TextRenderer el={el} />;
+    // A blank url means the asset couldn't be resolved (see rehydrateAssets).
+    // Rendering nothing is deliberate: handing a dead src to the media decoder
+    // makes it retry the failed fetch forever and hang the whole composition.
     case 'image': {
       const asset = assets.find((a) => a.id === el.assetId);
-      return asset ? <ImageRenderer el={el} url={asset.url} /> : null;
+      return asset?.url ? <ImageRenderer el={el} url={asset.url} /> : null;
     }
     case 'video': {
       const asset = assets.find((a) => a.id === el.assetId);
-      return asset ? <VideoRenderer el={el} url={asset.url} /> : null;
+      return asset?.url ? <VideoRenderer el={el} url={asset.url} /> : null;
     }
     case 'audio': {
       const asset = assets.find((a) => a.id === el.assetId);
-      return asset ? <AudioRenderer el={el} url={asset.url} /> : null;
+      return asset?.url ? <AudioRenderer el={el} url={asset.url} /> : null;
     }
     case 'shader':
       return <ShaderRenderer el={el} />;

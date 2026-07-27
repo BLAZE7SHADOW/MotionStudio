@@ -63,7 +63,11 @@ async function resolveAssetUrls(project: Project) {
       .filter((el): el is Extract<typeof el, { assetId: string }> => 'assetId' in el)
       .map((el) => el.assetId),
   );
-  const broken = assets.filter((a) => used.has(a.id) && a.url.startsWith('blob:') && !created.includes(a.url));
+  // Unusable = blank (rehydrate gave up on it) or a stale blob: we didn't just
+  // mint. Better to refuse than to hand back a video quietly missing content.
+  const broken = assets.filter(
+    (a) => used.has(a.id) && (!a.url || (a.url.startsWith('blob:') && !created.includes(a.url))),
+  );
   if (broken.length > 0) {
     created.forEach((u) => URL.revokeObjectURL(u));
     throw new Error(

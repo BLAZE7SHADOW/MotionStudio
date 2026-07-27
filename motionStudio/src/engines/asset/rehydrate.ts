@@ -20,6 +20,16 @@ export async function rehydrateAssets(projectId: string): Promise<void> {
       const blob = await getBlob(asset.id);
       if (blob) return { ...asset, url: URL.createObjectURL(blob) };
       if (asset.storageUrl) return { ...asset, url: asset.storageUrl };
+
+      // Neither local bytes nor a cloud copy: the stored `blob:` URL belongs to
+      // a session that ended and can never resolve. Blank it rather than
+      // leaving it in place — the media decoder treats a failing fetch as
+      // retryable and will hammer a dead URL indefinitely, which looks like a
+      // frozen editor. An empty url is the signal for "skip this element".
+      if (asset.url.startsWith('blob:')) {
+        console.warn(`[assets] "${asset.name}" is no longer available on this device`);
+        return { ...asset, url: '' };
+      }
       return asset;
     }),
   );
