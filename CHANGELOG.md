@@ -8,16 +8,30 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 ## [2026-07-27] — Legible progress steps, and a real first-run dashboard
 
 ### Fixed
-- **The Progress steps block rendered as a bare line.** Its geometry was
-  hard-coded for a small preview box — a 920px track, 44px nodes and **15px
-  labels**. Against a 1920×1080 composition that put the step names at 1.4% of
-  the frame height, roughly four pixels in the editor preview, so all you could
-  see was the connecting line. Geometry is now props (`trackLength`,
-  `nodeRadius`, `labelSize`) with defaults sized for a real canvas (1200 / 40 /
-  40), and stroke width, gaps, the check icon and the node glow all derive from
-  the node size so one control resizes the component coherently.
+- **The Progress steps block rendered as a bare line — its node layout was
+  broken.** Each step was a flex item with `width: segment` *and*
+  `marginRight: -segment`; the negative margin cancels the item's own width, so
+  every node was laid out at the same x and all of them stacked into a single
+  dot. The SVG track, sized independently, overflowed the element box and got
+  clipped. Nodes are now positioned absolutely along the track — each offset is
+  a direct function of `trackLength` — and the track is plain divs, so the box
+  dimensions and the drawn content can't disagree.
+  Caught by rendering the block headlessly through the Remotion CLI and looking
+  at the frame; a first pass that only enlarged the numbers made the broken
+  layout bigger without fixing it.
+- **Progress steps geometry was hard-coded for a small preview box** — a 920px
+  track, 44px nodes and **15px labels**. Against a 1920×1080 composition that
+  put the step names at 1.4% of the frame height, roughly four pixels in the
+  editor preview. Geometry is now props (`trackLength`, `nodeRadius`,
+  `labelSize`) with defaults sized for a real canvas (1200 / 40 / 40), and
+  stroke width, gaps, the check icon and the node glow all derive from node size
+  so one control resizes the component coherently.
   Existing projects pick the new sizes up automatically, since `blockProps`
   merges over the registry defaults and never stored these keys.
+- **Each step lit up before its incoming line arrived.** Segment `i` began
+  filling at `(i+1) * stepDuration` — a step behind the node it feeds — so a
+  node showed its check while the line reaching it was still half drawn. It now
+  fills between node `i` and node `i+1` activating.
 
 ### Added
 - **Size and direction controls for Progress steps.** Track length, node size

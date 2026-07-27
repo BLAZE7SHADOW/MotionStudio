@@ -202,8 +202,17 @@ pipeline's horizontal/vertical switch, and every block gets it for free.
 for whatever canvas their author had; dropped into a 1920×1080 composition those
 numbers can be invisible (the progress pipeline shipped with 15px labels — 1.4% of
 the frame height). Blocks therefore take their geometry as props and the registry
-supplies composition-scale defaults, so the vendored component stays untouched and
-the sizing decision lives with the rest of the block's configuration.
+supplies composition-scale defaults, so the sizing decision lives with the rest of
+the block's configuration rather than buried in the component.
+
+Vendored does not mean verified. The same pipeline's nodes were laid out with
+`width: segment` plus `marginRight: -segment`, which cancels each item's own width
+and stacked every node at the same x — it had never drawn correctly, and enlarging
+its numbers only made the broken layout bigger. The component now positions nodes
+absolutely from `trackLength`. Blocks are the one part of the composition with no
+cheap visual check in the editor, so the diagnosis came from rendering the block
+alone through `remotion render` and reading the frame — worth reaching for early
+rather than reasoning about layout from source.
 
 **`blockProps` is deliberately flat and primitive.** A project is persisted as JSON —
 localStorage and a Supabase JSONB column — so nothing non-serializable can live on an
