@@ -6,9 +6,14 @@ export interface QuotaResult {
   remaining: number;
 }
 
-export interface RenderResult {
-  url: string;
+export interface RenderStarted {
+  renderId: string;
 }
+
+export type RenderStatus =
+  | { status: 'rendering'; progress: number }
+  | { status: 'done'; url: string | null }
+  | { status: 'error'; error: string };
 
 export type StockType = 'photo' | 'video';
 
@@ -47,11 +52,18 @@ export const api = {
   getQuota: (token: string): Promise<QuotaResult> =>
     apiFetch('/api/quota', token),
 
-  startRender: (token: string, inputProps: Record<string, unknown>): Promise<RenderResult> =>
+  /** Queues a Lambda render and returns immediately — poll getRenderStatus. */
+  startRender: (token: string, inputProps: Record<string, unknown>): Promise<RenderStarted> =>
     apiFetch('/api/render', token, {
       method: 'POST',
       body: JSON.stringify({ inputProps, deviceId: getDeviceId() }),
     }),
+
+  getRenderStatus: (token: string, renderId: string): Promise<RenderStatus> =>
+    apiFetch(
+      `/api/render-status?renderId=${encodeURIComponent(renderId)}&deviceId=${encodeURIComponent(getDeviceId())}`,
+      token,
+    ),
 
   searchStock: (token: string, query: string, type: StockType, page = 1): Promise<StockSearchResult> =>
     apiFetch(`/api/stock-search?q=${encodeURIComponent(query)}&type=${type}&page=${page}`, token),

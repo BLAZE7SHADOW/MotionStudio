@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { renderMediaOnLambda, getRenderProgress } from '@remotion/lambda-client';
+import { renderMediaOnLambda } from '@remotion/lambda-client';
 import { verifyToken } from './_lib/auth';
 import { getRenderCount, recordRender } from './_lib/db';
-import { hasDeviceUsedFreeRender, recordDeviceRender } from './_lib/device';
+import { hasDeviceUsedFreeRender } from './_lib/device';
 
 const REGION = 'us-east-1';
 const FUNCTION_NAME = process.env.REMOTION_FUNCTION_NAME!;
@@ -77,28 +77,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: `Lambda error: ${(e as Error).message}` });
   }
 
-  // Record the render attempt now (quota deducted when Lambda starts, not when it finishes)
+  // Quota is deducted when Lambda starts, not when it finishes.
   await recordRender(user.id, renderId);
 
-  let outputUrl: string | null = null;
-  for (let i = 0; i < 120; i++) {
-    await new Promise((r) => setTimeout(r, 3000));
-    const progress = await getRenderProgress({
-      renderId, bucketName: BUCKET_NAME, functionName: FUNCTION_NAME, region: REGION,
-    });
-    if (progress.fatalErrorEncountered) {
-      return res.status(500).json({ error: progress.errors[0]?.message ?? 'Render failed' });
-    }
-    if (progress.done) { outputUrl = progress.outputFile ?? null; break; }
-  }
-
-  if (!outputUrl) return res.status(504).json({ error: 'Render timed out' });
-
-  // Lock the device only after a confirmed successful output — if Lambda failed,
-  // the guest hasn't "used" their free render and can try again.
-  if (user.is_anonymous && deviceId) {
-    await recordDeviceRender(deviceId);
-  }
-
-  return res.status(200).json({ url: outputUrl });
+  // Return as soon as the render is queued. This endpoint used to poll Lambda
+  // for up to 6 minutes, but Vercel kills a function long before that, so any
+  // render slower than the platform timeout failed from the caller's point of
+  // view even though Lambda finished and wrote the file to S3. The client now
+  // polls /api/render-status instead, which has no ceiling at all.
+  return res.status(202).json({ renderId });
 }

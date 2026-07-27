@@ -28,6 +28,9 @@ const QUALITIES = [
 
 type Tab = 'browser' | 'cloud';
 
+/** Client-side guard only — Lambda itself has no such limit. */
+const CLOUD_RENDER_TIMEOUT_MS = 15 * 60 * 1000;
+
 export default function ExportDialog({ project }: { project: Project }) {
   const navigate = useNavigate();
   const { user, token, loading: authLoading, isAnonymous, signInWithGoogle, signInAsGuest, signOut } = useAuth();
@@ -48,6 +51,7 @@ export default function ExportDialog({ project }: { project: Project }) {
   // cloud render state
   const [quota, setQuota] = useState<QuotaResult | null>(null);
   const [cloudStatus, setCloudStatus] = useState<'idle' | 'rendering' | 'done' | 'error'>('idle');
+  const [cloudProgress, setCloudProgress] = useState(0);
   const [cloudError, setCloudError] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
@@ -65,6 +69,21 @@ export default function ExportDialog({ project }: { project: Project }) {
   const supported = isExportSupported();
   const exporting = progress !== null;
 
+  // What this project contains that the canvas-based browser export can't draw.
+  const unsupportedSummary = (() => {
+    const els = project.canvas.elements;
+    const parts: string[] = [];
+    if (els.some((e) => e.type === 'text' && e.textEffect)) parts.push('text effects');
+    if (els.some((e) => e.type === 'shader')) parts.push('animated backgrounds');
+    if (els.some((e) => e.type === 'block')) parts.push('blocks');
+    return parts.length === 0
+      ? ''
+      : parts.length === 1
+        ? parts[0]
+        : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+  })();
+  const usesUnsupportedFeatures = unsupportedSummary.length > 0;
+
   // fetch quota whenever auth changes
   useEffect(() => {
     if (!token) { setQuota(null); return; }
@@ -75,6 +94,7 @@ export default function ExportDialog({ project }: { project: Project }) {
   useEffect(() => {
     if (!user) {
       setCloudStatus('idle');
+      setCloudProgress(0);
       setDownloadUrl(null);
       setCloudError(null);
     }
@@ -108,6 +128,7 @@ export default function ExportDialog({ project }: { project: Project }) {
     if (!token) return;
     setCloudError(null);
     setCloudStatus('rendering');
+    setCloudProgress(0);
     setDownloadUrl(null);
     track.exportCloudStarted();
 
@@ -129,11 +150,30 @@ export default function ExportDialog({ project }: { project: Project }) {
     };
 
     try {
-      const result = await api.startRender(token, inputProps);
-      setDownloadUrl(result.url);
-      setCloudStatus('done');
-      track.exportCloudCompleted();
-      api.getQuota(token).then(setQuota).catch(() => null);
+      const { renderId } = await api.startRender(token, inputProps);
+
+      // Poll from here rather than holding the request open server-side — a
+      // serverless function gets killed at the platform timeout, which used to
+      // cap renders regardless of how long Lambda was willing to work.
+      const startedAt = Date.now();
+      for (;;) {
+        if (Date.now() - startedAt > CLOUD_RENDER_TIMEOUT_MS) {
+          throw new Error('Render is taking unusually long — check back shortly.');
+        }
+        await new Promise((r) => setTimeout(r, 3000));
+        const status = await api.getRenderStatus(token, renderId);
+
+        if (status.status === 'error') throw new Error(status.error);
+        if (status.status === 'done') {
+          setDownloadUrl(status.url);
+          setCloudProgress(1);
+          setCloudStatus('done');
+          track.exportCloudCompleted();
+          api.getQuota(token).then(setQuota).catch(() => null);
+          return;
+        }
+        setCloudProgress(status.progress);
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Render failed';
       setCloudError(msg);
@@ -252,8 +292,31 @@ export default function ExportDialog({ project }: { project: Project }) {
                 <p className="text-[11px] text-studio-text-faint">Your browser doesn't support WebCodecs. Use Chrome or Edge.</p>
               )}
               {browserError && <p className="text-[11px] text-red-400">{browserError}</p>}
+
+              {/* Browser export paints frames onto a 2D canvas rather than
+                  running the React composition, so anything React-rendered is
+                  missing from the file. Saying so is better than shipping a
+                  video that silently lost half its content. */}
+              {usesUnsupportedFeatures && (
+                <div className="rounded-studio-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2">
+                  <p className="text-[11px] text-amber-300/90 leading-relaxed">
+                    This project uses {unsupportedSummary}, which browser export can't
+                    render — they'll be missing from the file. Use{' '}
+                    <button
+                      type="button"
+                      onClick={() => { track.exportTabChanged('cloud'); setTab('cloud'); }}
+                      className="underline underline-offset-2 hover:text-amber-200"
+                    >
+                      Cloud Render
+                    </button>{' '}
+                    to keep them.
+                  </p>
+                </div>
+              )}
+
               <p className="text-[10px] text-studio-text-faint leading-relaxed">
                 Renders in your browser — audio included. Requires Chrome or Edge.
+                Text effects, backgrounds and blocks are not included.
               </p>
             </>
           )}
@@ -355,7 +418,12 @@ export default function ExportDialog({ project }: { project: Project }) {
                     className="h-9 text-[12px] font-medium bg-studio-accent hover:bg-studio-accent-hover text-white rounded-studio-md gap-1.5 disabled:opacity-70"
                   >
                     {cloudStatus === 'rendering' ? (
-                      <><Loader2 className="w-3.5 h-3.5 animate-spin" />Rendering on cloud…</>
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        {cloudProgress > 0
+                          ? `Rendering on cloud… ${Math.round(cloudProgress * 100)}%`
+                          : 'Rendering on cloud…'}
+                      </>
                     ) : (
                       <><Cloud className="w-3.5 h-3.5" />Render & download</>
                     )}
