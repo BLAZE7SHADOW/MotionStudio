@@ -39,6 +39,15 @@ export default function TemplatePreview({ template }: { template: TemplateDefini
       compositionWidth={width}
       compositionHeight={height}
       style={{ width: '100%', height: '100%' }}
+      // A preview is a real composition: it lazy-loads a shader chunk, builds a
+      // WebGL context and renders at full composition resolution before it can
+      // show anything. That takes a moment, and an empty box while it happens
+      // reads as broken — so say it's loading instead of showing nothing.
+      renderLoading={() => (
+        <div className="w-full h-full flex items-center justify-center bg-studio-surface/40">
+          <span className="text-[11px] text-studio-text-faint animate-pulse">Loading preview…</span>
+        </div>
+      )}
       controls={false}
       loop
       autoPlay

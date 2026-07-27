@@ -5,6 +5,38 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Fixed: previews opened on a blank frame, and looked stuck while loading
+
+### Fixed
+- **The template preview and dashboard hover preview showed nothing.** Both
+  started at frame 0 — and every template opens with an entrance effect, which
+  animates opacity *from* 0. Frame 0 is a genuinely blank frame, and with the
+  shader backgrounds muted to 0.14–0.35 by the design pass it renders as a
+  near-black rectangle. Nothing was broken: a console check confirmed the
+  canvas present at the right size with a live WebGL context, faithfully
+  rendering an empty first frame. (An earlier layout theory was tested in the
+  browser and disproved — `height: 100%` resolves fine against those wrappers.)
+  Both now open part-way in: the template preview at 35%, the hover player at
+  the same poster frame the static thumbnail already used, so hovering
+  continues from what you were looking at rather than cutting to blank.
+  Looping still brings the entrance animation around.
+- **Previews looked stuck while starting.** A preview is a real composition —
+  it lazy-loads a shader chunk, creates a WebGL context and renders at full
+  composition resolution before it can show a pixel. That cost is inherent, but
+  showing an empty box meanwhile reads as broken. All three now use Remotion's
+  `renderLoading` to show a placeholder until the first frame is ready.
+
+### Changed
+- The tour's Properties step now says the headings collapse and that **Motion —
+  where the animation presets live — starts closed**. Defaulting it closed
+  saves seven Remotion Players per selection, but had made the presets
+  undiscoverable, which is a poor trade to make silently.
+
+Files: `src/features/dashboard/components/{TemplatePreview,ProjectThumbnail}.tsx`,
+`src/features/workspace/tour/editorTour.ts`
+
+---
+
 ## [2026-07-27] — Fixed: Add Block button; collapsible Properties; /contact rebuilt
 
 ### Fixed

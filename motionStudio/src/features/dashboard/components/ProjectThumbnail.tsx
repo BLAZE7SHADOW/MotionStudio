@@ -82,6 +82,13 @@ export default function ProjectThumbnail({ project }: { project: Project }) {
           compositionWidth={width}
           compositionHeight={height}
           style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+          renderLoading={() => (
+            <div className="w-full h-full flex items-center justify-center bg-studio-bg">
+              <span className="text-[11px] font-mono text-studio-text-faint">
+                {project.aspectRatio}
+              </span>
+            </div>
+          )}
           controls={false}
           loop
           autoPlay
@@ -99,6 +106,13 @@ export default function ProjectThumbnail({ project }: { project: Project }) {
           compositionWidth={width}
           compositionHeight={height}
           style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+          renderLoading={() => (
+            <div className="w-full h-full flex items-center justify-center bg-studio-bg">
+              <span className="text-[11px] font-mono text-studio-text-faint">
+                {project.aspectRatio}
+              </span>
+            </div>
+          )}
         />
       )}
     </div>
