@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -21,7 +21,8 @@ import { useProjectStore } from '@/engines/project';
 import type { AspectRatio } from '@/engines/project';
 import { track } from '@/lib/analytics';
 import type { TemplateDefinition } from '@/content/templates';
-import { instantiateTemplate, templateDurationInFrames } from '@/content/templates';
+import { instantiateTemplate, templateDurationInFrames, templateShaderPresets } from '@/content/templates';
+import { prefetchShaders } from '@/engines/rendering/components/renderers/ShaderRenderer';
 import TemplatePicker from './TemplatePicker';
 import TemplatePreview from './TemplatePreview';
 
@@ -47,9 +48,19 @@ export default function CreateProjectModal({ open, onClose }: CreateProjectModal
   const createProject = useProjectStore((s) => s.createProject);
 
   const [template, setTemplate] = useState<TemplateDefinition | null>(null);
+
   const [name, setName] = useState('');
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
   const [fps, setFps] = useState(30);
+
+  // Warm every shader the templates use as soon as the dialog opens. Each is
+  // its own lazy chunk, so without this the first preview of each shader waits
+  // on a fetch — which is exactly why some templates appeared instantly and
+  // others lagged. Runs on idle, so it never competes with the preview being
+  // looked at right now.
+  useEffect(() => {
+    if (open) prefetchShaders(templateShaderPresets());
+  }, [open]);
 
   // A template carries its own format; only a blank project needs the controls.
   const isBlank = template === null;

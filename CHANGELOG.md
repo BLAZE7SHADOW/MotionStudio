@@ -5,6 +5,43 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Performance: warm template shaders when the New Project dialog opens
+
+### Changed
+- **Template previews no longer wait on a network fetch.** Each of the 18
+  shaders is its own lazy chunk (~8–20 KB, plus a shared 24 KB runtime and a
+  24 KB noise texture on first use), so the first preview using a given shader
+  paid for fetching and compiling it while later ones were instant — which is
+  exactly why some templates appeared immediately and others visibly lagged.
+  Opening the dialog now warms all 15 shaders the template set uses.
+- Scheduled via `requestIdleCallback`, because this is speculative work and
+  must never compete with the preview the user is looking at right now.
+  Failures are swallowed — a missed prefetch just falls back to the normal
+  lazy load.
+- `ShaderRenderer` now derives both its lazy components *and* the prefetcher
+  from one importer map, so a newly added shader can't be wired into one and
+  forgotten by the other. The list of shaders to warm is likewise derived from
+  the template definitions rather than hardcoded.
+
+### Deliberately not done
+- **No prefetching on the dashboard.** Project thumbnails already load exactly
+  the shaders those projects use, on mount — there's nothing to warm ahead of
+  time. Prefetching the full set there would fetch ~156 KB of shaders a user
+  may never see, on a page that typically needs one or two.
+
+### Note on the earlier "slower" report
+`initialFrame` was ruled out as a cause by reading the Player source: it's used
+once, in a lazy `useState` initialiser, so it costs nothing at runtime. The
+delay was always present; it only became perceptible once the previews had
+visible content to arrive at, rather than resolving to the same blank frame
+they started on.
+
+Files: `src/engines/rendering/components/renderers/ShaderRenderer.tsx`,
+`src/content/templates/index.ts`,
+`src/features/dashboard/components/CreateProjectModal.tsx`
+
+---
+
 ## [2026-07-27] — Fixed: previews opened on a blank frame, and looked stuck while loading
 
 ### Fixed
