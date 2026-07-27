@@ -5,6 +5,54 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Changed: landing page reworked around the product
+
+The page pitched twice, then pointed away from itself.
+
+### Changed
+- **Removed the four-card feature grid.** It covered the same ground as the
+  `ProductTour` directly beneath it, in the same order — one description was
+  character-identical between the two files. The tour keeps the explaining
+  (it has real screenshots); a compact spec block now states what's in the box.
+- That spec block **absorbs the orphaned stats line**, which sat between two
+  sections with no heading of its own and claimed "22 text effects · 18
+  shaders" long after there were 34 effects, 18 shaders, 4 blocks and 21
+  templates. Counts verified against the source arrays rather than retyped.
+- **Inverted the CTA hierarchy.** The loudest element on the page was the
+  portfolio button — gradient fill, violet glow, hover lift — while the product
+  CTA was a flat rectangle. The strongest visual pull was sending visitors off
+  the site. The hero CTA now carries that weight and **fires analytics**; it
+  previously fired none, so hero→signup conversion was unmeasurable.
+- **The author section becomes a credit band in the footer.** It was a full
+  section with a heading, gradient button, socials and an entire contact form —
+  roughly 40% of the height below the fold spent on the author rather than the
+  product. The form already exists on `/contact`.
+- Nav **Contact** routes to `/contact` instead of the `#contact` anchor, which
+  no signed-in visitor could ever reach: `/` redirects to `/dashboard`, so the
+  whole section was unreachable once logged in.
+
+### Fixed
+- **Dead code in ProductTour**: no step has ever been a video, so the
+  `mediaKind` union, the `<video>` element and its error state were
+  unreachable. `TourMedia` now takes an image and real alt text.
+- **Two developer-facing strings shipped to visitors.** "Media not found —
+  check file path or add the asset" → "Preview unavailable"; the guest sign-in
+  failure no longer instructs the user to change a setting in a Supabase
+  dashboard they have no access to.
+- The tour's media frame is solid-bordered rather than dashed — dashed read as
+  an empty placeholder even with the screenshot loaded.
+
+### Performance
+- **Landing screenshots converted to WebP**: 2.4 MB of PNG (one file 1.27 MB
+  on its own) → **172 KB total, a 93% reduction**, at identical dimensions,
+  verified before the originals were deleted.
+
+Files: `src/features/landing/LandingPage.tsx`,
+`src/features/landing/components/{ProductTour,AuthPanel}.tsx`,
+`src/lib/analytics.ts`, `public/assets/landing/*`
+
+---
+
 ## [2026-07-27] — Fixed: dev-server API calls, frozen template previews; added viewer controls
 
 ### Fixed
