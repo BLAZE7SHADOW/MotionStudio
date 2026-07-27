@@ -15,17 +15,23 @@ the obvious approach.
   you press it, then it plays and loops. Removes the autoplay, the initial-frame
   offset and the loading state — a preview that loads on demand can't feel slow
   to load, because you asked for it.
-- **Dashboard thumbnails are a still frame, nothing more** (120 lines → 47).
-  Removed the IntersectionObserver and visibility gate, the hover swap between
-  `<Thumbnail>` and `<Player>`, and the loading placeholder. What remains: one
-  `<Thumbnail>` at 40% through, since frame 0 is blank while entrance effects
-  are still at opacity 0.
+- **Dashboard thumbnails cut back to a still frame that plays on hover**
+  (120 lines → 83). Removed the IntersectionObserver and visibility gate and
+  the loading placeholder. The still shows frame 40%, since frame 0 is blank
+  while entrance effects are at opacity 0; hovering swaps to a player that
+  starts from frame 0 — where being blank doesn't matter, because it moves off
+  immediately.
+- **Playback is driven explicitly through the player ref, not `autoPlay`**, in
+  both the template preview and the hover preview. The earlier symptom — a
+  preview that looked frozen — was a player parked on a static frame and never
+  actually playing.
 - **Dropped the dashboard shader prefetch.** It only existed to cover mounts the
   IntersectionObserver was deferring; with thumbnails mounting immediately it
   was doing nothing. `projectShaderPresets` went with it.
 
-The template prefetch on dialog open is kept — it's what makes the play button
-respond immediately — but it is now the only prefetching left.
+All prefetching is removed, including the derived-import map and
+`templateShaderPresets` that existed only to serve it; `ShaderRenderer` is back
+to a plain lazy map.
 
 Files: `src/features/dashboard/components/{TemplatePreview,ProjectThumbnail}.tsx`,
 `src/features/dashboard/DashboardPage.tsx`, `src/engines/project/index.ts`

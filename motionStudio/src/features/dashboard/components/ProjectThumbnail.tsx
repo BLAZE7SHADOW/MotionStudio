@@ -1,12 +1,16 @@
-import { useMemo } from 'react';
-import { Thumbnail } from '@remotion/player';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Player, Thumbnail } from '@remotion/player';
+import type { PlayerRef } from '@remotion/player';
 import MotionComposition from '@/engines/rendering/components/MotionComposition';
 import { getCompositionDimensions } from '@/engines/project';
 import type { Project } from '@/engines/project';
 
-/** A still frame of the project, shown on its dashboard card. */
+/** A still frame of the project, which plays while hovered. */
 export default function ProjectThumbnail({ project }: { project: Project }) {
+  const [hovered, setHovered] = useState(false);
+  const playerRef = useRef<PlayerRef>(null);
   const { width, height } = getCompositionDimensions(project.aspectRatio);
+  const duration = Math.max(project.durationInFrames, 1);
 
   const inputProps = useMemo(
     () => ({
@@ -17,6 +21,16 @@ export default function ProjectThumbnail({ project }: { project: Project }) {
     }),
     [project.canvas.elements, project.assets],
   );
+
+  // Play from the start each time the pointer arrives. Driven through the ref
+  // rather than autoPlay, which proved unreliable.
+  useEffect(() => {
+    if (!hovered) return;
+    const p = playerRef.current;
+    if (!p) return;
+    p.seekTo(0);
+    p.play();
+  }, [hovered]);
 
   if (project.canvas.elements.length === 0) {
     return (
@@ -29,19 +43,41 @@ export default function ProjectThumbnail({ project }: { project: Project }) {
   }
 
   return (
-    <Thumbnail
-      component={MotionComposition}
-      inputProps={inputProps}
-      // Not frame 0 — entrance effects start at opacity 0, so frame 0 is blank.
-      frameToDisplay={Math.min(
-        Math.round(project.durationInFrames * 0.4),
-        Math.max(project.durationInFrames - 1, 0),
+    <div
+      className="w-full h-full"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {hovered ? (
+        <Player
+          ref={playerRef}
+          component={MotionComposition}
+          inputProps={inputProps}
+          durationInFrames={duration}
+          fps={project.fps}
+          compositionWidth={width}
+          compositionHeight={height}
+          style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+          controls={false}
+          loop
+          clickToPlay={false}
+          doubleClickToFullscreen={false}
+          allowFullscreen={false}
+        />
+      ) : (
+        <Thumbnail
+          component={MotionComposition}
+          inputProps={inputProps}
+          // Not frame 0 — entrance effects start at opacity 0, so frame 0 is
+          // blank. Only matters for the still; the player moves off it at once.
+          frameToDisplay={Math.min(Math.round(duration * 0.4), duration - 1)}
+          durationInFrames={duration}
+          fps={project.fps}
+          compositionWidth={width}
+          compositionHeight={height}
+          style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+        />
       )}
-      durationInFrames={Math.max(project.durationInFrames, 1)}
-      fps={project.fps}
-      compositionWidth={width}
-      compositionHeight={height}
-      style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
-    />
+    </div>
   );
 }
