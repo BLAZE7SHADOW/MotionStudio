@@ -21,6 +21,9 @@ editor later on a bigger screen.
 1. On the landing page, **sign in** (Google, email, or **Continue as guest**) —
    then on the **Dashboard**, click **New Project**, give it a name, pick an aspect
    ratio (16:9 / 9:16 / 1:1) and a frame rate (24 / 30 / 60), then **Create**.
+   *In a hurry?* Before you have any projects the Dashboard shows a
+   **Try a demo project** button — one click builds a finished template project
+   and opens it in the editor, so you can skip straight to step 3.
 2. In the editor, click the **T** button in the top toolbar → a text box appears
    on the canvas.
 3. Double-click the text to type your own words. Click once to select it, then
@@ -74,6 +77,11 @@ in the top-right → **Replay tour**.
   demo, Code drop, How it works, Stack marquee) · *Hooks* (Bold question, Quote
   card, Stat drop, Wait for it, Before → after) · *Offers* (New offer, Product
   drop, Testimonial, Price reveal) · *Basics* (Title card, Outro/CTA).
+- **Your first project**: with nothing saved yet, the Dashboard shows a
+  first-run page instead of an empty grid — a live-playing template preview, a
+  three-step summary of how a video gets made, and two ways in: **Try a demo
+  project** (creates a filled-in project and opens the editor immediately) or
+  **New Project** (the full template picker).
 - **Open**: click a project card on the Dashboard. Each card shows a real frame
   of that project, and animates when you hover it — so you can tell your
   projects apart at a glance instead of reading names.
@@ -250,6 +258,9 @@ components that a text effect can't express:
   `✓ ` for a success line, `✗ ` for an error. Everything else is plain output.
 - **Code block** — a frosted editor window revealing your code line by line.
 - **Progress steps** — a pipeline whose steps light up in order, one per line.
+  **Direction** switches between horizontal and vertical, and **Track length**,
+  **Node size** and **Label size** control how big it draws — raise them if the
+  step names look small against a 1920×1080 frame.
 - **Confetti** — a celebratory burst. Drop it on top of a finished scene and set
   its clip to start at the moment you want it to fire.
 

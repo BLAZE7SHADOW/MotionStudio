@@ -5,6 +5,40 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Legible progress steps, and a real first-run dashboard
+
+### Fixed
+- **The Progress steps block rendered as a bare line.** Its geometry was
+  hard-coded for a small preview box — a 920px track, 44px nodes and **15px
+  labels**. Against a 1920×1080 composition that put the step names at 1.4% of
+  the frame height, roughly four pixels in the editor preview, so all you could
+  see was the connecting line. Geometry is now props (`trackLength`,
+  `nodeRadius`, `labelSize`) with defaults sized for a real canvas (1200 / 40 /
+  40), and stroke width, gaps, the check icon and the node glow all derive from
+  the node size so one control resizes the component coherently.
+  Existing projects pick the new sizes up automatically, since `blockProps`
+  merges over the registry defaults and never stored these keys.
+
+### Added
+- **Size and direction controls for Progress steps.** Track length, node size
+  and label size are exposed as number fields, and **Direction** finally exposes
+  the `orientation` prop — it was in the block's defaults but had no field, so
+  vertical pipelines were unreachable from the UI. Needed a new `select` field
+  type in the block registry, rendered by `PropertiesPanel`.
+- **A first-run dashboard.** With zero projects the Dashboard was a 14-line
+  placeholder: an icon, "No projects yet", and a button. It now shows a live
+  template preview, a three-step "how it works" summary (template → edit text →
+  export), and a pointer to the editor tour.
+- **Try a demo project.** One click builds a finished project from the
+  *Feature shipped* template and opens it in the editor — no picker, no naming,
+  no format decision. A first-timer shouldn't have to make three choices before
+  seeing what the editor looks like.
+
+### Changed
+- The Progress steps block's default box is 1400×320 (was 1400×260) so the
+  larger labels sit inside it, and the *How it works* template's block was
+  repositioned to match.
+
 ## [2026-07-27] — Changed: simplified both preview surfaces
 
 The previous versions were over-built and still didn't work well. Replaced with

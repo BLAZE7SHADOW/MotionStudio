@@ -194,7 +194,16 @@ arrays and objects (a terminal's lines, a pipeline's steps). Those became a sixt
 element type, `BlockElement`, backed by `src/content/blocks/registry.ts`: each entry
 declares its lazy import, defaults, natural length, a **field schema** the Properties
 panel renders inputs from, and a `toProps` translator. Adding a block is a registry
-entry; the renderer and the panel don't change.
+entry; the renderer and the panel don't change. The panel only grows when a block
+needs an input *kind* that doesn't exist yet — `select` was added for the progress
+pipeline's horizontal/vertical switch, and every block gets it for free.
+
+**Sizing is the registry's job too.** Remocn components carry pixel geometry tuned
+for whatever canvas their author had; dropped into a 1920×1080 composition those
+numbers can be invisible (the progress pipeline shipped with 15px labels — 1.4% of
+the frame height). Blocks therefore take their geometry as props and the registry
+supplies composition-scale defaults, so the vendored component stays untouched and
+the sizing decision lives with the rest of the block's configuration.
 
 **`blockProps` is deliberately flat and primitive.** A project is persisted as JSON —
 localStorage and a Supabase JSONB column — so nothing non-serializable can live on an
