@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Clapperboard, Layers, Zap, Music, Cloud, Loader2, ArrowRight, ExternalLink } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Clapperboard, Music, Cloud, Loader2, ArrowRight, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { track } from '@/lib/analytics';
 import { profile } from '@/content/profile';
 import { GithubIcon, LinkedinIcon, XIcon } from '@/components/icons/BrandIcons';
-import CopyEmail from '@/components/CopyEmail';
-import ContactForm from '@/components/ContactForm';
 import AuthPanel from './components/AuthPanel';
 import TimelineSignature from './components/TimelineSignature';
 import ProductTour from './components/ProductTour';
@@ -25,31 +24,22 @@ const DOT_GRID: React.CSSProperties = {
   backgroundSize: '24px 24px',
 };
 
-const FEATURES = [
-  {
-    icon: Layers,
-    title: 'Visual canvas editor',
-    desc: 'Drag, resize, and layer text, images, and video on a frame-perfect canvas.',
-    tag: 'drag · resize · layer',
-  },
-  {
-    icon: Zap,
-    title: 'Spring animations',
-    desc: 'Keyframe timeline with spring physics, easing curves, and real-time preview.',
-    tag: 'spring() · easing',
-  },
-  {
-    icon: Music,
-    title: 'Audio mixing',
-    desc: 'Stack multiple audio tracks. Rendered sample-perfectly via OfflineAudioContext.',
-    tag: 'OfflineAudioContext',
-  },
-  {
-    icon: Cloud,
-    title: 'Cloud render',
-    desc: 'Export on AWS Lambda — full 1080p, no CPU usage, works on any device.',
-    tag: 'AWS Lambda · 1080p',
-  },
+/**
+ * Counts, not prose. The four-card feature grid that used to live here said
+ * the same things as ProductTour immediately below it — one description was
+ * character-identical — so the page made its pitch twice before the visitor
+ * reached anything they could act on. The tour keeps the explaining (it has
+ * real screenshots); this states what's actually in the box.
+ *
+ * Keep these in step with the source arrays: TEXT_EFFECTS, SHADER_PRESETS and
+ * BLOCK_PRESETS in engines/project/types.ts, and TEMPLATES in
+ * content/templates. The old copy claimed 22 effects long after there were 34.
+ */
+const SPECS = [
+  { value: '21', label: 'templates' },
+  { value: '34', label: 'text effects' },
+  { value: '18', label: 'shader backgrounds' },
+  { value: '4', label: 'UI blocks' },
 ] as const;
 
 export default function LandingPage() {
@@ -85,12 +75,12 @@ export default function LandingPage() {
           </span>
         </div>
         <div className="flex items-center gap-5">
-          <a
-            href="#contact"
+          <Link
+            to="/contact"
             className="text-[13px] font-medium text-studio-text-muted hover:text-studio-text transition-colors"
           >
             Contact
-          </a>
+          </Link>
           <a
             href="#auth"
             className="text-[13px] font-medium text-studio-text-muted hover:text-studio-text transition-colors"
@@ -134,9 +124,20 @@ export default function LandingPage() {
             No plugins, no subscriptions.
           </p>
 
+          {/* The loudest element on the page has to be the one that keeps
+              people here. It used to be the portfolio button — gradient,
+              glow, hover lift — while this was a flat rectangle, so the
+              strongest visual pull sent visitors off the site. Inverted, and
+              instrumented: the primary CTA fired no analytics at all, which
+              made hero→signup conversion unmeasurable. */}
           <a
             href="#auth"
-            className="inline-flex items-center gap-2 h-11 px-6 rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover text-white text-[14px] font-medium transition-colors mb-16"
+            onClick={() => track.landingCtaClicked({ location: 'hero' })}
+            className="inline-flex items-center gap-2 h-12 px-7 rounded-full text-white text-[15px] font-semibold transition-transform hover:-translate-y-0.5 mb-16"
+            style={{
+              background: 'linear-gradient(135deg, oklch(0.627 0.265 298.232), oklch(0.577 0.245 295) )',
+              boxShadow: '0 8px 30px oklch(0.627 0.265 298.232 / 35%)',
+            }}
           >
             Get started — it's free
             <ArrowRight className="w-4 h-4" />
@@ -146,42 +147,50 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features — styled like the app's own layer rows, not generic icon cards */}
-      <section className="px-6 py-16 sm:py-20 border-b border-studio-border">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-[13px] font-semibold text-studio-text-faint uppercase tracking-widest mb-8">
-            What's on the timeline
+      {/* What's in the box — counts, then the two things the tour doesn't show */}
+      <section className="px-6 py-14 sm:py-16 border-b border-studio-border">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-[13px] font-semibold text-studio-text-faint uppercase tracking-widest mb-8 text-center">
+            What you get
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {FEATURES.map(({ icon: Icon, title, desc, tag }) => (
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+            {SPECS.map(({ value, label }) => (
               <div
-                key={title}
-                className="flex gap-4 p-5 rounded-studio-lg bg-studio-panel border border-studio-border border-l-2 border-l-studio-accent"
+                key={label}
+                className="flex flex-col items-center gap-1 py-5 rounded-studio-lg bg-studio-panel border border-studio-border"
               >
-                <div className="w-9 h-9 rounded-studio-sm bg-studio-accent-subtle border border-studio-accent-border flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4 text-studio-accent" />
-                </div>
-                <div className="flex flex-col gap-1.5 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[14px] font-semibold text-studio-text">{title}</span>
-                    <span className="font-mono text-[10px] text-studio-text-faint tracking-wide">{tag}</span>
-                  </div>
-                  <span className="text-[13px] text-studio-text-muted leading-relaxed">{desc}</span>
-                </div>
+                <span
+                  style={{ fontFamily: 'var(--font-display)' }}
+                  className="text-[30px] leading-none font-semibold text-studio-accent tabular-nums"
+                >
+                  {value}
+                </span>
+                <span className="text-[11px] text-studio-text-muted">{label}</span>
               </div>
             ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex gap-3 p-4 rounded-studio-lg bg-studio-panel border border-studio-border">
+              <Music className="w-4 h-4 text-studio-accent shrink-0 mt-0.5" />
+              <p className="text-[13px] text-studio-text-muted leading-relaxed">
+                <span className="text-studio-text font-medium">Audio mixing</span> — stack
+                tracks, rendered sample-perfectly offline.
+              </p>
+            </div>
+            <div className="flex gap-3 p-4 rounded-studio-lg bg-studio-panel border border-studio-border">
+              <Cloud className="w-4 h-4 text-studio-accent shrink-0 mt-0.5" />
+              <p className="text-[13px] text-studio-text-muted leading-relaxed">
+                <span className="text-studio-text font-medium">Two export paths</span> — free
+                and unlimited in your browser, or 1080p on AWS Lambda.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       <ProductTour />
-
-      {/* Stats — real substance, not decoration */}
-      <section className="px-6 py-10 border-b border-studio-border">
-        <p className="text-center font-mono text-[12px] text-studio-text-faint tracking-wide">
-          5K+ lines of strict TypeScript · 7 engines · 22 text effects · 18 shaders
-        </p>
-      </section>
 
       {/* Auth */}
       <section id="auth" className="flex-1 flex items-center justify-center px-6 py-20 sm:py-28">
@@ -190,64 +199,53 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Connect — who built this, and how to reach them */}
-      <section id="contact" className="px-6 py-16 sm:py-20 border-t border-studio-border">
-        <div className="max-w-2xl mx-auto text-center">
-          <span className="mb-5 inline-block text-[11px] font-medium text-studio-accent bg-studio-accent-subtle border border-studio-accent-border px-2.5 py-1 rounded-full">
-            Made by a solo engineer
-          </span>
+      {/* Built by — a credit band, not a second landing page.
+          This was a full section carrying a heading, a gradient portfolio
+          button, socials and a whole contact form, taking roughly 40% of the
+          height below the fold to talk about the author rather than the
+          product. The form lives on /contact, which is a real route that also
+          works once you're signed in — unlike this anchor, which nobody
+          logged in could ever reach, since / redirects to /dashboard. */}
+      <footer id="contact" className="px-6 py-10 border-t border-studio-border">
+        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-5">
+          <div className="flex flex-col items-center sm:items-start gap-1">
+            <p className="text-[13px] text-studio-text-muted">
+              Built by{' '}
+              <a
+                href={profile.portfolio}
+                target="_blank"
+                rel="noreferrer"
+                className="text-studio-text font-medium hover:text-studio-accent transition-colors inline-flex items-center gap-1"
+              >
+                {profile.name}
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </p>
+            <p className="text-[11px] text-studio-text-faint">
+              {PORTFOLIO_DOMAIN} ·{' '}
+              <Link to="/contact" className="hover:text-studio-text-muted transition-colors">
+                Get in touch
+              </Link>
+            </p>
+          </div>
 
-          <h2
-            style={{ fontFamily: 'var(--font-display)' }}
-            className="text-[26px] sm:text-[32px] font-semibold text-studio-text tracking-tight mb-1.5"
-          >
-            {profile.name}
-          </h2>
-          <p className="text-[13px] text-studio-text-muted mb-7">{profile.role}</p>
-
-          {/* Portfolio — the headline highlight, real domain visible so it reads as a real link */}
-          <a
-            href={profile.portfolio}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 h-11 px-6 rounded-full text-[15px] font-semibold text-white mb-6 transition-transform hover:-translate-y-0.5"
-            style={{
-              background: 'linear-gradient(135deg, oklch(0.627 0.265 298.232), oklch(0.627 0.265 298.232 / 70%))',
-              boxShadow: '0 8px 30px oklch(0.627 0.265 298.232 / 30%)',
-            }}
-          >
-            {PORTFOLIO_DOMAIN}
-            <ExternalLink className="w-4 h-4" />
-          </a>
-
-          {/* Email + socials */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
-            <CopyEmail email={profile.email} />
-            {SOCIALS.map(({ href, label, Icon, bg, fg }) => (
+          <div className="flex items-center gap-2">
+            {SOCIALS.map(({ href, label, Icon }) => (
               <a
                 key={label}
                 href={href}
                 target="_blank"
                 rel="noreferrer"
                 title={label}
-                className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:-translate-y-0.5 hover:scale-105"
-                style={{ backgroundColor: bg, color: fg }}
+                className="w-8 h-8 rounded-full flex items-center justify-center border border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors"
               >
-                <Icon className="w-4.5 h-4.5" />
+                <Icon className="w-4 h-4" />
               </a>
             ))}
           </div>
-
-          {/* Message form */}
-          <div className="rounded-studio-lg bg-studio-panel border border-studio-border p-6 text-left">
-            <ContactForm />
-          </div>
         </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="px-6 py-6 border-t border-studio-border text-center">
-        <p className="text-[11px] text-studio-text-faint">
+        <p className="mt-8 text-center text-[11px] text-studio-text-faint">
           Built on Remotion · WebCodecs · AWS Lambda · Supabase
         </p>
       </footer>

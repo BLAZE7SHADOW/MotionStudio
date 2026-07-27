@@ -26,6 +26,9 @@ export const track = {
   authUpgradeClicked: () =>
     posthog.capture('auth_upgrade_to_google_clicked'),
 
+  landingCtaClicked: (props: { location: string }) =>
+    posthog.capture('landing_cta_clicked', props),
+
   // ── Projects ──────────────────────────────────────────────────────────
   // template_id / template_category are 'blank' for an empty project — the
   // split between them is how we learn which templates (and which audience)
