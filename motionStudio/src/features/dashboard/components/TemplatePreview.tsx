@@ -17,10 +17,16 @@ export default function TemplatePreview({ template }: { template: TemplateDefini
   // makes new element ids and remounts the whole preview tree.
   const elements = useMemo(() => instantiateTemplate(template), [template]);
 
+  // inputProps must be memoised too. Built inline it's a fresh object on every
+  // render, and Player reads an identity change as new data and snaps back to
+  // frame 0 — so the preview sits frozen instead of playing. Same trap as
+  // CanvasPanel's inputProps and PRESET_PREVIEW_ANIMATIONS.
+  const inputProps = useMemo(() => ({ elements, assets: [] }), [elements]);
+
   return (
     <Player
       component={MotionComposition}
-      inputProps={{ elements, assets: [] }}
+      inputProps={inputProps}
       durationInFrames={templateDurationInFrames(template)}
       fps={template.fps}
       compositionWidth={width}
