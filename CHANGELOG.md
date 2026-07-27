@@ -5,6 +5,24 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Added: missing-media indicator in the Assets panel
+
+### Added
+- **Assets that can't be loaded now say so.** Once the renderers started
+  skipping unresolvable media (to stop the decoder hanging on a dead URL), that
+  media simply vanished from the canvas with nothing but a console warning —
+  no way to tell *which* file needed replacing. Such assets now render as a
+  dashed amber "Re-upload needed" tile in the Assets panel, still showing the
+  filename, and aren't draggable onto the canvas.
+- Uses the same `isUrlUsable()` the renderers use, so the panel and the canvas
+  can't disagree about whether a file is available. Promoted from a deep import
+  to the `engines/asset` barrel alongside `createObjectUrl`/`revokeObjectUrl`.
+
+Files: `src/features/workspace/components/AssetsPanel.tsx`,
+`src/engines/asset/index.ts`
+
+---
+
 ## [2026-07-27] — Fixed: the editor itself hung on unavailable media
 
 ### Fixed

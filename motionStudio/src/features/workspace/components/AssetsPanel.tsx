@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
-import { Image, Video, Music, Upload, Search, FolderOpen, CloudUpload, X, Play, Sparkle, Loader2 } from 'lucide-react';
+import { Image, Video, Music, Upload, Search, FolderOpen, CloudUpload, X, Play, Sparkle, Loader2, FileWarning } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { useAssetEngine } from '@/engines/asset';
+import { useAssetEngine, isUrlUsable } from '@/engines/asset';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
 import { useAuth } from '@/hooks/useAuth';
@@ -65,6 +65,35 @@ function AssetCard({
   onAdd: () => void;
   onRemove: () => void;
 }) {
+  // The file's bytes aren't on this device and there's no cloud copy — its URL
+  // points at a session that ended. The renderers already skip these, so
+  // without a marker here the media would just silently vanish from the canvas
+  // with no way to tell which file needs replacing.
+  const missing = !isUrlUsable(asset.url);
+
+  if (missing) {
+    return (
+      <div
+        title={`${asset.name} — file not available on this device. Re-upload it to use it again.`}
+        className="group relative aspect-video rounded-studio-md overflow-hidden border border-dashed border-amber-500/40 bg-amber-500/5 flex flex-col items-center justify-center gap-1 px-2"
+      >
+        <FileWarning className="w-4 h-4 text-amber-400/80" strokeWidth={1.5} />
+        <span className="text-[9px] text-amber-300/80 text-center leading-tight">Re-upload needed</span>
+        <span className="block w-full text-[10px] text-studio-text-faint truncate text-center">
+          {asset.name}
+        </span>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          title="Remove asset"
+          className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-studio-xs bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-opacity duration-120"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       onClick={onAdd}

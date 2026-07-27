@@ -113,6 +113,10 @@ Toolbar → **T**. A text box appears centered on the canvas.
 5. **Audio** has no on-screen visual — it drops straight onto the timeline as a
    sound clip.
 6. Remove an asset from the library with the **×** on its thumbnail (hover).
+7. **"Re-upload needed"** on a tile means that file isn't on this device — it was
+   added from another browser or session and only the reference synced across.
+   Elements using it render as empty rather than breaking the project. Re-add
+   the file, or remove the tile.
 
 ### Stock photos & video (Pexels)
 Open the **Assets** panel → **Stock** tab. Search, toggle **Photos**/**Videos**,
