@@ -89,9 +89,9 @@ That's the whole loop: **add → arrange → animate → preview → export.**
   files stay on the device you uploaded them from (cloud renders can still use them).
 - **Duration**: 10 seconds by default. Change it (5 / 10 / 15 / 30 / 60 / 90s) in
   the same settings popover. Changing the frame rate keeps the length in seconds.
-  **Note for 60s and 90s projects:** use the **Browser** export tab — it runs on
-  your own machine and handles any length. Cloud Render currently can't finish a
-  video that long (see §15).
+  **Note for 60s and 90s projects:** use **Cloud Render**. Browser export can't
+  draw text effects, animated backgrounds or blocks (see §12), so a long project
+  built from templates would export missing most of what you see.
 - **Delete**: hover a project card on the Dashboard → trash icon → confirm.
   Removes the project and its media everywhere it's stored — this device,
   the cloud, and any other browser you've signed into. Can't be undone.
@@ -407,10 +407,12 @@ npm run render    # render the default composition to out/video.mp4
   sign-in work on any screen size.
 - Project length is chosen from presets (5 / 10 / 15 / 30 / 60 / 90s); no custom
   value yet.
-- **Cloud Render can't complete long videos yet.** The server waits for the
-  render, but it gets cut off after about a minute — long enough for short
-  clips, not for a 60s or 90s one. Use the **Browser** export tab for those; it
-  runs entirely on your machine and has no such limit.
+- **Browser export doesn't include text effects, animated backgrounds or
+  blocks.** It draws frames onto a plain canvas rather than running the real
+  renderer, so those are missing from the file — the export dialog warns you
+  when your project uses them. Use **Cloud Render** for anything with effects.
+  Browser export is still fine for plain text, images and video, and it's free
+  and unlimited.
 - **Scene grouping** (moving several elements as one unit) isn't built yet — use
   timeline positioning to sequence.
 - **Browser export** requires Chrome or Edge (WebCodecs). On Safari or other

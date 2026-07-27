@@ -278,21 +278,34 @@ before invoking (uploaded in the background at import time via presigned PUTs fr
 > that command re-run, or cloud renders keep executing the old bundle while
 > the rest of the app looks fully deployed and up to date.
 
-### The render endpoint's hidden ceiling
-`api/render.ts` starts a Lambda render then **polls it server-side** for up to
-6 minutes (`120 × 3s`) before returning the S3 URL. That only works because no
-one has rendered anything long: no `maxDuration` is configured in `vercel.json`
-or the function itself, so Vercel terminates it at the platform default (~60s) —
-far short of its own loop. A 10s clip finishes inside that window; a 60–90s one
-won't, and the caller sees a timeout even though Lambda succeeded and the file
-is sitting in S3.
+### Cloud render: the client polls, the server doesn't wait
+`api/render.ts` queues a Lambda render and returns the `renderId` **immediately**
+(202); the browser then polls `api/render-status.ts`, which does one fast
+progress check per call. It previously polled inside the request for up to 6
+minutes — which silently capped renders at whatever Vercel allowed (~60s, since
+no `maxDuration` was ever configured). Lambda would finish and write to S3 while
+the caller saw a timeout. Polling from the client removes the ceiling entirely
+rather than raising it, and it's why the progress bar can show real percentages
+instead of an indefinite spinner.
 
-Raising `maxDuration` only moves the ceiling. The correct fix is to stop holding
-the request open: return the `renderId` immediately and let the client poll a
-`/api/render-status` endpoint — the standard serverless pattern for work that
-outlives a request, and it removes the limit rather than enlarging it. Not done
-yet; browser export (WebCodecs, entirely client-side) has no such constraint and
-covers long videos today.
+Device-locking for guests moved to the status endpoint, because success is only
+observable there. A guest who abandons the tab mid-render therefore isn't
+charged — deliberate, and the per-user monthly quota still applies.
+
+### Browser export is NOT the same renderer (a real WYSIWYG gap)
+The claim that all three paths run one composition holds for the editor preview
+and Lambda. It does **not** hold for browser export: `engines/export/canvasFrame.ts`
+paints each frame onto a 2D canvas with `fillText`/`drawImage`, handling only
+text, image and video plus the shared keyframe evaluator. Anything React-rendered
+— all 34 text effects, all 18 shaders, all 4 blocks — is absent from the output.
+
+That was acceptable when elements were plain text and images; adding Remocn
+components made it wrong, and it stayed invisible because the editor preview uses
+the real renderer, so a project looks right until it's exported. Reimplementing
+those components in canvas 2D isn't viable, so the export dialog now inspects the
+project and warns when it contains something the canvas path can't draw. The
+honest long-term options are to drop the path or move it to real composition
+capture; neither is done.
 
 ### Auth, quota & the serverless guard
 Three sign-in paths (Google OAuth, email/password, anonymous guest with 1 free cloud

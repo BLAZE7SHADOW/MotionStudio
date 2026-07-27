@@ -10,7 +10,7 @@ Built by [Shivam Govind Rao](https://shivamgovindrao.com/) · [get in touch](htt
 
 ## What it is
 
-MotionStudio is a full video compositor that runs in the browser. You place elements on a canvas, arrange them on a timeline, animate them per-property, and export real video. The editor preview, the in-browser export, and the AWS Lambda cloud render all run the **same React composition** — what you see while editing is exactly what renders.
+MotionStudio is a full video compositor that runs in the browser. You place elements on a canvas, arrange them on a timeline, animate them per-property, and export real video. The editor preview and the AWS Lambda cloud render run the **same React composition** — what you see while editing is exactly what renders. (The free in-browser export draws to a 2D canvas instead, so it omits text effects, shader backgrounds and blocks; the export dialog says so when it applies.)
 
 ~5K+ lines of strict TypeScript · 7 engines · 95+ logically-grouped commits · 6 element types · 21 templates.
 
@@ -26,7 +26,7 @@ MotionStudio is a full video compositor that runs in the browser. You place elem
 - **Media** — image, video (`OffthreadVideo`), audio elements with library, probing, and thumbnails
 - **Stock media** — search and import free Pexels photos/videos directly into a project (server-proxied, auth-gated)
 - **One-click backgrounds** — turn any image/video into a full-canvas background (resize, reposition, send to back)
-- **Two export paths** — in-browser WebCodecs (free, Chrome/Edge) and Remotion Lambda cloud render (any device, 1080p)
+- **Two export paths** — Remotion Lambda cloud render (full fidelity, any device, 1080p) and free in-browser WebCodecs (Chrome/Edge; plain text/image/video only)
 - **Accounts & sync** — Google OAuth / email / guest; projects auto-save to Supabase, restore on any device, delete anytime from the Dashboard
 - **Persistence** — project JSON in localStorage + cloud, asset bytes in IndexedDB, S3 for cloud renders
 - **Responsive landing + auth, desktop-only editor** — sign up from any device; the dashboard and editor gate below 1024px with a "use a bigger screen" message

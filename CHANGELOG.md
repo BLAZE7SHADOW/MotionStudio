@@ -5,6 +5,42 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Fixed: cloud render couldn't finish long videos; browser export silently drops effects
+
+### Fixed
+- **Cloud render now works for videos of any length.** `api/render.ts` used to
+  poll Lambda inside the request for up to 6 minutes, but no `maxDuration` was
+  ever configured, so Vercel killed the function at its ~60s default. Lambda
+  would finish and write the file to S3 while the caller saw a timeout — which
+  is why nothing longer than a short clip could be rendered. It now queues the
+  render and returns the `renderId` immediately (202), and the browser polls a
+  new `api/render-status.ts`. That removes the ceiling rather than raising it,
+  and the button shows a real percentage instead of an indefinite spinner.
+  Verified the Lambda function itself was never the constraint: it's deployed
+  at 120s per invocation and Remotion parallelises across invocations.
+- Guest device-locking moved into the status endpoint, since a successful
+  output is only observable there. A guest who abandons the tab mid-render
+  isn't charged for it; the per-user monthly quota still applies.
+
+### Changed
+- **Browser export now warns about what it can't render.** It paints frames onto
+  a 2D canvas (`engines/export/canvasFrame.ts`) rather than running the React
+  composition, so it handles only text, image and video plus keyframes — **all
+  34 text effects, all 18 shaders and all 4 blocks are absent from its output**.
+  That was fine when elements were plain text and images; adding Remocn
+  components made it wrong, and it stayed hidden because the editor preview uses
+  the real renderer, so projects look correct right up until export. The dialog
+  now inspects the project and names exactly what will be missing, with a link
+  to switch to Cloud Render.
+- Corrected README and ARCHITECTURE, which both claimed all three paths run the
+  same React composition. True for the editor and Lambda; false for browser
+  export.
+
+Files: `api/render.ts`, `api/render-status.ts` (new),
+`src/lib/apiClient.ts`, `src/features/workspace/components/ExportDialog.tsx`
+
+---
+
 ## [2026-07-27] — Added: 60s and 90s project lengths
 
 ### Added
