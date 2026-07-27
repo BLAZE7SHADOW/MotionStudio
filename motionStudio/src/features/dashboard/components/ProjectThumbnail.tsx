@@ -1,17 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Player, Thumbnail } from '@remotion/player';
+import { useMemo, useRef } from 'react';
+import { Player } from '@remotion/player';
 import type { PlayerRef } from '@remotion/player';
 import MotionComposition from '@/engines/rendering/components/MotionComposition';
 import { getCompositionDimensions } from '@/engines/project';
 import type { Project } from '@/engines/project';
 
-/** A still frame of the project, which plays while hovered. */
+/**
+ * The project's card preview: a paused frame that plays while hovered.
+ *
+ * One Player, mounted once and never swapped. Toggling between <Thumbnail> and
+ * <Player> on hover meant tearing down and rebuilding a WebGL canvas, which
+ * was observed remounting repeatedly and stalling playback. Pausing and
+ * playing one instance avoids that entirely, and mirrors the template preview,
+ * which behaves correctly.
+ */
 export default function ProjectThumbnail({ project }: { project: Project }) {
-  const [hovered, setHovered] = useState(false);
   const playerRef = useRef<PlayerRef>(null);
   const { width, height } = getCompositionDimensions(project.aspectRatio);
   const duration = Math.max(project.durationInFrames, 1);
 
+  // Frame 0 is blank while entrance effects are still at opacity 0, so the
+  // resting frame is part-way in.
+  const posterFrame = Math.min(Math.round(duration * 0.4), duration - 1);
+
+  // Must stay referentially stable: a fresh object here makes the Player treat
+  // it as new data and reset.
   const inputProps = useMemo(
     () => ({
       elements: project.canvas.elements,
@@ -21,16 +34,6 @@ export default function ProjectThumbnail({ project }: { project: Project }) {
     }),
     [project.canvas.elements, project.assets],
   );
-
-  // Play from the start each time the pointer arrives. Driven through the ref
-  // rather than autoPlay, which proved unreliable.
-  useEffect(() => {
-    if (!hovered) return;
-    const p = playerRef.current;
-    if (!p) return;
-    p.seekTo(0);
-    p.play();
-  }, [hovered]);
 
   if (project.canvas.elements.length === 0) {
     return (
@@ -45,39 +48,35 @@ export default function ProjectThumbnail({ project }: { project: Project }) {
   return (
     <div
       className="w-full h-full"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => {
+        const p = playerRef.current;
+        if (!p) return;
+        p.seekTo(0);
+        p.play();
+      }}
+      onMouseLeave={() => {
+        const p = playerRef.current;
+        if (!p) return;
+        p.pause();
+        p.seekTo(posterFrame);
+      }}
     >
-      {hovered ? (
-        <Player
-          ref={playerRef}
-          component={MotionComposition}
-          inputProps={inputProps}
-          durationInFrames={duration}
-          fps={project.fps}
-          compositionWidth={width}
-          compositionHeight={height}
-          style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
-          controls={false}
-          loop
-          clickToPlay={false}
-          doubleClickToFullscreen={false}
-          allowFullscreen={false}
-        />
-      ) : (
-        <Thumbnail
-          component={MotionComposition}
-          inputProps={inputProps}
-          // Not frame 0 — entrance effects start at opacity 0, so frame 0 is
-          // blank. Only matters for the still; the player moves off it at once.
-          frameToDisplay={Math.min(Math.round(duration * 0.4), duration - 1)}
-          durationInFrames={duration}
-          fps={project.fps}
-          compositionWidth={width}
-          compositionHeight={height}
-          style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
-        />
-      )}
+      <Player
+        ref={playerRef}
+        component={MotionComposition}
+        inputProps={inputProps}
+        durationInFrames={duration}
+        initialFrame={posterFrame}
+        fps={project.fps}
+        compositionWidth={width}
+        compositionHeight={height}
+        style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+        controls={false}
+        loop
+        clickToPlay={false}
+        doubleClickToFullscreen={false}
+        allowFullscreen={false}
+      />
     </div>
   );
 }

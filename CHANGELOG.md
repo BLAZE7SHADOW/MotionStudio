@@ -15,12 +15,18 @@ the obvious approach.
   you press it, then it plays and loops. Removes the autoplay, the initial-frame
   offset and the loading state — a preview that loads on demand can't feel slow
   to load, because you asked for it.
-- **Dashboard thumbnails cut back to a still frame that plays on hover**
-  (120 lines → 83). Removed the IntersectionObserver and visibility gate and
-  the loading placeholder. The still shows frame 40%, since frame 0 is blank
-  while entrance effects are at opacity 0; hovering swaps to a player that
-  starts from frame 0 — where being blank doesn't matter, because it moves off
-  immediately.
+- **Dashboard cards use one Player, paused, that plays while hovered**
+  (120 lines → 82). Removed the IntersectionObserver and visibility gate and
+  the loading placeholder.
+  - Swapping between `<Thumbnail>` and `<Player>` on hover was tearing down and
+    rebuilding a WebGL canvas. A MutationObserver caught it remounting **eight
+    times in three seconds** with the pointer held still — and only
+    intermittently, which is why it presented as "starts, then sticks". One
+    Player that pauses and plays avoids the churn completely, and matches the
+    template preview, which behaves correctly.
+  - It rests on frame 40%, because frame 0 is blank while entrance effects are
+    at opacity 0, and plays from 0 on hover — where blank doesn't matter,
+    since it moves off immediately.
 - **Playback is driven explicitly through the player ref, not `autoPlay`**, in
   both the template preview and the hover preview. The earlier symptom — a
   preview that looked frozen — was a player parked on a static frame and never
