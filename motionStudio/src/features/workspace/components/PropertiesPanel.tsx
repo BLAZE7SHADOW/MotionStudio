@@ -1,4 +1,5 @@
-import { MousePointer, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown, Sparkles, Maximize2, Trash2 } from 'lucide-react';
+import { MousePointer, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown, ChevronRight, Sparkles, Maximize2, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
@@ -184,14 +185,86 @@ function NumInput({
   );
 }
 
-/* ── section header ── */
-function Section({ title }: { title: string }) {
+/* ── collapsible section ──
+   Collapsing matters here for two reasons. A selected text element renders
+   roughly 1000px of controls into a panel that gets `100vh - 268px` — about
+   630px on a 13" laptop — so Transform and Layer sit permanently below the
+   fold with nothing hinting they exist.
+
+   More importantly, the Animation section renders an <AnimationPreview> per
+   preset, and each one is a full Remotion <Player>. Selecting any element
+   mounts seven of them, looping continuously, on top of the effect preview
+   and the canvas itself. Collapsing that section unmounts all seven.
+
+   Which is why the DEFAULTS carry the value, not the mechanism: a collapsed
+   section is hidden too. Motion starts closed (it's the expensive one and the
+   presets are a one-time choice); everything else starts open. */
+const SECTION_STORAGE_KEY = 'ms_properties_sections';
+const DEFAULT_CLOSED = ['Motion', 'Animation'];
+
+function readClosedSections(): string[] {
+  try {
+    const raw = localStorage.getItem(SECTION_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : DEFAULT_CLOSED;
+  } catch {
+    return DEFAULT_CLOSED;
+  }
+}
+
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children?: React.ReactNode;
+}) {
+  const [closed, setClosed] = useState(() => readClosedSections().includes(title));
+
+  const toggle = () => {
+    setClosed((prev) => {
+      const next = !prev;
+      try {
+        const list = new Set(readClosedSections());
+        if (next) list.add(title);
+        else list.delete(title);
+        localStorage.setItem(SECTION_STORAGE_KEY, JSON.stringify([...list]));
+      } catch {
+        // storage unavailable (private mode) — the panel still works, the
+        // preference just won't survive a reload
+      }
+      return next;
+    });
+  };
+
+  // Callers that pass no children are just headers; keep them static so the
+  // chevron never suggests something can open when nothing would.
+  if (!children) {
+    return (
+      <div className="px-4 py-2 border-b border-studio-border shrink-0">
+        <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">
+          {title}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="px-4 py-2 border-b border-studio-border shrink-0">
-      <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">
-        {title}
-      </span>
-    </div>
+    <>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={!closed}
+        className="w-full px-4 py-2 border-b border-studio-border shrink-0 flex items-center gap-1.5 text-left hover:bg-studio-surface/50 transition-colors duration-120"
+      >
+        <ChevronRight
+          className={`w-3 h-3 text-studio-text-faint transition-transform duration-120 ${closed ? '' : 'rotate-90'}`}
+        />
+        <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">
+          {title}
+        </span>
+      </button>
+      {!closed && children}
+    </>
   );
 }
 
@@ -264,7 +337,7 @@ function AnimationRow({
 function TransformSection({ el, update }: { el: BaseElement; update: Update }) {
   return (
     <>
-      <Section title="Transform" />
+      <Section title="Transform">
       <div className="flex flex-col gap-3 px-4 py-3">
         <div className="flex gap-2">
           <PropRow label="X" compact><NumInput value={Math.round(el.x)} onChange={(v) => update({ x: v })} /></PropRow>
@@ -285,6 +358,7 @@ function TransformSection({ el, update }: { el: BaseElement; update: Update }) {
           />
         </PropRow>
       </div>
+      </Section>
     </>
   );
 }
@@ -301,7 +375,7 @@ function LayerSection({ reorder }: { reorder: (dir: LayerDir) => void }) {
   ];
   return (
     <>
-      <Section title="Layer" />
+      <Section title="Layer">
       <div className="grid grid-cols-2 gap-1.5 px-4 py-3">
         {buttons.map(({ dir, label, icon: Icon }) => (
           <button
@@ -315,6 +389,7 @@ function LayerSection({ reorder }: { reorder: (dir: LayerDir) => void }) {
           </button>
         ))}
       </div>
+      </Section>
     </>
   );
 }
@@ -324,13 +399,7 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
   const anims = el.animations ?? [];
   return (
     <>
-      {hideHeader ? (
-        <div className="px-4 pt-1">
-          <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">Motion</span>
-        </div>
-      ) : (
-        <Section title="Animation" />
-      )}
+      <Section title={hideHeader ? 'Motion' : 'Animation'}>
       <div className="flex flex-col gap-2.5 px-4 py-3">
         {anims.length > 0 && (
           <div className="flex flex-col gap-2">
@@ -398,6 +467,7 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
           sequence multiple together, and press play to preview the full clip.
         </p>
       </div>
+      </Section>
     </>
   );
 }
