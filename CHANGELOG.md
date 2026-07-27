@@ -5,6 +5,36 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Fixed: video and audio now render in the browser too
+
+### Fixed
+- **`<OffthreadVideo>` and `<Html5Audio>` are rejected by the client-side web
+  renderer**, so any project containing video or audio failed to export with
+  effects enabled. Both renderers now use `<Video>` and `<Audio>` from
+  **`@remotion/media`** (added, pinned to `4.0.488` to match every other
+  Remotion package — its only deps are `remotion@4.0.488` and
+  `mediabunny@1.50.8`, both already present at those exact versions).
+- **This is safe for Lambda.** `@remotion/media` decodes via Mediabunny and
+  works in *both* the browser and server-side rendering, falling back to
+  `<OffthreadVideo>` server-side if a file can't be decoded. Verified by
+  rendering a video-plus-audio composition through the Remotion CLI: no
+  fallback was triggered, and `ffprobe` confirms h264 + aac streams in the
+  output. One component now covers every render path.
+- Worth knowing: `@remotion/media` **requires CORS headers on the media URL**
+  and falls back (or fails, client-side) without them. The S3 assets bucket is
+  already configured for this.
+
+### Known limitation
+- **Shimmer Sweep produces no shimmer in browser export.** Its whole mechanism
+  is `background-clip: text`, which the web renderer doesn't support. It
+  degrades gracefully — the base text still renders, just without the sweep —
+  rather than breaking the frame. Cloud Render is unaffected.
+
+Files: `src/engines/rendering/components/renderers/{VideoRenderer,AudioRenderer}.tsx`,
+`package.json`
+
+---
+
 ## [2026-07-27] — Fixed: CORS-tainted media in both browser export paths
 
 ### Fixed

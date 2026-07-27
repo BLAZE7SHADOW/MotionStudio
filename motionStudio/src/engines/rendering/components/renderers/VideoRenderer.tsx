@@ -1,18 +1,24 @@
-import { OffthreadVideo, useCurrentFrame, useVideoConfig } from 'remotion';
+import { useCurrentFrame, useVideoConfig } from 'remotion';
+import { Video } from '@remotion/media';
 import type { VideoElement } from '../../../project/types';
 import { imageElementStyle } from '../../style';
 
 /**
- * Renders a video element. <OffthreadVideo> extracts the exact frame that
- * matches the composition's current frame — accurate and render-safe. Inside a
- * <Sequence>, it plays from the clip's start automatically.
+ * Renders a video element.
+ *
+ * Uses <Video> from @remotion/media rather than <OffthreadVideo>: it decodes
+ * with Mediabunny and draws the exact frame to a canvas, which works in BOTH
+ * the browser (the client-side web renderer refuses <OffthreadVideo> outright)
+ * and server-side on Lambda/CLI, where it falls back to <OffthreadVideo> if a
+ * file can't be decoded. One component for every path — the same reason
+ * style.ts is shared rather than duplicated per renderer.
  */
 export default function VideoRenderer({ el, url }: { el: VideoElement; url: string }) {
   const localFrame = useCurrentFrame();
   const { fps } = useVideoConfig();
   return (
     <div style={imageElementStyle(el, 1, { localFrame, fps })}>
-      <OffthreadVideo
+      <Video
         src={url}
         style={{ width: '100%', height: '100%', objectFit: el.objectFit ?? 'cover' }}
       />

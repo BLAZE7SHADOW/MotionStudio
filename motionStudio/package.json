@@ -19,6 +19,7 @@
     "@paper-design/shaders-react": "^0.0.77",
     "@remotion/google-fonts": "4.0.488",
     "@remotion/lambda": "4.0.488",
+    "@remotion/media": "4.0.488",
     "@remotion/player": "^4.0.488",
     "@supabase/supabase-js": "^2.110.2",
     "@tailwindcss/vite": "^4.3.1",
