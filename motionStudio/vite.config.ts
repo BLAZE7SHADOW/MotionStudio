@@ -37,6 +37,21 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      // The /api functions are Vercel-hosted and don't exist under `vite dev`,
+      // so without this every API call falls through to the SPA catch-all and
+      // returns index.html — which surfaces as a baffling
+      // `Unexpected token '<', "<!doctype "... is not valid JSON`.
+      // Point at the deployment by default; set VITE_API_PROXY to a local
+      // `vercel dev` (e.g. http://localhost:3000) to work on the API itself.
+      '/api': {
+        target: process.env.VITE_API_PROXY ?? 'https://motionstudio-six.vercel.app',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
   optimizeDeps: {
     // Pre-bundle at dev-server startup instead of on first lazy-import — without
     // this, the FIRST time any shader effect is used in a session, Vite compiles

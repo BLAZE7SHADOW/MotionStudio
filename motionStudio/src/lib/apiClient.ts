@@ -43,6 +43,19 @@ async function apiFetch<T>(path: string, token: string, options?: RequestInit): 
       ...(options?.headers ?? {}),
     },
   });
+
+  // An HTML body here means the request never reached a function and hit the
+  // SPA fallback instead. Parsing it blindly produced
+  // `Unexpected token '<', "<!doctype "...`, which says nothing about the
+  // actual problem — so name it.
+  const contentType = res.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(
+      `${path} did not return JSON (${res.status}). The API isn't reachable — ` +
+        `if you're on the dev server, check the /api proxy in vite.config.ts.`,
+    );
+  }
+
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? `Request failed (${res.status})`);
   return data as T;
