@@ -5,6 +5,7 @@ import VideoRenderer from './renderers/VideoRenderer';
 import AudioRenderer from './renderers/AudioRenderer';
 import ShaderRenderer from './renderers/ShaderRenderer';
 import BlockRenderer from './renderers/BlockRenderer';
+import { isUrlUsable } from '../../asset/objectUrls';
 
 /**
  * Dispatches an element to its type-specific renderer. Image elements resolve
@@ -25,15 +26,15 @@ export default function ElementRenderer({
     // makes it retry the failed fetch forever and hang the whole composition.
     case 'image': {
       const asset = assets.find((a) => a.id === el.assetId);
-      return asset?.url ? <ImageRenderer el={el} url={asset.url} /> : null;
+      return isUrlUsable(asset?.url) ? <ImageRenderer el={el} url={asset!.url} /> : null;
     }
     case 'video': {
       const asset = assets.find((a) => a.id === el.assetId);
-      return asset?.url ? <VideoRenderer el={el} url={asset.url} /> : null;
+      return isUrlUsable(asset?.url) ? <VideoRenderer el={el} url={asset!.url} /> : null;
     }
     case 'audio': {
       const asset = assets.find((a) => a.id === el.assetId);
-      return asset?.url ? <AudioRenderer el={el} url={asset.url} /> : null;
+      return isUrlUsable(asset?.url) ? <AudioRenderer el={el} url={asset!.url} /> : null;
     }
     case 'shader':
       return <ShaderRenderer el={el} />;

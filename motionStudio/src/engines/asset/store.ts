@@ -2,6 +2,7 @@ import { useProjectStore } from '../project/store';
 import type { Asset } from '../project/types';
 import { assetTypeFromFile, probeAsset } from './probe';
 import { putBlob, deleteBlob } from './blobStore';
+import { createObjectUrl } from './objectUrls';
 import { uploadAssetToStorage, deleteAssetFromStorage } from '@/lib/storage';
 import { getSupabase } from '@/lib/supabase';
 
@@ -27,7 +28,7 @@ export function useAssetEngine() {
       const type = assetTypeFromFile(file);
       if (!type) continue; // skip unsupported files
       const id = crypto.randomUUID();
-      const url = URL.createObjectURL(file);
+      const url = createObjectUrl(file);
       const meta = await probeAsset(type, url);
       await putBlob(id, file); // persist bytes for future sessions
       pairs.push({ asset: { id, type, name: file.name, url, ...meta }, file });

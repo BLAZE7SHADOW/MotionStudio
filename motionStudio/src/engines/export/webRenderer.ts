@@ -1,5 +1,6 @@
 import MotionComposition from '../rendering/components/MotionComposition';
 import { getBlob } from '../asset/blobStore';
+import { createObjectUrl, revokeObjectUrl, isUrlUsable } from '../asset/objectUrls';
 import { getCompositionDimensions } from '../project/dimensions';
 import type { Project } from '../project/types';
 import type { ExportOptions, ExportResult } from './exporter';
@@ -47,7 +48,7 @@ async function resolveAssetUrls(project: Project) {
     project.assets.map(async (asset) => {
       const blob = await getBlob(asset.id).catch(() => undefined);
       if (blob) {
-        const url = URL.createObjectURL(blob);
+        const url = createObjectUrl(blob);
         created.push(url);
         return { ...asset, url };
       }
@@ -65,18 +66,16 @@ async function resolveAssetUrls(project: Project) {
   );
   // Unusable = blank (rehydrate gave up on it) or a stale blob: we didn't just
   // mint. Better to refuse than to hand back a video quietly missing content.
-  const broken = assets.filter(
-    (a) => used.has(a.id) && (!a.url || (a.url.startsWith('blob:') && !created.includes(a.url))),
-  );
+  const broken = assets.filter((a) => used.has(a.id) && !isUrlUsable(a.url));
   if (broken.length > 0) {
-    created.forEach((u) => URL.revokeObjectURL(u));
+    created.forEach(revokeObjectUrl);
     throw new Error(
       `Media is no longer available on this device: ${broken.map((a) => a.name).join(', ')}. ` +
         `Re-upload it, or use Cloud Render if it finished uploading.`,
     );
   }
 
-  return { assets, revoke: () => created.forEach((u) => URL.revokeObjectURL(u)) };
+  return { assets, revoke: () => created.forEach(revokeObjectUrl) };
 }
 
 /** Reports whether this browser can run the web renderer at a given size. */

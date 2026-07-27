@@ -20,7 +20,9 @@ export default function VideoRenderer({ el, url }: { el: VideoElement; url: stri
     <div style={imageElementStyle(el, 1, { localFrame, fps })}>
       <Video
         src={url}
-        style={{ width: '100%', height: '100%', objectFit: el.objectFit ?? 'cover' }}
+        // objectFit must be a PROP, not a style — see ImageRenderer.
+        objectFit={el.objectFit ?? 'cover'}
+        style={{ width: '100%', height: '100%' }}
       />
     </div>
   );

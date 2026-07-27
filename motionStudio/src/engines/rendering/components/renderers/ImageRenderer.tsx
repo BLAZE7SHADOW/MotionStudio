@@ -20,6 +20,8 @@ export default function ImageRenderer({ el, url }: { el: ImageElement; url: stri
         // that ACAO-less response and fails. Being consistent avoids that, and
         // is also what keeps the export canvas untainted.
         crossOrigin={url.startsWith('http') ? 'anonymous' : undefined}
+        // `object-fit` via style is fine for <Img> (the web renderer supports
+        // that property); only <Video> requires it as an explicit prop.
         style={{ width: '100%', height: '100%', objectFit: el.objectFit ?? 'cover' }}
       />
     </div>
