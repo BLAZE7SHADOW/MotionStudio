@@ -52,9 +52,33 @@ export default function ExportDialog({ project }: { project: Project }) {
   const [quota, setQuota] = useState<QuotaResult | null>(null);
   const [cloudStatus, setCloudStatus] = useState<'idle' | 'rendering' | 'done' | 'error'>('idle');
   const [cloudProgress, setCloudProgress] = useState(0);
-  // Experimental: render the real composition in-browser instead of hand-drawing
-  // to canvas, so text effects survive. Opt-in while we find out what it drops.
-  const [useWebRenderer, setUseWebRenderer] = useState(false);
+  // What this project contains that the canvas-based browser export can't draw.
+  const unsupportedSummary = (() => {
+    const els = project.canvas.elements;
+    const parts: string[] = [];
+    if (els.some((e) => e.type === 'text' && e.textEffect)) parts.push('text effects');
+    if (els.some((e) => e.type === 'shader')) parts.push('animated backgrounds');
+    if (els.some((e) => e.type === 'block')) parts.push('blocks');
+    return parts.length === 0
+      ? ''
+      : parts.length === 1
+        ? parts[0]
+        : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+  })();
+  const usesUnsupportedFeatures = unsupportedSummary.length > 0;
+
+  /**
+   * Render the real composition in-browser rather than hand-drawing to canvas.
+   *
+   * On by default *only* when the project actually uses effects. Off, the
+   * export silently drops them, which is the wrong default for a project built
+   * around them; on, for a plain text-and-images project, it is pure cost —
+   * slower and more ways to fail for a byte-identical result.
+   */
+  const [useWebRenderer, setUseWebRenderer] = useState(usesUnsupportedFeatures);
+  // Set when the beta renderer failed and the canvas path produced the file
+  // instead — the user gets a video, but not the one they asked for, so say so.
+  const [fellBackToCanvas, setFellBackToCanvas] = useState(false);
   const [cloudError, setCloudError] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
@@ -71,21 +95,6 @@ export default function ExportDialog({ project }: { project: Project }) {
   const dims = getCompositionDimensions(project.aspectRatio);
   const supported = isExportSupported();
   const exporting = progress !== null;
-
-  // What this project contains that the canvas-based browser export can't draw.
-  const unsupportedSummary = (() => {
-    const els = project.canvas.elements;
-    const parts: string[] = [];
-    if (els.some((e) => e.type === 'text' && e.textEffect)) parts.push('text effects');
-    if (els.some((e) => e.type === 'shader')) parts.push('animated backgrounds');
-    if (els.some((e) => e.type === 'block')) parts.push('blocks');
-    return parts.length === 0
-      ? ''
-      : parts.length === 1
-        ? parts[0]
-        : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
-  })();
-  const usesUnsupportedFeatures = unsupportedSummary.length > 0;
 
   // fetch quota whenever auth changes
   useEffect(() => {
@@ -110,15 +119,31 @@ export default function ExportDialog({ project }: { project: Project }) {
     setProgress(0);
     track.exportBrowserStarted({ resolution: resolution.id, quality: quality.id, bps: quality.bps });
     const startedAt = Date.now();
+    setFellBackToCanvas(false);
     try {
       const exportOptions = {
         resolutionScale: resolution.scale,
         videoBitsPerSecond: quality.bps,
         onProgress: (frame: number, total: number) => setProgress(Math.round((frame / total) * 100)),
       };
-      const { blob, extension } = useWebRenderer
-        ? await exportViaWebRenderer(project, exportOptions)
-        : await exportComposition(project, exportOptions);
+      let result: { blob: Blob; extension: string };
+      if (useWebRenderer) {
+        try {
+          result = await exportViaWebRenderer(project, exportOptions);
+        } catch (webErr) {
+          // The beta renderer is the default for effect-heavy projects, so a
+          // failure must not cost the user their export. Produce the flattened
+          // version rather than nothing — and never silently: fellBackToCanvas
+          // tells them what they actually got.
+          console.warn('[export] web renderer failed, falling back to canvas:', webErr);
+          setProgress(0);
+          result = await exportComposition(project, exportOptions);
+          setFellBackToCanvas(true);
+        }
+      } else {
+        result = await exportComposition(project, exportOptions);
+      }
+      const { blob, extension } = result;
       downloadBlob(blob, `${project.name || 'video'}.${extension}`);
       track.exportBrowserCompleted(Date.now() - startedAt);
     } catch (e) {
@@ -299,6 +324,29 @@ export default function ExportDialog({ project }: { project: Project }) {
               )}
               {browserError && <p className="text-[11px] text-red-400">{browserError}</p>}
 
+              {/* The fallback saved the export, but produced a different video
+                  than the one asked for. Silence here would be a lie. */}
+              {fellBackToCanvas && (
+                <div className="rounded-studio-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2">
+                  <p className="text-[11px] text-amber-300/90 leading-relaxed">
+                    <strong className="font-medium">
+                      The beta renderer couldn't finish, so this file was exported
+                      without effects.
+                    </strong>{' '}
+                    The video downloaded and is complete otherwise. For a version
+                    with {unsupportedSummary || 'effects'} intact, use{' '}
+                    <button
+                      type="button"
+                      onClick={() => { track.exportTabChanged('cloud'); setTab('cloud'); }}
+                      className="underline underline-offset-2 hover:text-amber-200"
+                    >
+                      Cloud Render
+                    </button>
+                    .
+                  </p>
+                </div>
+              )}
+
               {/* Experimental path: Remotion's own web renderer runs the real
                   composition, so effects survive. Opt-in until we know what it
                   drops (it can't do background-clip:text, 3D transforms,
@@ -321,9 +369,13 @@ export default function ExportDialog({ project }: { project: Project }) {
                   </span>
                   <span className="text-[10px] text-studio-text-faint leading-relaxed">
                     Renders the real composition rather than a flattened canvas, so
-                    text effects, backgrounds and blocks are kept. Expect a slower
-                    export, and a few things still differ from Cloud Render —
-                    gradient-filled text, 3D transforms and blend modes.
+                    text effects, backgrounds and blocks are kept.{' '}
+                    {usesUnsupportedFeatures
+                      ? 'On by default because this project uses them. '
+                      : 'This project has none, so it changes nothing here. '}
+                    Expect a slower export, and a few things still differ from
+                    Cloud Render — gradient-filled text, 3D transforms and blend
+                    modes.
                   </span>
                 </span>
               </label>

@@ -374,12 +374,19 @@ Renders entirely inside your browser — no server, no terminal.
 3. Click **Export & download** — a progress bar fills while every frame is rendered
    offline, then the finished MP4 downloads automatically.
 
-**Include effects (Beta).** By default this path flattens each frame onto a plain
-canvas, so text effects, animated backgrounds and blocks are dropped — the video
-still renders, just without them, and the dialog warns you when your project
-actually uses any. Tick **Include effects** to render the real composition and
-keep them. It's slower, and a few things still differ from Cloud Render:
-gradient-filled text, 3D transforms and blend modes.
+**Include effects (Beta).** There are two browser paths. The plain one flattens
+each frame onto a canvas, which is fast and dependable but drops text effects,
+animated backgrounds and blocks. **Include effects** renders the real
+composition and keeps them.
+
+It is **ticked automatically when your project uses any of those**, and left off
+when it doesn't — on a plain text-and-images project it would only make the
+export slower for an identical file. Untick it any time.
+
+It's slower, and a few things still differ from Cloud Render: gradient-filled
+text, 3D transforms and blend modes. If it can't finish, the export falls back
+to the plain path so you still get a video, and the dialog tells you that's what
+happened.
 
 Under the hood: every frame is drawn to an off-screen canvas in exact order, source
 videos are seeked frame-by-frame, all audio is mixed sample-exact

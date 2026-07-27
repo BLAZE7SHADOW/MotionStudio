@@ -5,6 +5,25 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-27] — Browser export keeps effects by default
+
+### Changed
+- **"Include effects" is now on by default — but only for projects that use
+  them.** Off, the export silently drops text effects, backgrounds and blocks,
+  which is the wrong default for a project built around them. On for a plain
+  text-and-images project it would be pure cost: slower, more ways to fail, for
+  a byte-identical file. The toggle seeds from `usesUnsupportedFeatures`, the
+  same check that drives the warning banner, and stays manually overridable.
+
+### Added
+- **A canvas fallback when the beta renderer fails.** Promoting a beta path to
+  the default meant a failure would have cost the user their export outright —
+  previously they'd have got an error and no video. It now retries through the
+  flattened canvas exporter so a file is always produced, and reports that it
+  did: the video is complete but without effects, with a route to Cloud Render
+  for one that isn't. Falling back silently would hand back exactly the
+  degraded video the default was chosen to avoid.
+
 ## [2026-07-27] — Session tokens stopped expiring mid-edit
 
 ### Fixed
