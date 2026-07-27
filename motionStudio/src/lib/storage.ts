@@ -5,6 +5,8 @@
  * Returns the public S3 URL so Lambda can fetch it during cloud renders.
  */
 
+import { getAccessToken } from './authToken';
+
 interface UploadUrlResponse {
   uploadUrl: string;
   publicUrl: string;
@@ -13,9 +15,12 @@ interface UploadUrlResponse {
 export async function uploadAssetToStorage(
   assetId: string,
   file: File,
-  token: string,
 ): Promise<string | null> {
   try {
+    // Resolved here, not passed in: an upload can start long after the caller
+    // rendered, by which time a captured token may have expired.
+    const token = await getAccessToken();
+
     // Step 1 — get presigned PUT URL from our API
     const res = await fetch('/api/upload-url', {
       method: 'POST',

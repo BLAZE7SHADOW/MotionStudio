@@ -189,7 +189,7 @@ function StockTab({
     setLoading(true);
     setError(null);
     try {
-      const { results } = await api.searchStock(token, q.trim(), t);
+      const { results } = await api.searchStock(q.trim(), t);
       setResults(results);
     } catch (e) {
       setError((e as Error).message);

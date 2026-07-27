@@ -1,4 +1,5 @@
 import { getDeviceId } from './deviceId';
+import { getAccessToken } from './authToken';
 
 export interface QuotaResult {
   used: number;
@@ -34,15 +35,28 @@ export interface StockSearchResult {
   totalResults: number;
 }
 
-async function apiFetch<T>(path: string, token: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...(options?.headers ?? {}),
-    },
-  });
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  // The token is fetched per request rather than passed in. A token captured in
+  // component state expires mid-session and every endpoint starts returning
+  // 401 "Invalid session" at once.
+  const send = (token: string) =>
+    fetch(path, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...(options?.headers ?? {}),
+      },
+    });
+
+  let res = await send(await getAccessToken());
+
+  // A 401 despite a token we believed was live means our expiry estimate was
+  // wrong — clock skew, or the session was rotated elsewhere. Force a refresh
+  // and try once more before surfacing it.
+  if (res.status === 401) {
+    res = await send(await getAccessToken(true));
+  }
 
   // An HTML body here means the request never reached a function and hit the
   // SPA fallback instead. Parsing it blindly produced
@@ -62,22 +76,20 @@ async function apiFetch<T>(path: string, token: string, options?: RequestInit): 
 }
 
 export const api = {
-  getQuota: (token: string): Promise<QuotaResult> =>
-    apiFetch('/api/quota', token),
+  getQuota: (): Promise<QuotaResult> => apiFetch('/api/quota'),
 
   /** Queues a Lambda render and returns immediately — poll getRenderStatus. */
-  startRender: (token: string, inputProps: Record<string, unknown>): Promise<RenderStarted> =>
-    apiFetch('/api/render', token, {
+  startRender: (inputProps: Record<string, unknown>): Promise<RenderStarted> =>
+    apiFetch('/api/render', {
       method: 'POST',
       body: JSON.stringify({ inputProps, deviceId: getDeviceId() }),
     }),
 
-  getRenderStatus: (token: string, renderId: string): Promise<RenderStatus> =>
+  getRenderStatus: (renderId: string): Promise<RenderStatus> =>
     apiFetch(
       `/api/render-status?renderId=${encodeURIComponent(renderId)}&deviceId=${encodeURIComponent(getDeviceId())}`,
-      token,
     ),
 
-  searchStock: (token: string, query: string, type: StockType, page = 1): Promise<StockSearchResult> =>
-    apiFetch(`/api/stock-search?q=${encodeURIComponent(query)}&type=${type}&page=${page}`, token),
+  searchStock: (query: string, type: StockType, page = 1): Promise<StockSearchResult> =>
+    apiFetch(`/api/stock-search?q=${encodeURIComponent(query)}&type=${type}&page=${page}`),
 };

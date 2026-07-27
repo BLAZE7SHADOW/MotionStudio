@@ -4,6 +4,14 @@ import { getSupabase } from '@/lib/supabase';
 
 export interface AuthState {
   user: User | null;
+  /**
+   * Presence signal for UI gating only — "is there a session right now".
+   *
+   * Do NOT send this to an API. It is a snapshot taken at mount and refreshed
+   * only when Supabase emits an auth event, so it goes stale within the hour
+   * and every endpoint starts returning 401. Request code must call
+   * `getAccessToken()` from `lib/authToken`, which refreshes near expiry.
+   */
   token: string | null;
   loading: boolean;
   isAnonymous: boolean;

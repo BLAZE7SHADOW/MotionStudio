@@ -4,7 +4,6 @@ import { assetTypeFromFile, probeAsset } from './probe';
 import { putBlob, deleteBlob } from './blobStore';
 import { createObjectUrl } from './objectUrls';
 import { uploadAssetToStorage, deleteAssetFromStorage } from '@/lib/storage';
-import { getSupabase } from '@/lib/supabase';
 
 /**
  * Asset Engine — service layer over the project's asset library.
@@ -46,11 +45,11 @@ export function useAssetEngine() {
     const projectId = project.id;
     void Promise.all(
       pairs.map(async ({ asset, file }) => {
-        // Get token fresh — hook state may be stale by the time upload runs
-        const { data } = await getSupabase().auth.getSession();
-        const token = data.session?.access_token;
-        if (!token) return; // not signed in; upload skipped, Lambda won't be used
-        const storageUrl = await uploadAssetToStorage(asset.id, file, token);
+        // uploadAssetToStorage resolves the token itself. Reading it here via
+        // getSession() looked fresh but wasn't — getSession returns the *stored*
+        // token whether or not it has expired, so a long session uploaded with a
+        // dead JWT and got 401 "Invalid session".
+        const storageUrl = await uploadAssetToStorage(asset.id, file);
         if (!storageUrl) return;
         const latest = useProjectStore.getState().getProject(projectId);
         if (!latest) return;
