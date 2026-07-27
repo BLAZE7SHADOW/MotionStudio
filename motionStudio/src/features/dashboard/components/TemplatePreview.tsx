@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Player } from '@remotion/player';
 import type { PlayerRef } from '@remotion/player';
 import { Play } from 'lucide-react';
@@ -29,6 +29,17 @@ export default function TemplatePreview({ template }: { template: TemplateDefini
     [template],
   );
 
+  // Play from the beginning as soon as a template is shown. Driven explicitly
+  // rather than via autoPlay, and from frame 0 so the entrance animations are
+  // actually seen — parking on a later frame just looked frozen.
+  useEffect(() => {
+    const p = playerRef.current;
+    if (!p) return;
+    p.seekTo(0);
+    p.play();
+    setPlaying(true);
+  }, []);
+
   return (
     <div className="flex flex-col gap-2">
       <div
@@ -40,9 +51,6 @@ export default function TemplatePreview({ template }: { template: TemplateDefini
           component={MotionComposition}
           inputProps={inputProps}
           durationInFrames={duration}
-          // Not frame 0 — entrance effects start at opacity 0, so a paused
-          // player parked there shows an empty frame.
-          initialFrame={Math.round(duration * 0.4)}
           fps={template.fps}
           compositionWidth={width}
           compositionHeight={height}
@@ -62,18 +70,15 @@ export default function TemplatePreview({ template }: { template: TemplateDefini
         onClick={() => {
           const p = playerRef.current;
           if (!p) return;
-          if (playing) {
-            p.pause();
-          } else {
-            p.seekTo(0);
-            p.play();
-          }
-          setPlaying(!playing);
+          // Always from the top — this is "watch it again", not a scrubber.
+          p.seekTo(0);
+          p.play();
+          setPlaying(true);
         }}
         className="self-start inline-flex items-center gap-1.5 h-7 px-3 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors"
       >
         <Play className="w-3 h-3" fill="currentColor" />
-        {playing ? 'Restart' : 'Play preview'}
+        {playing ? 'Replay' : 'Play preview'}
       </button>
     </div>
   );
