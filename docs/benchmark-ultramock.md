@@ -113,11 +113,15 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
 
 ### B. Control design
 
-- [ ] **Gesture chips printed on the control** — `TILT X `​`DRAG`​,
+- [x] **Gesture chips printed on the control** — `TILT X `​`DRAG`​,
       `ZOOM `​`SCROLL`​, `PAN X `​`SPACE DRAG`. The interaction is a chip inside
       the row. No tooltip, no hover delay, no tour step needed.
-- [ ] **Row-as-slider** — the row background fills to show value. Label, gesture
+      *(2026-07-28 — `components/ui/scrub-input.tsx`. Only `DRAG` so far; we
+      have no scroll- or space-drag gestures to advertise yet.)*
+- [x] **Row-as-slider** — the row background fills to show value. Label, gesture
       hint, fill and editable number in one ~32px row. No separate slider+input.
+      *(2026-07-28 — same control. Fill draws only when `min`/`max` are given,
+      so unbounded values like X don't imply a range that doesn't exist.)*
 - [~] **Sections collapsed by default, all headers visible** — BLUR, SCENE,
       3D DEVICES, BORDER, EFFECTS are single header rows; only CAMERA is open.
       The whole capability surface is legible at a glance.
@@ -254,3 +258,4 @@ Append a line whenever something above is ticked.
 | Date | Item | Notes |
 |---|---|---|
 | 2026-07-28 | — | Benchmark captured. Nothing ticked yet. |
+| 2026-07-28 | B — gesture chips, row-as-slider | `ScrubInput`. All 16 numeric call sites upgraded via `NumInput`/`MiniNum`, which became wrappers. Next: accent audit (C), then default-closed sections + per-section reset (B). |

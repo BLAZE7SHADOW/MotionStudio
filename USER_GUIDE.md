@@ -185,6 +185,12 @@ Shows controls for the selected element. Sections vary by type:
 **Transform** (text / image / video) — X, Y, Width, Height, Rotation, Opacity.
 Values are in composition pixels (e.g. 1920×1080).
 
+> **Every number here can be dragged.** Press on a value and slide sideways to
+> scrub it; hold **Shift** to move ten times faster. Click without dragging and
+> it becomes a text field, so you can still type an exact number and press
+> Enter (or Escape to cancel). Bounded values like Opacity show a filled track
+> behind them so you can see where you are in the range.
+
 **Layout** (image / video) — **Make Background**: one click resizes the element
 to fill the whole canvas, resets its position/rotation, and sends it behind
 every other layer. The fastest way to turn an uploaded photo or clip into a

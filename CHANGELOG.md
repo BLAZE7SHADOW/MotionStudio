@@ -5,6 +5,40 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Drag-to-scrub numbers
+
+### Added
+- **`components/ui/scrub-input.tsx`** — a number field you can drag. Press
+  anywhere on the row and slide horizontally to scrub; Shift multiplies the
+  step by ten; releasing without moving more than 3px focuses the field for
+  typing instead.
+  - Every numeric control in the editor was a plain `<input type="number">`,
+    so nudging an element 10px right meant clicking in, selecting the text and
+    typing. For a spatial tool that is the wrong primitive: the value is a
+    quantity you want to feel, not a string you want to author.
+  - The `DRAG` chip is printed on the control rather than hidden in a tooltip
+    or a tour step. A hint you must hover to find does not help the person who
+    never suspected there was anything to find. Taken from the Ultramock
+    benchmark (`docs/benchmark-ultramock.md` §B).
+  - Drag state lives in a ref, not state — it changes on every `pointermove`,
+    and re-rendering the panel at pointer frequency is the jank this was meant
+    to remove. Only the committed value goes through `onChange`.
+  - `startValue` is captured once on pointerdown and the new value computed as
+    `startValue + dx × step`, so a long drag cannot accumulate rounding drift.
+  - `min`/`max` are optional and draw a filled track. They are passed only for
+    genuinely bounded quantities (Opacity 0–100, W/H floored at 1); a fill on
+    an unbounded value like X would imply a range that does not exist.
+
+### Changed
+- `NumInput` and `MiniNum` in `PropertiesPanel.tsx` are now thin wrappers over
+  `ScrubInput`, so all 16 numeric call sites — Transform, Text, Blocks, Shader,
+  Audio and the animation rows — gained scrubbing without being edited.
+- The hint is suppressed on the paired X/Y and W/H fields and inside animation
+  rows, where four controls share a card. The full-width fields above them have
+  already taught the gesture, and repeating it in every slot is noise.
+
+---
+
 ## [2026-07-28] — Ultramock benchmark
 
 ### Added

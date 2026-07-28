@@ -36,6 +36,10 @@ export const RELEASES: Release[] = [
     title: 'Effects you can actually preview',
     changes: [
       {
+        kind: 'improved',
+        text: 'Every number in the Properties panel can now be dragged. Press on a value and slide sideways to change it, holding Shift to move in bigger steps. Click without dragging and you can still type an exact number, exactly as before.',
+      },
+      {
         kind: 'new',
         text: 'A feedback form and a "What\u2019s new" list under the ? button in the toolbar. When an export or an upload fails, "Report this" sends the details straight through — you just add what you were doing.',
       },

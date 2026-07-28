@@ -8,6 +8,7 @@ import type { Animation, AnimationProperty, AnimationEasing, TextEffect, ShaderP
 import { isTwoValueEffect, isListEffect, isNumberEffect, parseEffectNumber } from '@/engines/project';
 import { getBlock } from '@/content/blocks/registry';
 import { Input } from '@/components/ui/input';
+import { ScrubInput } from '@/components/ui/scrub-input';
 import ShaderPreview from './ShaderPreview';
 import TextEffectPreview from './TextEffectPreview';
 import AnimationPreview from './AnimationPreview';
@@ -161,27 +162,27 @@ function PropRow({ label, children, compact }: { label: string; children: React.
   );
 }
 
-/* ── compact number input ── */
+/* ── compact number input ──
+   A thin wrapper over <ScrubInput> so every existing call site gained
+   drag-to-scrub without being touched. `min`/`max` are optional and only
+   worth passing for genuinely bounded quantities — they're what draws the
+   filled track, and a fill on an unbounded value like X would be a lie. */
 function NumInput({
-  value, onChange, unit, step,
+  value, onChange, unit, step, min, max, compact,
 }: {
   value: number; onChange: (v: number) => void; unit?: string; step?: number;
+  min?: number; max?: number; compact?: boolean;
 }) {
   return (
-    <div className="relative flex-1">
-      <Input
-        type="number"
-        step={step}
-        value={value}
-        onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) onChange(v); }}
-        className={`h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${unit ? 'pr-6' : 'pr-2'}`}
-      />
-      {unit && (
-        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-studio-text-faint pointer-events-none">
-          {unit}
-        </span>
-      )}
-    </div>
+    <ScrubInput
+      value={value}
+      onChange={onChange}
+      unit={unit}
+      step={step}
+      min={min}
+      max={max}
+      hideHint={compact}
+    />
   );
 }
 
@@ -281,20 +282,9 @@ function MiniNum({
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-[10px] text-studio-text-faint w-8 shrink-0">{label}</span>
-      <div className="relative flex-1">
-        <Input
-          type="number"
-          step={step}
-          value={value}
-          onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) onChange(v); }}
-          className="h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm pr-5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-        />
-        {unit && (
-          <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-studio-text-faint pointer-events-none">
-            {unit}
-          </span>
-        )}
-      </div>
+      {/* Animation rows pack four of these into one card, so the hint is
+          suppressed — the Transform fields above have already taught it. */}
+      <ScrubInput value={value} onChange={onChange} unit={unit} step={step} hideHint />
     </div>
   );
 }
@@ -344,12 +334,12 @@ function TransformSection({ el, update }: { el: BaseElement; update: Update }) {
       <Section title="Transform">
       <div className="flex flex-col gap-3 px-4 py-3">
         <div className="flex gap-2">
-          <PropRow label="X" compact><NumInput value={Math.round(el.x)} onChange={(v) => update({ x: v })} /></PropRow>
-          <PropRow label="Y" compact><NumInput value={Math.round(el.y)} onChange={(v) => update({ y: v })} /></PropRow>
+          <PropRow label="X" compact><NumInput value={Math.round(el.x)} onChange={(v) => update({ x: v })} compact /></PropRow>
+          <PropRow label="Y" compact><NumInput value={Math.round(el.y)} onChange={(v) => update({ y: v })} compact /></PropRow>
         </div>
         <div className="flex gap-2">
-          <PropRow label="W" compact><NumInput value={Math.round(el.width)} onChange={(v) => update({ width: v })} /></PropRow>
-          <PropRow label="H" compact><NumInput value={Math.round(el.height)} onChange={(v) => update({ height: v })} /></PropRow>
+          <PropRow label="W" compact><NumInput value={Math.round(el.width)} onChange={(v) => update({ width: v })} min={1} compact /></PropRow>
+          <PropRow label="H" compact><NumInput value={Math.round(el.height)} onChange={(v) => update({ height: v })} min={1} compact /></PropRow>
         </div>
         <PropRow label="Rotation">
           <NumInput value={Math.round(el.rotation)} onChange={(v) => update({ rotation: v })} unit="°" />
@@ -359,6 +349,8 @@ function TransformSection({ el, update }: { el: BaseElement; update: Update }) {
             value={Math.round(el.opacity * 100)}
             onChange={(v) => update({ opacity: Math.min(1, Math.max(0, v / 100)) })}
             unit="%"
+            min={0}
+            max={100}
           />
         </PropRow>
       </div>
