@@ -36,6 +36,10 @@ export const RELEASES: Release[] = [
     title: 'Effects you can actually preview',
     changes: [
       {
+        kind: 'fixed',
+        text: 'Adding a second shot used to leave you on a black screen with no music, because the background and the soundtrack belonged to the first shot. Backgrounds and audio now play through the whole video. Any other element can be switched between "this shot only" and "the whole video" with the layers icon on its timeline row.',
+      },
+      {
         kind: 'new',
         text: 'Build a video shot by shot. Add shot puts a new moment on the end, and you work on one at a time \u2014 the timeline shows only that shot, so twenty quick cuts never become twenty rows to scroll through. Sequence steps back to see the whole video, where you can drag a shot\u2019s edge to change how long it lasts and drag the shot itself to reorder it. Double-click a shot to name it.',
       },

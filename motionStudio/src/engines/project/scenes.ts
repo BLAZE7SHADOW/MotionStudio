@@ -17,6 +17,28 @@ import type { CanvasElement, Project, Scene } from './types';
  *      price of leaving the render path untouched.
  */
 
+/**
+ * `sceneId` for an element that belongs to the **whole video** rather than one
+ * shot — a background, a music bed, a watermark.
+ *
+ * Every shot-based editor hits this, and skipping it made the model wrong in
+ * the first five minutes of real use: a project's shader background lived in
+ * shot 1, so adding shot 2 produced a black void with no background and no
+ * music. Ultramock's answer is a global "scene" setting separate from per-shot
+ * effects; ours is one field, because a background is already an element and
+ * giving it a second home would mean two ways to say the same thing.
+ *
+ * A sentinel rather than `null`/`undefined` on purpose: absent means "not
+ * migrated yet" and gets adopted by `ensureScenes`, which is a different thing
+ * entirely and would silently swallow globals.
+ */
+export const ALL_SHOTS = '__all__';
+
+/** True when this element spans the video rather than living in one shot. */
+export function spansAllShots(el: { sceneId?: string }): boolean {
+  return el.sceneId === ALL_SHOTS;
+}
+
 /** A shot shorter than this can't be trimmed or clicked reliably. */
 export const MIN_SCENE_FRAMES = 6;
 
@@ -53,8 +75,36 @@ export function sceneSpan(scenes: Scene[], sceneId: string): { start: number; en
   return { start, end: start + (scene?.durationInFrames ?? 0) };
 }
 
+/** Elements a shot shows: its own, plus everything spanning the whole video. */
 export function elementsInScene(project: Project, sceneId: string): CanvasElement[] {
-  return project.canvas.elements.filter((el) => el.sceneId === sceneId);
+  return project.canvas.elements.filter(
+    (el) => el.sceneId === sceneId || spansAllShots(el),
+  );
+}
+
+/**
+ * Re-spans every video-wide element over the current total.
+ *
+ * Their whole point is to cover the video, so their timing is derived, not
+ * authored — any operation that changes the total length has to run this or
+ * the background stops halfway through. Audio keeps its own length, since a
+ * 20s track can't be stretched to fill a 30s video.
+ */
+function respanGlobals(project: Project, total: number): Project {
+  if (!project.canvas.elements.some(spansAllShots)) return project;
+  return {
+    ...project,
+    canvas: {
+      ...project.canvas,
+      elements: project.canvas.elements.map((el) => {
+        if (!spansAllShots(el)) return el;
+        const duration = el.type === 'audio' ? Math.min(el.durationInFrames, total) : total;
+        return el.startFrame === 0 && el.durationInFrames === duration
+          ? el
+          : { ...el, startFrame: 0, durationInFrames: duration };
+      }),
+    },
+  };
 }
 
 /** Display name for a shot — falls back to its position, so renaming or
@@ -102,7 +152,10 @@ export function ensureScenes(project: Project): Project {
   const ids = new Set(existing?.map((s) => s.id));
 
   // Already migrated and coherent — the common path, so make it allocation-free.
-  if (existing?.length && project.canvas.elements.every((el) => el.sceneId && ids.has(el.sceneId))) {
+  if (
+    existing?.length &&
+    project.canvas.elements.every((el) => spansAllShots(el) || (el.sceneId && ids.has(el.sceneId)))
+  ) {
     return project;
   }
 
@@ -128,7 +181,9 @@ export function ensureScenes(project: Project): Project {
     canvas: {
       ...project.canvas,
       elements: project.canvas.elements.map((el) =>
-        el.sceneId && ids.has(el.sceneId) ? el : { ...el, sceneId: owning(el.startFrame) },
+        spansAllShots(el) || (el.sceneId && ids.has(el.sceneId))
+          ? el
+          : { ...el, sceneId: owning(el.startFrame) },
       ),
     },
   };
@@ -147,7 +202,10 @@ export function addScene(project: Project, durationInFrames: number, fps: number
   if (totalFrames(scenes) + duration > MAX_PROJECT_SECONDS * fps) return base;
 
   const next = [...scenes, { id: newSceneId(), durationInFrames: duration }];
-  return { ...base, scenes: next, durationInFrames: totalFrames(next) };
+  return respanGlobals(
+    { ...base, scenes: next, durationInFrames: totalFrames(next) },
+    totalFrames(next),
+  );
 }
 
 /**
@@ -165,18 +223,24 @@ export function removeScene(project: Project, sceneId: string): Project {
   const removedLength = end - start;
   const next = scenes.filter((s) => s.id !== sceneId);
 
-  return {
+  const out: Project = {
     ...base,
     scenes: next,
     durationInFrames: totalFrames(next),
     canvas: {
       ...base.canvas,
       elements: base.canvas.elements
-        .filter((el) => el.sceneId !== sceneId)
+        // A video-wide element isn't "in" the shot being deleted, so it stays.
+        .filter((el) => spansAllShots(el) || el.sceneId !== sceneId)
         // Everything after the hole slides back by its length.
-        .map((el) => (el.startFrame >= end ? { ...el, startFrame: el.startFrame - removedLength } : el)),
+        .map((el) =>
+          !spansAllShots(el) && el.startFrame >= end
+            ? { ...el, startFrame: el.startFrame - removedLength }
+            : el,
+        ),
     },
   };
+  return respanGlobals(out, totalFrames(next));
 }
 
 /**
@@ -205,19 +269,22 @@ export function setSceneDuration(
   const { start, end } = sceneSpan(scenes, sceneId);
   const next = scenes.map((s) => (s.id === sceneId ? { ...s, durationInFrames: duration } : s));
 
-  return {
+  const out: Project = {
     ...base,
     scenes: next,
     durationInFrames: totalFrames(next),
     canvas: {
       ...base.canvas,
       elements: base.canvas.elements.map((el) => {
+        // Video-wide elements are re-spanned below, not rippled.
+        if (spansAllShots(el)) return el;
         if (el.startFrame >= end) return { ...el, startFrame: el.startFrame + delta };
         if (el.sceneId === sceneId) return fitInto(el, start, start + duration);
         return el;
       }),
     },
   };
+  return respanGlobals(out, totalFrames(next));
 }
 
 /** Moves a shot, recomputing every element that changed position as a result. */
@@ -243,7 +310,7 @@ export function reorderScene(project: Project, sceneId: string, toIndex: number)
     canvas: {
       ...base.canvas,
       elements: base.canvas.elements.map((el) => {
-        if (!el.sceneId) return el;
+        if (!el.sceneId || spansAllShots(el)) return el;
         const wasAt = before.get(el.sceneId);
         const nowAt = after.get(el.sceneId);
         if (wasAt === undefined || nowAt === undefined || wasAt === nowAt) return el;
@@ -279,7 +346,7 @@ export function rescaleForFps(project: Project, nextFps: number): Project {
   last.durationInFrames = Math.max(MIN_SCENE_FRAMES, last.durationInFrames + drift);
 
   const offsets = sceneOffsets(scaled);
-  return {
+  const out: Project = {
     ...base,
     fps: nextFps,
     scenes: scaled,
@@ -293,13 +360,16 @@ export function rescaleForFps(project: Project, nextFps: number): Project {
           durationInFrames: Math.max(1, Math.round(el.durationInFrames * ratio)),
         };
         // Rounding can push an element a frame past its shot; refit rather
-        // than leave invariant 3 broken.
+        // than leave invariant 3 broken. A video-wide element has no shot to
+        // be refitted into — `respanGlobals` gives it the exact new total.
+        if (spansAllShots(el)) return scaledEl;
         const start = el.sceneId ? offsets.get(el.sceneId) ?? 0 : 0;
         const shot = scaled.find((s) => s.id === el.sceneId);
         return shot ? fitInto(scaledEl, start, start + shot.durationInFrames) : scaledEl;
       }),
     },
   };
+  return respanGlobals(out, totalFrames(scaled));
 }
 
 /**

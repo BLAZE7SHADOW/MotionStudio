@@ -5,6 +5,60 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Elements can span the whole video
+
+Found by opening the app and adding a shot. The shot model was wrong in a way
+no test caught, because every test built its own fixtures and none of them had
+a background.
+
+### Fixed
+- **Adding a shot dropped you onto a black screen with no music.** Every
+  element belonged to exactly one shot, so a project's shader background and
+  its audio track lived in shot 1 — and shot 2 was an empty void. That reads as
+  "the editor is broken", and it also made the planned beat-sync work
+  impossible: you cannot cut shots to a soundtrack trapped inside one shot.
+  - This is the "elements that cross shot boundaries" problem flagged when the
+    shot model was designed and then deferred. It survived about five minutes
+    of real use.
+
+### Added
+- **`ALL_SHOTS`** in `engines/project/scenes.ts` — a `sceneId` sentinel meaning
+  *the whole video* rather than one shot.
+  - A sentinel rather than `null`/`undefined` on purpose: absent already means
+    "not migrated yet" and gets adopted by `ensureScenes`, which is a different
+    thing and would have silently swallowed every global.
+  - One field rather than a separate project-level "background" setting, which
+    is Ultramock's answer: a background is already an element here, and giving
+    it a second home would mean two ways to say the same thing.
+  - `respanGlobals()` re-derives their timing after anything that changes the
+    total length. Their whole point is to cover the video, so that timing is
+    derived, not authored — otherwise the background stops halfway through.
+    Audio is capped at its own length, since a 20s track can't fill a 30s video.
+  - Every scene operation now excludes them from rippling, refitting and
+    reordering, and `removeScene` no longer deletes them along with a shot.
+- **A pin control on each timeline row** toggling "this shot only" ⇄ "the whole
+  video". It lives on the row rather than in Properties because the row is
+  where you notice the problem — the background missing from the shot you just
+  made. Pinning rewrites the timing too, and un-pinning refits the element into
+  the shot it lands in, so it can never end up outside every shot and become
+  unreachable.
+
+### Changed
+- **New shader backgrounds and new audio now span the whole video by default.**
+  A background is a background and a track is a soundtrack; neither belongs to
+  whichever shot happened to be open. This is the part that stops the bug
+  happening again without anyone having to know the pin exists.
+
+### Verified
+- 11 new assertions (86 total): migration leaves a video-wide element alone, it
+  appears in every shot including newly added ones, adding/resizing/deleting a
+  shot re-spans it, reordering never moves it, deleting a shot doesn't delete
+  it, and audio is never stretched past its own length.
+- Live: pinned the shader and audio on a real 3-shot project, then opened a shot
+  that previously rendered pure black — the background now draws there.
+
+---
+
 ## [2026-07-28] — Shots can be reordered
 
 ### Added

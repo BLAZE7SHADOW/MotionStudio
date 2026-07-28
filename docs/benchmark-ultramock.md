@@ -109,7 +109,7 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
       (`00:00.00 / 00:03.00`), not the whole video.
       *(2026-07-28 — `TimelineScale.originFrame`. Ruler labels stay absolute so
       you still know where you are in the whole video.)*
-- [ ] **Explicit scope split** — "Background & scene settings apply to all shots"
+- [x] **Explicit scope split** — "Background & scene settings apply to all shots"
       vs "Effects apply to the selected shot, not all shots."
 - [x] **Shared duration budget** — *"Couldn't add a shot for this video. Free up
       some duration first."*

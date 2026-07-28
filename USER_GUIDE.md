@@ -367,6 +367,12 @@ arrange them.
 - **Hover a shot and click ×** to delete it — this removes everything inside it
   too, and the video gets shorter. The last remaining shot can't be deleted.
 - Anything you add lands in the shot you're looking at, and spans it.
+- **Some things belong to the whole video, not one shot** — a background, a
+  music track, a watermark. Animated backgrounds and audio are set that way
+  automatically when you add them. Anything else can be switched with the small
+  **layers icon** on its timeline row: click it to play that element through
+  every shot, click again to keep it to the current shot. Video-wide elements
+  show up in every shot's timeline, because that's where they actually are.
 - Existing projects are one shot covering the whole video, so nothing you have
   already made looks or behaves differently.
 

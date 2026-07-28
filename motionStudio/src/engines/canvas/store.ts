@@ -1,7 +1,7 @@
 import { useProjectStore } from '../project/store';
 import { useEditorStore } from '../editor/store';
 import { getCompositionDimensions } from '../project/dimensions';
-import { sceneAtFrame, sceneSpan, scenesOf } from '../project/scenes';
+import { ALL_SHOTS, sceneAtFrame, sceneSpan, scenesOf } from '../project/scenes';
 import type { CanvasElement, TextElement, ImageElement, VideoElement, AudioElement, ShaderElement, ShaderPreset, BlockElement, BlockPreset } from './types';
 import type { AddTextInput } from './types';
 import { getBlock } from '@/content/blocks/registry';
@@ -174,14 +174,16 @@ export function useCanvasEngine() {
 
   function addAudio(assetId: string): CanvasElement | null {
     if (!project) return null;
-    const shot = targetShot(project);
     const asset = project.assets.find((a) => a.id === assetId);
     if (!asset || asset.type !== 'audio') return null;
 
+    /* A track is a soundtrack: it plays under the whole video, not just the
+       shot that happened to be open when it was dropped in. Trapping it in one
+       shot also makes cutting shots to the music impossible. */
     const sourceFrames = asset.durationInSeconds
       ? Math.round(asset.durationInSeconds * project.fps)
-      : shot.length;
-    const durationInFrames = Math.min(shot.length, sourceFrames);
+      : project.durationInFrames;
+    const durationInFrames = Math.min(project.durationInFrames, sourceFrames);
 
     /* audio has no canvas presence — spatial fields are zero */
     const element: AudioElement = {
@@ -191,12 +193,12 @@ export function useCanvasEngine() {
       x: 0, y: 0, width: 0, height: 0,
       rotation: 0, opacity: 1,
       zIndex:           elements.length,
-      startFrame:       shot.start,
+      startFrame:       0,
       durationInFrames,
       volume:           1,
     };
 
-    updateProject(project.id, { canvas: { elements: [...elements, { ...element, sceneId: shot.id }] } });
+    updateProject(project.id, { canvas: { elements: [...elements, { ...element, sceneId: ALL_SHOTS }] } });
     return element;
   }
 
@@ -226,7 +228,12 @@ export function useCanvasEngine() {
       durationInFrames: shot.length,
     };
 
-    updateProject(project.id, { canvas: { elements: [...shifted, { ...element, sceneId: shot.id }] } });
+    /* Backgrounds span the video, not the shot you happened to be in. Without
+       this, adding a second shot drops you onto black — which is exactly how
+       the shot model first went wrong in real use. */
+    updateProject(project.id, {
+      canvas: { elements: [...shifted, { ...element, sceneId: ALL_SHOTS, startFrame: 0, durationInFrames: project.durationInFrames }] },
+    });
     return element;
   }
 
@@ -292,6 +299,35 @@ export function useCanvasEngine() {
     });
   }
 
+  /**
+   * Switch an element between "this shot" and "the whole video".
+   *
+   * Pinning has to rewrite the timing as well as the id: a video-wide element
+   * starts at 0 and runs the full length, and one being un-pinned has to be
+   * refitted into whichever shot it lands in, or it would sit outside every
+   * shot and become unreachable in the timeline.
+   */
+  function setElementSpan(id: string, spanAllShots: boolean) {
+    if (!project) return;
+    const el = elements.find((e) => e.id === id);
+    if (!el) return;
+
+    if (spanAllShots) {
+      const duration = el.type === 'audio'
+        ? Math.min(el.durationInFrames, project.durationInFrames)
+        : project.durationInFrames;
+      updateElement(id, { sceneId: ALL_SHOTS, startFrame: 0, durationInFrames: duration });
+      return;
+    }
+
+    const shot = targetShot(project);
+    updateElement(id, {
+      sceneId: shot.id,
+      startFrame: shot.start,
+      durationInFrames: Math.min(el.durationInFrames, shot.length),
+    });
+  }
+
   function removeElement(id: string) {
     if (!project) return;
     updateProject(project.id, {
@@ -325,5 +361,5 @@ export function useCanvasEngine() {
     updateProject(project.id, { canvas: { elements: next } });
   }
 
-  return { elements, addText, addImage, addVideo, addAudio, addShader, addBlock, makeBackground, updateElement, removeElement, reorderLayer };
+  return { elements, addText, addImage, addVideo, addAudio, addShader, addBlock, makeBackground, updateElement, removeElement, reorderLayer, setElementSpan };
 }

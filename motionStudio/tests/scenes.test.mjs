@@ -106,5 +106,48 @@ check('fps change keeps every element inside its shot', at60.canvas.elements.eve
 check('fps change round-trips', S.rescaleForFps(at60, 30).durationInFrames === two30.durationInFrames);
 check('fps change to the same rate is a no-op', S.rescaleForFps(two30, FPS) === two30);
 
+/* ── 9. elements that span the whole video ───────────────────────────────
+   A background or a soundtrack belongs to the video, not to whichever shot was
+   open when it was added. Getting this wrong is what made adding a shot land
+   you on a black screen with no music. */
+const bg = el('bg', 0, 300, { sceneId: S.ALL_SHOTS, type: 'shader' });
+const track = el('mus', 0, 200, { sceneId: S.ALL_SHOTS, type: 'audio' });
+const withGlobals = S.ensureScenes({ ...legacy,
+  canvas: { elements: [...legacy.canvas.elements, bg, track] } });
+
+check('migration leaves a video-wide element alone',
+  withGlobals.canvas.elements.find(e => e.id === 'bg').sceneId === S.ALL_SHOTS);
+check('a video-wide element shows in every shot',
+  S.elementsInScene(withGlobals, withGlobals.scenes[0].id).some(e => e.id === 'bg'));
+
+const grown2 = S.addScene(withGlobals, 90, FPS);
+check('adding a shot re-spans the background over the new total',
+  grown2.canvas.elements.find(e => e.id === 'bg').durationInFrames === grown2.durationInFrames);
+check('adding a shot does not stretch audio past its own length',
+  grown2.canvas.elements.find(e => e.id === 'mus').durationInFrames === 200);
+check('the background still starts at 0',
+  grown2.canvas.elements.find(e => e.id === 'bg').startFrame === 0);
+check('a video-wide element appears in the NEW shot too',
+  S.elementsInScene(grown2, grown2.scenes[1].id).some(e => e.id === 'bg'));
+
+const shrunk2 = S.setSceneDuration(grown2, grown2.scenes[0].id, 120, FPS);
+check('resizing a shot re-spans the background, never ripples it',
+  shrunk2.canvas.elements.find(e => e.id === 'bg').startFrame === 0 &&
+  shrunk2.canvas.elements.find(e => e.id === 'bg').durationInFrames === shrunk2.durationInFrames);
+
+const deleted = S.removeScene(grown2, grown2.scenes[1].id);
+check('deleting a shot does not delete the background',
+  deleted.canvas.elements.some(e => e.id === 'bg'));
+check('the background re-spans after a shot is deleted',
+  deleted.canvas.elements.find(e => e.id === 'bg').durationInFrames === deleted.durationInFrames);
+
+const reordered = S.reorderScene(grown2, grown2.scenes[0].id, 1);
+check('reordering never moves a video-wide element',
+  reordered.canvas.elements.find(e => e.id === 'bg').startFrame === 0);
+
+const fps60 = S.rescaleForFps(grown2, 60);
+check('changing fps re-spans the background exactly',
+  fps60.canvas.elements.find(e => e.id === 'bg').durationInFrames === fps60.durationInFrames);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

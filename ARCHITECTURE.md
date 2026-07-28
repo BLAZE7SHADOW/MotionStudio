@@ -371,6 +371,16 @@ are covered by `npm test`. That trade is deliberate: ripple is twenty lines in
 one file, whereas a render-path regression is the failure mode this codebase has
 been bitten by most.
 
+**Some elements belong to the video, not a shot.** A background, a soundtrack,
+a watermark. Skipping this made the model wrong within five minutes of real
+use: a project's shader lived in shot 1, so adding shot 2 gave a black screen
+with no music — and it would have made beat-syncing shots to a track
+impossible. Those elements carry the `ALL_SHOTS` sentinel as their `sceneId`,
+and `respanGlobals()` re-derives their timing after anything that changes the
+total, because covering the video is the whole point and so that timing is
+derived rather than authored. A sentinel rather than `null`, because absent
+already means "not migrated" and would have been silently adopted into a shot.
+
 `ensureScenes()` is the migration, and is idempotent so it can run at all three
 entry points — the `persist` `migrate` (IndexedDB), `setProjects` (the cloud
 load, which bypasses `persist`), and `createProject` (templates, which stay

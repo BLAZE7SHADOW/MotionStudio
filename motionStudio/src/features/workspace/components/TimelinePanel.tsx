@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Play, Pause, SkipBack, Trash2 } from 'lucide-react';
+import { Play, Pause, SkipBack, Trash2, Layers, Square } from 'lucide-react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { createScale, frameToX, xToFrame, formatFrameLabel } from '@/engines/timeline';
 import type { Project } from '@/engines/project';
-import { scenesOf, sceneSpan } from '@/engines/project';
+import { scenesOf, sceneSpan, spansAllShots } from '@/engines/project';
 import TimelineRuler from './timeline/TimelineRuler';
 import TimelineClip from './timeline/TimelineClip';
 import ShotStrip from './timeline/ShotStrip';
@@ -26,7 +26,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
   const isPlaying          = useEditorStore((s) => s.isPlaying);
   const setIsPlaying       = useEditorStore((s) => s.setIsPlaying);
-  const { updateElement, removeElement } = useCanvasEngine();
+  const { updateElement, removeElement, setElementSpan } = useCanvasEngine();
   const activeSceneId = useEditorStore((s) => s.activeSceneId);
   const setActiveScene = useEditorStore((s) => s.setActiveScene);
 
@@ -44,7 +44,9 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
      beat cuts stop being sixteen permanent rows. */
   const ordered = activeScene
     ? [...project.canvas.elements]
-        .filter((el) => el.sceneId === activeScene.id)
+        // Video-wide elements — a background, a soundtrack — appear in every
+        // shot, because that is where they actually are.
+        .filter((el) => el.sceneId === activeScene.id || spansAllShots(el))
         .sort((a, b) => b.zIndex - a.zIndex)
     // The sequence view shows shots, not elements, so it has no element rows
     // and therefore no header labels either.
@@ -184,6 +186,24 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                 style={{ height: TRACK_ROW_H }}
               >
                 <span className="text-[11px] truncate flex-1">{clipLabel(el)}</span>
+                {/* Pin to the whole video. The control lives here rather than in
+                    Properties because this row is where you notice the problem:
+                    the background is missing from the shot you just made. */}
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setElementSpan(el.id, !spansAllShots(el)); }}
+                  title={spansAllShots(el)
+                    ? 'Plays through the whole video — click to keep it to this shot only'
+                    : 'Only in this shot — click to play it through the whole video'}
+                  className={[
+                    'w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs transition-all duration-120',
+                    spansAllShots(el)
+                      ? 'text-studio-accent'
+                      : 'text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-studio-text',
+                  ].join(' ')}
+                >
+                  {spansAllShots(el) ? <Layers className="w-3 h-3" /> : <Square className="w-3 h-3" />}
+                </button>
                 <button
                   type="button"
                   onClick={(e) => {
@@ -244,7 +264,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                         el={el}
                         scale={scale}
                         selected={selectedElementId === el.id}
-                        bounds={viewWindow}
+                        bounds={spansAllShots(el) ? { start: 0, end: project.durationInFrames } : viewWindow}
                         onSelect={() => setSelectedElement(el.id)}
                         onUpdate={(patch) => updateElement(el.id, patch)}
                       />
