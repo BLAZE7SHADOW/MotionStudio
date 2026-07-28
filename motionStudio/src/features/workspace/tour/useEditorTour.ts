@@ -11,7 +11,7 @@ import { track } from '@/lib/analytics';
  * web renderer.
  *
  * `startEditorTour` is a plain function rather than something the hook
- * returns, so the account menu can replay it without threading a callback
+ * returns, so the help menu can replay it without threading a callback
  * down through the layout.
  */
 

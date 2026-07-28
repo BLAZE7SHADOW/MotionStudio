@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plus, Clapperboard } from 'lucide-react';
 import UserMenu from '@/components/UserMenu';
+import HelpMenu from '@/components/HelpMenu';
 
 interface DashboardHeaderProps {
   onNewProject: () => void;
@@ -33,6 +34,7 @@ export default function DashboardHeader({ onNewProject }: DashboardHeaderProps) 
           New Project
         </Button>
 
+        <HelpMenu />
         <UserMenu />
       </div>
     </header>

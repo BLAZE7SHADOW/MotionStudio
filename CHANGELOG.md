@@ -5,10 +5,30 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Help, feedback and release notes get their own button
+
+### Changed
+- **Feedback, release notes and Replay tour move out of the account menu into a
+  `?` button in the toolbar**, left of Preview, and in the dashboard header.
+  The account menu is a circle showing your initial — nothing about it suggests
+  "report a bug" or "what changed", so both features were effectively
+  undiscoverable the moment they shipped. Identity and help are different jobs;
+  the avatar now does identity and sign-out only.
+  - **One button, not two.** Feedback and release notes are both occasional, and
+    two permanent controls for occasional actions is a poor trade for the
+    toolbar space next to Preview and Export.
+  - The unread dot moved to the `?` button, where it reads as "there's something
+    to look at" rather than decorating an avatar.
+
+### Added
+- **A 14th tour step on the help menu**, placed last: what to do when you're
+  stuck, which is the right note to end a walkthrough on. One step covering all
+  three entries rather than one per entry — the tour is long enough already.
+
 ## [2026-07-28] — In-app feedback and release notes
 
 ### Added
-- **A feedback form in the account menu.** Category (broke / want / other), a
+- **A feedback form.** Category (broke / want / other), a
   message, and a reply address — prefilled for signed-in users, required for
   guests, since without one there is no way to close the loop.
   - **It auto-attaches context**: build id, browser, screen size, and in the
@@ -23,7 +43,7 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
     infrastructure. Reports the endpoint's `fallback` response as an error
     rather than showing a false success when mail isn't configured.
 - **A "What's new" dialog**, opening once per release and reachable from the
-  account menu, with a dot on the avatar while unread. First-time users never
+  help menu, with a dot on the button while unread. First-time users never
   see it — a changelog is meaningless before you have a "before", so a first
   visit is marked seen silently.
 - `src/content/releases.ts` — user-facing release notes, and

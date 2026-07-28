@@ -13,6 +13,7 @@ import { useEditorStore } from '@/engines/editor';
 import ProjectSettingsPopover from './ProjectSettingsPopover';
 import ExportDialog from './ExportDialog';
 import UserMenu from '@/components/UserMenu';
+import HelpMenu from '@/components/HelpMenu';
 import { track } from '@/lib/analytics';
 
 interface ToolbarProps {
@@ -167,6 +168,8 @@ export default function Toolbar({ project }: ToolbarProps) {
 
       {/* Preview toggle */}
       <div className="ml-auto flex items-center gap-2">
+        <HelpMenu />
+
         <Button
           data-tour="preview"
           variant="ghost"

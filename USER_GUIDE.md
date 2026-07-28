@@ -45,8 +45,8 @@ text effects live.
 The tour only shows steps whose panel is actually on screen. The Effects section
 exists only while a text element is selected, so **replaying the tour with some
 text selected shows more than the first run did** — worth doing once you have
-something on the canvas. Replay it any time from the account menu in the
-top-right → **Replay tour**.
+something on the canvas. Replay it any time from the **?** menu in the toolbar
+→ **Replay tour**.
 
 ---
 
@@ -472,7 +472,10 @@ npm run render    # render the default composition to out/video.mp4
 
 ## 14a. Feedback and "What's new"
 
-Both live in the **account menu** (your initial, top-right).
+Both live under the **?** button in the toolbar, just left of Preview (and in
+the dashboard header). Your avatar next to it is identity and sign-out only —
+help and identity are separate jobs, and hiding one behind the other made it
+undiscoverable.
 
 - **Send feedback** — pick whether something broke, you want a feature, or it's
   something else, describe it, and send. It reaches a real inbox and replies come
@@ -483,8 +486,8 @@ Both live in the **account menu** (your initial, top-right).
   to read exactly what's attached before you send it** — nothing is collected
   that you can't see.
 - **What's new** — a short list of what changed recently, in plain terms. It
-  opens by itself once per release, and a dot appears on your avatar until you've
-  read it. Brand-new accounts never see it: a changelog needs a "before".
+  opens by itself once per release, and a dot sits on the **?** button until
+  you've read it. Brand-new accounts never see it: a changelog needs a "before".
 
 ---
 

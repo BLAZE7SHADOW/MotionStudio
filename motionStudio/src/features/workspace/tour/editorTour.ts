@@ -139,7 +139,17 @@ const ALL_STEPS: DriveStep[] = [
     popover: {
       title: 'Export',
       description:
-        'Render an MP4 in your browser, or on the cloud for full fidelity. You can replay this tour any time from the account menu.',
+        'Render an MP4 in your browser, or on the cloud for full fidelity.',
+      side: 'bottom',
+      align: 'end',
+    },
+  },
+  {
+    element: '[data-tour="help"]',
+    popover: {
+      title: 'When something goes wrong',
+      description:
+        'Everything you need when you’re stuck lives here: <strong>replay this tour</strong>, <strong>send feedback</strong> — it reaches a real person, and carries the details that make a bug fixable — and <strong>what’s new</strong>, so you can tell a change from a fault. A dot means there’s something you haven’t read.',
       side: 'bottom',
       align: 'end',
     },

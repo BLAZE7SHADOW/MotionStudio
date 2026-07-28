@@ -18,7 +18,7 @@ const KIND_LABEL: Record<ReleaseChangeKind, string> = {
  * What changed recently, in the user's terms.
  *
  * Opens by itself once per release for people who were already using the app,
- * and is reachable any time from the account menu. First-time users never see
+ * and is reachable any time from the help menu (?). First-time users never see
  * it — a changelog is meaningless before you have a "before".
  */
 export default function WhatsNewDialog({
@@ -66,7 +66,8 @@ export default function WhatsNewDialog({
         <div className="px-5 py-3 border-t border-studio-border bg-studio-bg/40">
           <p className="text-[11px] text-studio-text-faint">
             Something broken or missing? Use <strong className="font-medium">Send
-            feedback</strong> in the account menu — it reaches a human.
+            feedback</strong> under the <strong className="font-medium">?</strong>{' '}
+            menu — it reaches a human.
           </p>
         </div>
       </DialogContent>
