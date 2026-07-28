@@ -11,6 +11,7 @@ import ErrorPage from './pages/ErrorPage';
 import UpdateBanner from './components/UpdateBanner';
 import { useAuth } from './hooks/useAuth';
 import { useProjectStore, saveProject, loadProjects } from './engines/project';
+import { isReadOnly } from './lib/projectLock';
 
 // Fires a PostHog $pageview on every SPA route change.
 // Must live inside the router so useLocation works.
@@ -95,8 +96,14 @@ function CloudSync() {
   useEffect(() => {
     if (!user || loadingRef.current) return;
     const timer = setTimeout(() => {
-      // Read from store at save-time so we always push the latest version
-      useProjectStore.getState().projects.forEach((p) => void saveProject(p, user.id));
+      // Read from store at save-time so we always push the latest version.
+      // Skip anything this tab holds read-only: we push *every* project, so a
+      // tab looking at a project another tab is editing would otherwise write
+      // its stale copy straight over the live one.
+      useProjectStore
+        .getState()
+        .projects.filter((p) => !isReadOnly(p.id))
+        .forEach((p) => void saveProject(p, user.id));
     }, 2000);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps

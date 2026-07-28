@@ -113,6 +113,13 @@ something on the canvas. Replay it any time from the **?** menu in the toolbar
 - **Cloud sync**: when signed in, projects also save to your account a couple of
   seconds after every edit, and load back on any device you log in from. Media
   files stay on the device you uploaded them from (cloud renders can still use them).
+- **One tab at a time**: a project can only be *edited* in one tab. Open the
+  same project in a second tab and it asks whether to **take over here** or
+  **open read-only**. Take over and the first tab switches to read-only with a
+  banner, so it stops saving rather than overwriting your newer work — this used
+  to lose changes silently. A read-only tab can take the project back at any
+  time with **Edit here**, and picks it up automatically if the editing tab
+  closes. Different projects in different tabs are unaffected.
 - **Duration**: 10 seconds by default. Change it (5 / 10 / 15 / 30 / 60 / 90s) in
   the same settings popover. Changing the frame rate keeps the length in seconds.
   **Note for 60s and 90s projects:** use **Cloud Render**. Browser export can't

@@ -174,9 +174,13 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
 
 ### F. Trust and resilience — our weakest area
 
-- [ ] **Multi-tab safety** — "Project open elsewhere" / "Take over here" /
+- [x] **Multi-tab safety** — "Project open elsewhere" / "Take over here" /
       "Open read-only" / "Can't replace the scene while the project is
-      read-only". **We will corrupt a project opened in two tabs today.**
+      read-only".
+      *(2026-07-28 — `lib/projectLock.ts` + `useProjectLock`. Guard sits on
+      `updateProject`/`undo`/`redo` and on the cloud autosave, which pushed
+      every project from every tab and was the worst vector. Lock logic
+      covered by a headless test — 12 cases including crashed-tab recovery.)*
 - [ ] **Offline save states** — "Saving disabled until connection restored",
       "Save failed: no internet connection", "Saved just now", "Up to date".
 - [ ] **Mobile honesty** — "Rotate your device for a wide screen experience.",
@@ -268,4 +272,5 @@ Append a line whenever something above is ticked.
 | 2026-07-28 | — | Benchmark captured. Nothing ticked yet. |
 | 2026-07-28 | B — gesture chips, row-as-slider | `ScrubInput`. All 16 numeric call sites upgraded via `NumInput`/`MiniNum`, which became wrappers. |
 | 2026-07-28 | C — one accent colour | Rule written at the token definition in `index.css`. Four decorative usages removed; the rest were already legitimate. |
-| 2026-07-28 | B — default-closed sections, section reset | Transform/Layer/Motion default closed. Reset built on Motion only, where it has one meaning. Next: multi-tab guard (F), then the shot model (A). |
+| 2026-07-28 | B — default-closed sections, section reset | Transform/Layer/Motion default closed. Reset built on Motion only, where it has one meaning. |
+| 2026-07-28 | F — multi-tab safety | `projectLock.ts`. Guard on `updateProject`/`undo`/`redo` + the cloud autosave. 12 headless tests pass. Next: the shot model (A). |

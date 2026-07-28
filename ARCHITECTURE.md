@@ -344,6 +344,40 @@ confirmed output URL, so failed renders don't consume the slot. On account switc
 each other's projects. **Why this order:** never trust the client — identity first,
 then abuse checks, then spend.
 
+### One editor per project, across tabs
+
+Both persistence paths serialise the **whole** projects array: zustand's
+`persist` middleware to IndexedDB, and the cloud autosave in `App.tsx`, which
+pushes every project every two seconds. Neither reconciles, so a second tab
+holding a stale copy silently overwrote the first tab's work — and because the
+cloud save iterates all projects, a tab left idle on the *dashboard* could
+clobber edits to a project it wasn't even showing. Last writer won, and the
+loser was never told.
+
+**A lock, not a merge.** Merging concurrent edits to a video composition has no
+obvious right answer — whose element position wins? — while "this is open
+somewhere else, take over or look without touching" is a question a user can
+actually answer. `lib/projectLock.ts` keeps a per-project claim in
+**localStorage**, chosen over IndexedDB for two reasons: it is synchronous, and
+a lock you have to `await` has a race in it; and its `storage` event fires in
+*other* tabs, which is exactly who needs to know they have been taken over.
+
+Three decisions worth keeping:
+
+- **Claims expire (13 s, three missed heartbeats).** A crashed or force-quit tab
+  never releases, and without an expiry the project would be locked forever.
+- **The guard sits on `updateProject`**, the single chokepoint every element
+  mutation already passes through, rather than being spread across the panels —
+  and on `undo`/`redo`, which restore the entire projects array and so would
+  clobber every project, not just the one on screen.
+- **`release()` only drops our own claim.** Removing the key unconditionally
+  would hand the project to nobody and discard the guard of whichever tab had
+  since taken over.
+
+When localStorage is unusable (private mode, quota) `isLockable()` returns
+false and the editor opens unguarded. Refusing to open at all would be a worse
+failure than the one being prevented.
+
 ---
 
 ## 6. Problems faced & how they were solved

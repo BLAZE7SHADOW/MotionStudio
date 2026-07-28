@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Project, CreateProjectInput } from './types';
 import { DEFAULT_DURATION_SECONDS } from './dimensions';
+import { hasReadOnly, isReadOnly } from '@/lib/projectLock';
 
 export type UpdateProjectInput = Partial<Pick<Project, 'name' | 'aspectRatio' | 'fps' | 'durationInFrames' | 'assets' | 'canvas'>>;
 
@@ -60,8 +61,14 @@ export const useProjectStore = create<ProjectStore>()(
 
       getProject: (id) => get().projects.find((p) => p.id === id),
 
+      /* Every element mutation in the editor funnels through here, which is
+         why the read-only guard lives at this one point rather than being
+         spread across the panels. A tab that lost its lock must not write —
+         both persistence paths serialise the whole projects array, so one
+         stale write clobbers the tab that actually holds the lock. */
       updateProject: (id, updates, opts) =>
         set((state) => {
+          if (isReadOnly(id)) return {};
           const now = Date.now();
           const newProjects = state.projects.map((p) =>
             p.id === id ? { ...p, ...updates, updatedAt: now } : p,
@@ -87,9 +94,12 @@ export const useProjectStore = create<ProjectStore>()(
           activeProjectId: state.activeProjectId === id ? null : state.activeProjectId,
         })),
 
+      /* History snapshots the entire projects array, so an undo in a
+         read-only tab would restore every project, not just the one it is
+         looking at — the exact clobber the lock exists to prevent. */
       undo: () =>
         set((state) => {
-          if (state.past.length === 0) return {};
+          if (state.past.length === 0 || hasReadOnly()) return {};
           const previous = state.past[state.past.length - 1];
           lastEditAt = 0; // next edit starts a fresh gesture
           return {
@@ -101,7 +111,7 @@ export const useProjectStore = create<ProjectStore>()(
 
       redo: () =>
         set((state) => {
-          if (state.future.length === 0) return {};
+          if (state.future.length === 0 || hasReadOnly()) return {};
           const next = state.future[0];
           lastEditAt = 0;
           return {

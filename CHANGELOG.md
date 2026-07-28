@@ -5,6 +5,60 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — One editor per project, across tabs
+
+### Fixed
+- **Two tabs on one project silently destroyed work.** Both persistence paths
+  serialise the *whole* projects array — zustand's `persist` to IndexedDB, and
+  the cloud autosave in `App.tsx` pushing every project every two seconds —
+  and neither reconciles. A second tab holding a stale copy overwrote the
+  first tab's edits. Because the cloud save iterates *all* projects, a tab left
+  idle on the dashboard could clobber a project it wasn't even showing. Last
+  writer won and the loser was never told.
+
+### Added
+- **`lib/projectLock.ts`** — a per-project claim in localStorage, with
+  `features/workspace/hooks/useProjectLock.ts` driving the lifecycle and
+  `ProjectLockGate.tsx` presenting it.
+  - **A lock, not a merge.** Merging concurrent edits to a composition has no
+    obvious right answer — whose element position wins? — while "this is open
+    somewhere else, take over or look without touching" is a question the user
+    can answer.
+  - **localStorage over IndexedDB**: it is synchronous, and a lock you have to
+    `await` has a race in it; and its `storage` event fires in *other* tabs,
+    which is exactly who needs to know they were taken over.
+  - **Claims expire after 13 s** (three missed 4 s heartbeats). A crashed or
+    force-quit tab never releases, and without an expiry the project would be
+    locked forever. Three misses so a throttled background tab isn't evicted.
+  - **`release()` only drops our own claim.** Removing the key unconditionally
+    would hand the project to nobody and discard the guard of whichever tab had
+    since taken over.
+  - The hook starts in `blocked` rather than claiming optimistically — the
+    second tab must not write before the user decides, and a claim is a write.
+  - A read-only tab promotes itself when the holder closes cleanly, rather than
+    stranding the user in a dead editor.
+  - When localStorage is unusable, `isLockable()` returns false and the editor
+    opens unguarded. Refusing to open would be a worse failure than the one
+    being prevented.
+
+### Changed
+- `updateProject` no-ops when the project is read-only — it is the single
+  chokepoint every element mutation already passes through, so the guard did
+  not have to be spread across the panels.
+- `undo`/`redo` no-op while any project is read-only. History snapshots the
+  entire projects array, so an undo in a read-only tab would restore *every*
+  project — the exact clobber the lock exists to prevent.
+- The cloud autosave skips read-only projects. It pushes every project from
+  every tab and was the worst vector of the three.
+
+### Verified
+- Lock logic covered by a headless test against a stubbed localStorage: 12
+  cases, all passing — including crashed-tab recovery via staleness, `release`
+  refusing to steal a foreign live claim, and corrupt or malformed lock entries
+  reading as unlocked rather than locking a project forever.
+
+---
+
 ## [2026-07-28] — Secondary sections start closed, and Motion can be reset
 
 ### Changed

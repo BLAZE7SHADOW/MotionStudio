@@ -6,6 +6,8 @@ import PropertiesPanel from './PropertiesPanel';
 import TimelinePanel from './TimelinePanel';
 import { useUndoRedoShortcuts } from '../hooks/useUndoRedoShortcuts';
 import { useEditorTour } from '../tour/useEditorTour';
+import { useProjectLock } from '../hooks/useProjectLock';
+import ProjectLockGate from './ProjectLockGate';
 
 interface EditorLayoutProps {
   project: Project;
@@ -16,9 +18,11 @@ export default function EditorLayout({ project }: EditorLayoutProps) {
   useUndoRedoShortcuts();
   // first-run walkthrough; no-ops once the user has seen or dismissed it
   useEditorTour(true);
+  // one editor per project across tabs — see lib/projectLock.ts
+  const lock = useProjectLock(project.id);
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col bg-studio-bg">
+    <div className="relative h-screen w-screen overflow-hidden flex flex-col bg-studio-bg">
       <Toolbar project={project} />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -42,6 +46,12 @@ export default function EditorLayout({ project }: EditorLayoutProps) {
       <div data-tour="timeline" className="h-56 shrink-0 border-t border-studio-border overflow-hidden">
         <TimelinePanel project={project} />
       </div>
+
+      <ProjectLockGate
+        status={lock.status}
+        onTakeOver={lock.takeOver}
+        onOpenReadOnly={lock.openReadOnly}
+      />
     </div>
   );
 }

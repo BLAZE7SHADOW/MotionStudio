@@ -36,6 +36,10 @@ export const RELEASES: Release[] = [
     title: 'Effects you can actually preview',
     changes: [
       {
+        kind: 'fixed',
+        text: 'Opening the same project in two tabs could quietly undo your work — whichever tab saved last won, and the other one was never told. Only one tab can edit a project now. The second offers to take over or open read-only, and the tab that loses says so instead of dropping changes on the floor.',
+      },
+      {
         kind: 'improved',
         text: 'The Properties panel opens on the controls you came for. Transform, Layer and Motion now start collapsed, so what an element actually says and looks like is on screen without scrolling. Open any of them once and it stays that way.',
       },
