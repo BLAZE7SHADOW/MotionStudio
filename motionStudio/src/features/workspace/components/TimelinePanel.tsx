@@ -63,7 +63,13 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
   useEffect(() => {
     if (!selectedElementId) return;
     const el = project.canvas.elements.find((e) => e.id === selectedElementId);
-    if (el?.sceneId && el.sceneId !== activeSceneId) setActiveScene(el.sceneId);
+    /* A video-wide element is already in every shot, so there is nothing to
+       follow. Worse, its `sceneId` is a sentinel rather than a real shot —
+       following it set the active shot to something no shot matches, which
+       silently dropped the user out to the sequence overview every time they
+       clicked the soundtrack or the background. */
+    if (!el?.sceneId || spansAllShots(el)) return;
+    if (el.sceneId !== activeSceneId) setActiveScene(el.sceneId);
   }, [selectedElementId, project.canvas.elements, activeSceneId, setActiveScene]);
 
   /* ── measure the track body → trackWidth ── */

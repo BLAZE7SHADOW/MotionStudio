@@ -5,6 +5,22 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Selecting the soundtrack no longer throws you out of the shot
+
+### Fixed
+- **Clicking a video-wide element dropped you to the sequence overview.** The
+  timeline follows the selection into whichever shot owns it, but a video-wide
+  element's `sceneId` is the `ALL_SHOTS` sentinel rather than a real shot — so
+  following it set the active shot to something no shot matches, and the panel
+  fell back to the overview. Selecting the background or the music track
+  therefore kicked you out of the shot you were working in, every time.
+  - There is nothing to follow in the first place: a video-wide element is
+    already in every shot, so the effect now ignores them.
+  - Found while verifying transitions, where it made the playhead readings
+    nonsensical — the timeline had silently rescaled to the whole video.
+
+---
+
 ## [2026-07-28] — A soundtrack now covers the whole sequence
 
 The common case — one track under the whole video — stopped partway through it.
