@@ -56,9 +56,15 @@ export type BaseElement = {
   rotation: number;
   opacity: number;
   zIndex: number;
-  /* temporal — Remotion <Sequence> model */
+  /* temporal — Remotion <Sequence> model.
+     `startFrame` is absolute, measured from the start of the whole video, and
+     stays that way now that shots exist. See the note on `Scene`. */
   startFrame: number;
   durationInFrames: number;
+  /* Which shot this element belongs to. Optional only so a project saved
+     before shots existed still type-checks on the way in; `ensureScenes()`
+     fills it before anything reads it. */
+  sceneId?: string;
   /* motion — evaluated per frame relative to the clip start */
   animations?: Animation[];
 };
@@ -205,6 +211,32 @@ export type BlockElement = BaseElement & {
 export type CanvasElement =
   TextElement | ImageElement | VideoElement | AudioElement | ShaderElement | BlockElement;
 
+/* ── Shots ── */
+
+/**
+ * A shot: one slice of the video's timeline.
+ *
+ * Shots are a *labelling* of time, not a container for it. Elements stay in one
+ * flat array with absolute `startFrame`s and simply carry a `sceneId`, which is
+ * what keeps the entire render path — `MotionComposition`, all three exporters,
+ * `audioMix` and the Lambda payload — completely unchanged by their existence.
+ * The alternative (nesting elements inside shots, timed relative to them) would
+ * have forced every one of those to flatten first.
+ *
+ * A shot's start is the sum of the durations before it; it is never stored,
+ * because two sources for the same number is how they drift apart. Derive it
+ * with `sceneOffsets()` in `scenes.ts`.
+ *
+ * Called "Scene" in code and **"shot"** in the UI. The code name predates the
+ * copy and matches `sceneId` on the element.
+ */
+export interface Scene {
+  id: string;
+  durationInFrames: number;
+  /** User-set. Falls back to "Shot N" by position, so it is never stale. */
+  name?: string;
+}
+
 /* ── Project ── */
 
 export interface Project {
@@ -212,10 +244,14 @@ export interface Project {
   name: string;
   aspectRatio: AspectRatio;
   fps: number;
+  /** Always equals the sum of `scenes[].durationInFrames`. */
   durationInFrames: number;
   createdAt: number;
   updatedAt: number;
   assets: Asset[];
+  /** Ordered, never empty. Optional only for projects saved before shots
+      existed — `ensureScenes()` fills it before anything reads it. */
+  scenes?: Scene[];
   canvas: {
     elements: CanvasElement[];
   };

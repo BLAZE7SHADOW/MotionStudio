@@ -5,6 +5,71 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — The shot model, stage 1: data model and migration
+
+Groundwork for the shot/sequence timeline. Ships **invisibly** — a migrated
+project is one shot spanning the whole video, which is exactly how it already
+behaved. The sequence bar and drill-in are stage 2.
+
+### Added
+- **`engines/project/scenes.ts`** — the whole shot model as pure functions:
+  `ensureScenes` (the migration), `addScene`, `removeScene`, `setSceneDuration`,
+  `reorderScene`, `rescaleForFps`, `setTotalDuration`, plus the derivations
+  `sceneOffsets`, `sceneSpan`, `sceneAtFrame`, `sceneLabel`, `elementsInScene`.
+  - **The decision worth recording: elements stay flat with absolute frames and
+    gain a `sceneId`, rather than being nested inside shots.** The render
+    contract is a flat array of absolute-timed elements —
+    `MotionComposition` → `<Sequence from={...}>`, and `CanvasPanel`'s
+    `inputProps` is the same shape `api/render.ts` forwards to Lambda. Nesting
+    would have forced `exporter.ts`, `webRenderer.ts`, `canvasFrame.ts`,
+    `audioMix.ts` and the Lambda site to flatten first. **Not one line of the
+    render path changed.**
+  - The price: "an element lies inside its shot" and "total === sum of shots"
+    are enforced rather than structural, and ripple is an explicit recompute.
+    Both are ~20 lines in one pure, testable file — a better trade than
+    destabilising the export paths.
+  - A shot's start frame is never stored. `sceneOffsets()` derives it, because
+    two sources for one number is how they drift apart.
+  - `sceneLabel()` falls back to "Shot N" by position, so renaming or reordering
+    can't leave a stale "Shot 3" sitting in second place.
+- **`tests/` + `npm test`** — a 40-line runner over esbuild (already a Vite
+  dependency, so no new package). 57 assertions across `scenes` and
+  `projectLock`, in under a second.
+
+### Changed
+- `createProject`, `setProjects` and the `persist` `migrate` (now `version: 1`)
+  all run `ensureScenes`. It is idempotent, so overlapping entry points cost
+  nothing — and the cloud load genuinely needs its own call, since it bypasses
+  `persist` entirely.
+- Templates stay authored flat and shot-unaware; `createProject` stamps every
+  element with the shot it mints. No template needed re-authoring.
+- `useCanvasEngine` stamps each new element with the shot covering its start
+  frame, so an element is never briefly shot-less — which would make it
+  invisible to a shot-scoped timeline in the session that created it.
+- Shot operations live on the store as `addShot`/`removeShot`/`resizeShot`/
+  `moveShot`/`renameShot` and route through `updateProject`, so undo/redo and
+  the read-only tab lock apply to them without either knowing shots exist.
+
+### Fixed
+- **Changing the frame rate silently changed how long everything ran for.**
+  It moved only `project.durationInFrames`, leaving every element's frame
+  counts alone — so 30→60 fps halved the real-time length of every clip.
+  `rescaleForFps` now scales shots *and* element timings by the same ratio,
+  absorbing rounding into the last shot so `total === sum of shots` stays exact.
+
+### Verified
+- `npm test` — 45 assertions on `scenes.ts`. The two that matter most:
+  **migration leaves every element's `startFrame`, `durationInFrames` and
+  `zIndex` byte-identical**, and adds exactly one field. That is the proof no
+  existing project changes on screen.
+- Also covered: ripple on grow and shrink, refitting elements inside a shrunk
+  shot, delete-takes-its-elements, reorder recomputing absolute frames, the 90s
+  cap refusing rather than clamping, refusing to delete the last shot,
+  idempotency, fps round-trip, and both invariants asserted across every
+  produced project.
+
+---
+
 ## [2026-07-28] — One editor per project, across tabs
 
 ### Fixed

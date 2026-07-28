@@ -121,7 +121,9 @@ something on the canvas. Replay it any time from the **?** menu in the toolbar
   time with **Edit here**, and picks it up automatically if the editing tab
   closes. Different projects in different tabs are unaffected.
 - **Duration**: 10 seconds by default. Change it (5 / 10 / 15 / 30 / 60 / 90s) in
-  the same settings popover. Changing the frame rate keeps the length in seconds.
+  the same settings popover. Changing the frame rate keeps the length in seconds —
+  for the project **and** for every clip on the timeline, so nothing speeds up or
+  slows down when you switch between 30 and 60 fps.
   **Note for 60s and 90s projects:** use **Cloud Render**. Browser export can't
   draw text effects, animated backgrounds or blocks (see §12), so a long project
   built from templates would export missing most of what you see.

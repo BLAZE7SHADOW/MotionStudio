@@ -34,6 +34,8 @@ const DURATION_OPTIONS = [5, 10, 15, 30, 60, 90] as const; // seconds
 
 export default function ProjectSettingsPopover({ project }: ProjectSettingsPopoverProps) {
   const updateProject = useProjectStore((s) => s.updateProject);
+  const setProjectDuration = useProjectStore((s) => s.setProjectDuration);
+  const setProjectFps = useProjectStore((s) => s.setProjectFps);
 
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>(project.aspectRatio);
   const [fps, setFps] = useState(project.fps);
@@ -52,14 +54,16 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
 
   function handleFpsChange(value: number) {
     setFps(value);
-    // keep the timeline the same length in seconds when fps changes
-    const secs = project.durationInFrames / project.fps;
-    updateProject(project.id, { fps: value, durationInFrames: Math.round(secs * value) });
+    // Rescales shots AND element timings, so everything keeps the length in
+    // seconds the user gave it. Changing fps used to move only the project
+    // total, which silently halved or doubled how long every clip ran for.
+    setProjectFps(project.id, value);
   }
 
   function handleDurationChange(secs: number) {
     setSeconds(secs);
-    updateProject(project.id, { durationInFrames: Math.round(secs * fps) });
+    // Absorbed into the last shot, keeping total === sum of shots.
+    setProjectDuration(project.id, Math.round(secs * fps));
   }
 
   return (

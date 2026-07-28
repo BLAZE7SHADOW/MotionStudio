@@ -81,6 +81,7 @@ Deep dives: [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/adrs/](docs/adrs/) · [U
 git clone <repo-url> && cd MotionStudio/motionStudio
 npm install
 npm run dev          # http://localhost:5173
+npm test             # headless unit tests for the pure engine modules
 ```
 
 Frontend env (`motionStudio/.env.local`):

@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "studio": "remotion studio src/remotion/index.ts",
     "render": "remotion render src/remotion/index.ts MotionStudio out/video.mp4",
-    "deploy:lambda-site": "remotion lambda sites create src/remotion/index.ts --site-name=motionstudio"
+    "deploy:lambda-site": "remotion lambda sites create src/remotion/index.ts --site-name=motionstudio",
+    "test": "node tests/run.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

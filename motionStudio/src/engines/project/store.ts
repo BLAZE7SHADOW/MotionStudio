@@ -3,8 +3,17 @@ import { persist } from 'zustand/middleware';
 import type { Project, CreateProjectInput } from './types';
 import { DEFAULT_DURATION_SECONDS } from './dimensions';
 import { hasReadOnly, isReadOnly } from '@/lib/projectLock';
+import {
+  addScene,
+  ensureScenes,
+  removeScene,
+  reorderScene,
+  setSceneDuration,
+  setTotalDuration,
+  rescaleForFps,
+} from './scenes';
 
-export type UpdateProjectInput = Partial<Pick<Project, 'name' | 'aspectRatio' | 'fps' | 'durationInFrames' | 'assets' | 'canvas'>>;
+export type UpdateProjectInput = Partial<Pick<Project, 'name' | 'aspectRatio' | 'fps' | 'durationInFrames' | 'assets' | 'canvas' | 'scenes'>>;
 
 interface ProjectStore {
   projects: Project[];
@@ -20,6 +29,19 @@ interface ProjectStore {
   setProjects: (projects: Project[]) => void;
   /** Remove one project from local state. Cloud row + asset bytes are the caller's job. */
   deleteProject: (id: string) => void;
+  /* ── shots ──
+     Thin wrappers over the pure functions in `scenes.ts`. They route through
+     `updateProject`, so undo/redo and the read-only tab lock apply to shot
+     edits without either having to know shots exist. */
+  addShot: (projectId: string, durationInFrames: number) => void;
+  removeShot: (projectId: string, sceneId: string) => void;
+  resizeShot: (projectId: string, sceneId: string, durationInFrames: number) => void;
+  moveShot: (projectId: string, sceneId: string, toIndex: number) => void;
+  renameShot: (projectId: string, sceneId: string, name: string) => void;
+  /** Changes total length, absorbing the difference into the last shot. */
+  setProjectDuration: (projectId: string, durationInFrames: number) => void;
+  /** Changes frame rate, rescaling shots and elements so nothing changes length. */
+  setProjectFps: (projectId: string, fps: number) => void;
   undo: () => void;
   redo: () => void;
   /** Wipe all projects + history. Called on account switch to prevent data bleed. */
@@ -45,7 +67,9 @@ export const useProjectStore = create<ProjectStore>()(
         // elements/durationInFrames are template-only — pulled out of the spread
         // so they don't land on the Project as stray top-level fields.
         const { elements, durationInFrames, ...rest } = input;
-        const project: Project = {
+        // `ensureScenes` mints the first shot and stamps every template element
+        // with its id, so templates stay authored flat and shot-unaware.
+        const project: Project = ensureScenes({
           id: crypto.randomUUID(),
           ...rest,
           durationInFrames: durationInFrames ?? Math.round(input.fps * DEFAULT_DURATION_SECONDS),
@@ -53,7 +77,7 @@ export const useProjectStore = create<ProjectStore>()(
           canvas: { elements: elements ?? [] },
           createdAt: now,
           updatedAt: now,
-        };
+        });
         // creation isn't part of editor undo history
         set((state) => ({ projects: [...state.projects, project] }));
         return project;
@@ -86,13 +110,102 @@ export const useProjectStore = create<ProjectStore>()(
           };
         }),
 
-      setProjects: (projects) => set({ projects, past: [], future: [] }),
+      // The cloud load path bypasses `persist`, so it needs the migration too.
+      // `ensureScenes` is idempotent, so overlapping with the persist `migrate`
+      // costs nothing.
+      setProjects: (projects) => set({ projects: projects.map(ensureScenes), past: [], future: [] }),
 
       deleteProject: (id) =>
         set((state) => ({
           projects: state.projects.filter((p) => p.id !== id),
           activeProjectId: state.activeProjectId === id ? null : state.activeProjectId,
         })),
+
+      /* Shot operations. Each reads the current project, applies the pure
+         function, and writes the result back through `updateProject` — one
+         path in, so history, the lock and autosave all keep working. */
+      addShot: (projectId, durationInFrames) => {
+        const p = get().getProject(projectId);
+        if (!p) return;
+        const next = addScene(p, durationInFrames, p.fps);
+        // Unchanged means the 90s cap refused it; don't record an undo step
+        // for something that did nothing.
+        if (next === p) return;
+        get().updateProject(projectId, {
+          scenes: next.scenes,
+          durationInFrames: next.durationInFrames,
+        });
+      },
+
+      removeShot: (projectId, sceneId) => {
+        const p = get().getProject(projectId);
+        if (!p) return;
+        const next = removeScene(p, sceneId);
+        if (next === p) return;
+        get().updateProject(projectId, {
+          scenes: next.scenes,
+          durationInFrames: next.durationInFrames,
+          canvas: next.canvas,
+        });
+      },
+
+      resizeShot: (projectId, sceneId, durationInFrames) => {
+        const p = get().getProject(projectId);
+        if (!p) return;
+        const next = setSceneDuration(p, sceneId, durationInFrames, p.fps);
+        if (next === p) return;
+        get().updateProject(projectId, {
+          scenes: next.scenes,
+          durationInFrames: next.durationInFrames,
+          canvas: next.canvas,
+        });
+      },
+
+      moveShot: (projectId, sceneId, toIndex) => {
+        const p = get().getProject(projectId);
+        if (!p) return;
+        const next = reorderScene(p, sceneId, toIndex);
+        if (next === p) return;
+        get().updateProject(projectId, { scenes: next.scenes, canvas: next.canvas });
+      },
+
+      renameShot: (projectId, sceneId, name) => {
+        const p = get().getProject(projectId);
+        if (!p?.scenes) return;
+        const trimmed = name.trim();
+        get().updateProject(projectId, {
+          // Empty clears the override, so the label falls back to "Shot N"
+          // rather than rendering as blank.
+          scenes: p.scenes.map((s) =>
+            s.id === sceneId ? { ...s, name: trimmed || undefined } : s,
+          ),
+        });
+      },
+
+      setProjectDuration: (projectId, durationInFrames) => {
+        const p = get().getProject(projectId);
+        if (!p) return;
+        const next = setTotalDuration(p, durationInFrames, p.fps);
+        if (next === p) return;
+        get().updateProject(projectId, {
+          scenes: next.scenes,
+          durationInFrames: next.durationInFrames,
+          canvas: next.canvas,
+        });
+      },
+
+      setProjectFps: (projectId, fps) => {
+        const p = get().getProject(projectId);
+        if (!p) return;
+        const next = rescaleForFps(p, fps);
+        if (next === p) return;
+        get().updateProject(projectId, {
+          fps: next.fps,
+          scenes: next.scenes,
+          durationInFrames: next.durationInFrames,
+          canvas: next.canvas,
+        });
+      },
 
       /* History snapshots the entire projects array, so an undo in a
          read-only tab would restore every project, not just the one it is
@@ -132,6 +245,16 @@ export const useProjectStore = create<ProjectStore>()(
       name: 'motionstudio-projects',
       // persist only project data — not history or session UI state
       partialize: (s) => ({ projects: s.projects }),
+      /* v1 introduced shots. `ensureScenes` turns a pre-shot project into a
+         one-shot project spanning its whole length — which is exactly how it
+         already behaved — without touching a single element's timing, so
+         nothing renders differently after the upgrade. */
+      version: 1,
+      migrate: (persisted) => {
+        const state = persisted as { projects?: Project[] } | undefined;
+        if (!state?.projects) return state as never;
+        return { ...state, projects: state.projects.map(ensureScenes) } as never;
+      },
     },
   ),
 );

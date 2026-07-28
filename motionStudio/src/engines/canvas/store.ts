@@ -1,5 +1,6 @@
 import { useProjectStore } from '../project/store';
 import { getCompositionDimensions } from '../project/dimensions';
+import { sceneAtFrame, scenesOf } from '../project/scenes';
 import type { CanvasElement, TextElement, ImageElement, VideoElement, AudioElement, ShaderElement, ShaderPreset, BlockElement, BlockPreset } from './types';
 import type { AddTextInput } from './types';
 import { getBlock } from '@/content/blocks/registry';
@@ -23,6 +24,13 @@ export function useCanvasEngine() {
   );
   const updateProject = useProjectStore((s) => s.updateProject);
   const elements = project?.canvas.elements ?? [];
+
+  /* Every new element is stamped with the shot covering its start frame.
+     Doing it here rather than letting `ensureScenes` adopt orphans on the next
+     load means an element is never briefly shot-less — which would make it
+     invisible to a shot-scoped timeline in the session that created it. */
+  const inShot = <T extends CanvasElement>(el: T): T =>
+    ({ ...el, sceneId: sceneAtFrame(scenesOf(project!), el.startFrame) });
 
   function addText(input: AddTextInput = {}): CanvasElement | null {
     if (!project) return null;
@@ -51,7 +59,7 @@ export function useCanvasEngine() {
     };
 
     updateProject(project.id, {
-      canvas: { elements: [...elements, element] },
+      canvas: { elements: [...elements, inShot(element)] },
     });
 
     return element;
@@ -100,7 +108,7 @@ export function useCanvasEngine() {
       objectFit:        'cover',
     };
 
-    updateProject(project.id, { canvas: { elements: [...elements, element] } });
+    updateProject(project.id, { canvas: { elements: [...elements, inShot(element)] } });
     return element;
   }
 
@@ -138,7 +146,7 @@ export function useCanvasEngine() {
       objectFit:        'cover',
     };
 
-    updateProject(project.id, { canvas: { elements: [...elements, element] } });
+    updateProject(project.id, { canvas: { elements: [...elements, inShot(element)] } });
     return element;
   }
 
@@ -165,7 +173,7 @@ export function useCanvasEngine() {
       volume:           1,
     };
 
-    updateProject(project.id, { canvas: { elements: [...elements, element] } });
+    updateProject(project.id, { canvas: { elements: [...elements, inShot(element)] } });
     return element;
   }
 
@@ -194,7 +202,7 @@ export function useCanvasEngine() {
       durationInFrames: project.durationInFrames,
     };
 
-    updateProject(project.id, { canvas: { elements: [...shifted, element] } });
+    updateProject(project.id, { canvas: { elements: [...shifted, inShot(element)] } });
     return element;
   }
 
@@ -229,7 +237,7 @@ export function useCanvasEngine() {
       durationInFrames: Math.max(def.naturalLength, project.durationInFrames),
     };
 
-    updateProject(project.id, { canvas: { elements: [...elements, element] } });
+    updateProject(project.id, { canvas: { elements: [...elements, inShot(element)] } });
     return element;
   }
 

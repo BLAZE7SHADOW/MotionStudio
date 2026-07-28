@@ -12,6 +12,11 @@ export {
   LIST_TEXT_EFFECTS, TWO_VALUE_TEXT_EFFECTS, NUMBER_TEXT_EFFECTS,
   isTwoValueEffect, isListEffect, isNumberEffect, parseEffectNumber,
 } from './types';
+export type { Scene } from './types';
+export {
+  sceneOffsets, sceneSpan, sceneAtFrame, sceneLabel, scenesOf, elementsInScene,
+  ensureScenes, MIN_SCENE_FRAMES, MAX_PROJECT_SECONDS,
+} from './scenes';
 export type { UpdateProjectInput } from './store';
 export { saveProject, loadProjects, deleteCloudProject } from './cloudSync';
 export { deleteProjectCompletely } from './deleteProject';

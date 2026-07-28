@@ -37,6 +37,10 @@ export const RELEASES: Release[] = [
     changes: [
       {
         kind: 'fixed',
+        text: 'Changing the frame rate used to silently change how long everything ran for — switch 30 to 60 and a three-second clip played for a second and a half. Every clip now keeps the length in seconds you gave it.',
+      },
+      {
+        kind: 'fixed',
         text: 'Opening the same project in two tabs could quietly undo your work — whichever tab saved last won, and the other one was never told. Only one tab can edit a project now. The second offers to take over or open read-only, and the tab that loses says so instead of dropping changes on the floor.',
       },
       {

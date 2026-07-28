@@ -95,8 +95,12 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
 
 ### A. The shot model
 
-- [ ] **Scenes / "shots"** — their model is `timeline: { scenes: [...] }`,
+- [~] **Scenes / "shots"** — their model is `timeline: { scenes: [...] }`,
       sequential, `+ ADD SHOT` appends. Internally `scenes`, called "shots" in UI.
+      *(2026-07-28 — data model, ops and migration shipped in
+      `engines/project/scenes.ts`; no UI yet. We keep elements flat with
+      absolute frames + a `sceneId` rather than nesting, which left the entire
+      render path untouched. 45 assertions in `npm test`.)*
 - [ ] **Drill-in navigation** — `< SEQUENCE │ 1 2 │ + ADD SHOT` breadcrumb;
       double-click a shot to enter and edit it. This is the answer to timeline
       row explosion: a two-level timeline.
@@ -273,4 +277,5 @@ Append a line whenever something above is ticked.
 | 2026-07-28 | B — gesture chips, row-as-slider | `ScrubInput`. All 16 numeric call sites upgraded via `NumInput`/`MiniNum`, which became wrappers. |
 | 2026-07-28 | C — one accent colour | Rule written at the token definition in `index.css`. Four decorative usages removed; the rest were already legitimate. |
 | 2026-07-28 | B — default-closed sections, section reset | Transform/Layer/Motion default closed. Reset built on Motion only, where it has one meaning. |
-| 2026-07-28 | F — multi-tab safety | `projectLock.ts`. Guard on `updateProject`/`undo`/`redo` + the cloud autosave. 12 headless tests pass. Next: the shot model (A). |
+| 2026-07-28 | F — multi-tab safety | `projectLock.ts`. Guard on `updateProject`/`undo`/`redo` + the cloud autosave. 12 headless tests pass. |
+| 2026-07-28 | A — shot model, stage 1 | `scenes.ts` + migration, invisible. Flat elements + `sceneId`, not nested — render path untouched. `npm test` added (57 assertions). Next: stage 2, the sequence bar + drill-in. |

@@ -344,6 +344,40 @@ confirmed output URL, so failed renders don't consume the slot. On account switc
 each other's projects. **Why this order:** never trust the client — identity first,
 then abuse checks, then spend.
 
+### Shots: a labelling of time, not a container for it
+
+A video is a sequence of shots, and the timeline needs to say so — one row per
+element costs sixteen rows for a sixteen-cut reel. The obvious model is
+`scene.elements[]` with `startFrame` relative to each shot.
+
+**We didn't do that.** The render contract is a flat array with *absolute*
+`startFrame`s: `MotionComposition` maps elements to `<Sequence from={...}>`, and
+`CanvasPanel` hands `{ elements, assets }` to the Player as the same `inputProps`
+shape `api/render.ts` forwards untouched to Lambda. Nesting would have forced
+every consumer to flatten first — and the consumers are `exporter.ts`,
+`webRenderer.ts`, `canvasFrame.ts`, `audioMix.ts` and the Lambda site, which is
+the code least worth destabilising.
+
+So elements stay flat and absolute, and gain a `sceneId`. `Project` gains an
+ordered `scenes[]`. **A shot is a labelled span of time**, and not one line of
+the render path changed.
+
+The price is that two invariants are enforced rather than structural — an
+element must lie inside its shot, and the total must equal the sum of the shots
+— and that ripple (resize shot 2, everything after moves) is an explicit
+recompute instead of falling out of the data shape. Both live in
+`engines/project/scenes.ts` as pure functions with no React and no store, and
+are covered by `npm test`. That trade is deliberate: ripple is twenty lines in
+one file, whereas a render-path regression is the failure mode this codebase has
+been bitten by most.
+
+`ensureScenes()` is the migration, and is idempotent so it can run at all three
+entry points — the `persist` `migrate` (IndexedDB), `setProjects` (the cloud
+load, which bypasses `persist`), and `createProject` (templates, which stay
+authored flat and shot-unaware). It gives a pre-shot project one shot spanning
+its length and touches no element's timing, so nothing renders differently
+after the upgrade — asserted directly in `tests/scenes.test.mjs`.
+
 ### One editor per project, across tabs
 
 Both persistence paths serialise the **whole** projects array: zustand's
