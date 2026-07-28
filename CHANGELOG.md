@@ -5,6 +5,34 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — A soundtrack now covers the whole sequence
+
+The common case — one track under the whole video — stopped partway through it.
+
+### Fixed
+- **Music stopped where the video used to end.** Two bugs stacked:
+  - `respanGlobals` capped media against the element's *current* length rather
+    than the file's, making it a one-way ratchet: a 20s track added to a 15s
+    video was clipped to 15s, and no amount of adding shots could let it grow
+    back. It now looks up the asset and caps against the real source length, so
+    a track extends to cover new shots and stops only where the audio does.
+  - `addShot` never wrote `canvas` back. Correct when it was written — adding a
+    shot moved no elements — and wrong the moment video-wide elements began
+    being re-spanned, which silently discarded the re-span. `removeShot`,
+    `resizeShot` and `moveShot` all already passed it.
+- Verified live: a 20s track sitting at 452 frames grew to its full 600 as shots
+  were added, and correctly went no further while the video ran on to 675.
+
+### Verified
+- 5 new assertions (119 total): a track is clipped to a video shorter than it,
+  adding a shot lets it grow to cover the new length, it never runs past the end
+  of the file, and the video may still be longer than the music.
+- An older assertion was rewritten rather than kept: it asserted a track stays
+  at its current length, which was the ratchet bug written down as intent. Its
+  fixture had no asset at all, so there was no file length to respect.
+
+---
+
 ## [2026-07-28] — Beat detection, stage 2: shots snap to the beat
 
 The payoff. Cutting in time with the music is now a click rather than

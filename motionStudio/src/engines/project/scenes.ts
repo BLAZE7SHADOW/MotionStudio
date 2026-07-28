@@ -93,13 +93,25 @@ export function elementsInScene(project: Project, sceneId: string): CanvasElemen
  */
 function respanGlobals(project: Project, total: number): Project {
   if (!project.canvas.elements.some(spansAllShots)) return project;
+
+  /* Media is limited by the file, not by whatever length it currently happens
+     to have. Capping against the element's own duration looks equivalent and
+     is a one-way ratchet: a track added to a 15s video got clipped to 15s, and
+     then adding a shot could never let it grow again — so the music stopped
+     dead partway through the sequence it was supposed to carry. */
+  const sourceFrames = (el: CanvasElement): number => {
+    if (el.type !== 'audio' && el.type !== 'video') return total;
+    const asset = project.assets.find((a) => a.id === el.assetId);
+    return asset?.durationInSeconds ? Math.round(asset.durationInSeconds * project.fps) : total;
+  };
+
   return {
     ...project,
     canvas: {
       ...project.canvas,
       elements: project.canvas.elements.map((el) => {
         if (!spansAllShots(el)) return el;
-        const duration = el.type === 'audio' ? Math.min(el.durationInFrames, total) : total;
+        const duration = Math.min(total, sourceFrames(el));
         return el.startFrame === 0 && el.durationInFrames === duration
           ? el
           : { ...el, startFrame: 0, durationInFrames: duration };

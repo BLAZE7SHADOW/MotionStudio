@@ -131,9 +131,15 @@ export const useProjectStore = create<ProjectStore>()(
         // Unchanged means the 90s cap refused it; don't record an undo step
         // for something that did nothing.
         if (next === p) return;
+        /* `canvas` matters here even though adding a shot moves nothing:
+           video-wide elements are re-spanned over the new total, and leaving it
+           out silently dropped that. A soundtrack stayed the length of the
+           video as it was when the track was added and stopped partway through
+           every shot added afterwards. */
         get().updateProject(projectId, {
           scenes: next.scenes,
           durationInFrames: next.durationInFrames,
+          canvas: next.canvas,
         });
       },
 

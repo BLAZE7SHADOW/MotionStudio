@@ -111,8 +111,12 @@ check('fps change to the same rate is a no-op', S.rescaleForFps(two30, FPS) === 
    open when it was added. Getting this wrong is what made adding a shot land
    you on a black screen with no music. */
 const bg = el('bg', 0, 300, { sceneId: S.ALL_SHOTS, type: 'shader' });
-const track = el('mus', 0, 200, { sceneId: S.ALL_SHOTS, type: 'audio' });
+// The asset matters: a track's limit is the file, not whatever length the
+// element currently has. Without one there is nothing to respect.
+const trackAsset = { id: 'mus-src', type: 'audio', name: 'm.wav', url: '', durationInSeconds: 200 / FPS };
+const track = el('mus', 0, 200, { sceneId: S.ALL_SHOTS, type: 'audio', assetId: 'mus-src' });
 const withGlobals = S.ensureScenes({ ...legacy,
+  assets: [trackAsset],
   canvas: { elements: [...legacy.canvas.elements, bg, track] } });
 
 check('migration leaves a video-wide element alone',
@@ -148,6 +152,30 @@ check('reordering never moves a video-wide element',
 const fps60 = S.rescaleForFps(grown2, 60);
 check('changing fps re-spans the background exactly',
   fps60.canvas.elements.find(e => e.id === 'bg').durationInFrames === fps60.durationInFrames);
+
+/* ── 9b. a soundtrack must cover the sequence, not stop partway ──
+   The common case: one track under the whole video. Capping the element by its
+   own current length made that a one-way ratchet — a track added to a short
+   video was clipped, and adding shots could never let it grow back. */
+const musicAsset = { id: 'aud', type: 'audio', name: 'track.wav', url: '', durationInSeconds: 20 };
+const shortProject = S.ensureScenes({
+  ...legacy, durationInFrames: 150, assets: [musicAsset],
+  scenes: [{ id: 'only', durationInFrames: 150 }],
+  canvas: { elements: [el('bed', 0, 150, { sceneId: S.ALL_SHOTS, type: 'audio', assetId: 'aud' })] },
+});
+const bed = (p) => p.canvas.elements.find((e) => e.id === 'bed');
+check('a track is clipped to a video shorter than it', bed(shortProject).durationInFrames === 150);
+
+const longer = S.addScene(shortProject, 300, FPS);          // 150 -> 450 frames
+check('adding a shot lets the soundtrack grow to cover it',
+  bed(longer).durationInFrames === 450);
+check('...and it still starts at zero', bed(longer).startFrame === 0);
+
+const beyond = S.addScene(longer, 300, FPS);                 // 450 -> 750, past the 600-frame file
+check('but never past the end of the file itself',
+  bed(beyond).durationInFrames === 600);
+check('the video is still allowed to be longer than the music',
+  beyond.durationInFrames === 750);
 
 /* ── 10. beat snapping ───────────────────────────────────────────────────
    The grid lives in seconds precisely so that frames are computed once. These

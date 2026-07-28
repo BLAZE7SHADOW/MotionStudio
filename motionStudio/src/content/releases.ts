@@ -36,6 +36,10 @@ export const RELEASES: Release[] = [
     title: 'Effects you can actually preview',
     changes: [
       {
+        kind: 'fixed',
+        text: 'A music track stopped where the video used to end, so adding shots left the last part of your video silent. One track now plays across the whole sequence, however many shots you add \u2014 up to the end of the track itself.',
+      },
+      {
         kind: 'new',
         text: 'Add a music track and MotionStudio works out its tempo, then marks the beats along the timeline — brighter lines every fourth beat so you can count bars at a glance. If it reads the tempo wrong you can type it, drag it, or just tap along in time.\n\nShots then cut in time with the track: Add shot lands on a beat, dragging a shot\u2019s edge snaps to one (hold Alt if you want an odd length), and each shot says how many beats it lasts.',
       },

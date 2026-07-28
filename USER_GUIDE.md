@@ -349,6 +349,11 @@ to send one further back / bring one forward.
 
 ### Beats
 
+**One track under the whole video is the normal way to work.** Audio you add
+plays across every shot automatically, and keeps covering new shots as you add
+them — up to the length of the track itself. If the video ends up longer than
+the music, the music simply stops; nothing is stretched.
+
 Add a music track and MotionStudio measures its tempo in the background, then
 marks the beats along the timeline — a brighter line every fourth beat, so you
 can count bars at a glance. This is how you cut in time with the music instead
