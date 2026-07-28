@@ -2,14 +2,15 @@
 
 ## Living docs (MANDATORY — never skip)
 
-Four docs at the repo root must ALWAYS reflect the current state of the project
-and stay consistent with each other — never let one describe a feature another
-doesn't know about:
+Four docs at the repo root, plus the in-app release notes, must ALWAYS reflect
+the current state of the project and stay consistent with each other — never let
+one describe a feature another doesn't know about:
 
 - `README.md` — public front page + portfolio/resume source
 - `CHANGELOG.md` — detailed history + portfolio/resume source
 - `ARCHITECTURE.md` — engineering decisions deep-dive
 - `USER_GUIDE.md` — how to use every feature
+- `motionStudio/src/content/releases.ts` — the in-app "What's new", written for users
 
 At the end of any change that ships a feature, fixes a bug, or alters behavior,
 check ALL FOUR and update every one the change touches — in the same commit or an
@@ -36,6 +37,21 @@ something that shipped) is a bug.
 
 4. **Update `USER_GUIDE.md`** when a change alters what the user sees or does —
    new features, changed flows, new limitations, removed restrictions.
+
+5. **Update `motionStudio/src/content/releases.ts`** whenever a change ships
+   something a **user** would notice. This is the in-app "What's new" dialog, and
+   it is NOT `CHANGELOG.md`:
+   - `CHANGELOG.md` is for whoever maintains the code — root causes, module
+     names, decisions. `releases.ts` is for the person using the app.
+   - Write it in their terms: what they can now do, or what stopped being
+     broken. Never name a file, function or internal concept.
+   - Add to the newest entry if it's the same day; otherwise add a new entry at
+     the top with today's date as `id`. Ids must be unique and only move
+     forward — the id doubles as the "have they seen it" marker.
+   - Purely internal work (refactors, lint, docs, test scaffolding) gets a
+     `CHANGELOG.md` entry and **no** `releases.ts` entry.
+   - A stale "What's new" is worse than none: it advertises that nobody is
+     minding the product. Treat a missing entry as a bug, same as a stale README.
 
 ## Conventions
 

@@ -5,6 +5,39 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — In-app feedback and release notes
+
+### Added
+- **A feedback form in the account menu.** Category (broke / want / other), a
+  message, and a reply address — prefilled for signed-in users, required for
+  guests, since without one there is no way to close the loop.
+  - **It auto-attaches context**: build id, browser, screen size, and in the
+    editor the project's id, format and element/asset counts. Unstructured
+    feedback is mostly unactionable not because people are unhelpful but because
+    they don't know which details matter — nobody thinks to mention their aspect
+    ratio or that they were on Safari. This is the difference between a form
+    that generates work and one that generates fixes.
+  - **The attached context is shown before sending**, expandable in full.
+    Collecting diagnostics silently would be a cheap trick.
+  - Posts to the existing `/api/contact` (Resend + rate limiting), so no new
+    infrastructure. Reports the endpoint's `fallback` response as an error
+    rather than showing a false success when mail isn't configured.
+- **A "What's new" dialog**, opening once per release and reachable from the
+  account menu, with a dot on the avatar while unread. First-time users never
+  see it — a changelog is meaningless before you have a "before", so a first
+  visit is marked seen silently.
+- `src/content/releases.ts` — user-facing release notes, and
+  `lib/releaseSeen.ts` for the seen-tracking (called during render as a lazy
+  state initialiser, so it can't live in a component module).
+
+### Changed
+- **`CLAUDE.md`'s living-docs rule now covers `releases.ts` as a fifth
+  document.** The notes are deliberately *not* generated from `CHANGELOG.md`:
+  that file names modules and explains root causes, which is right for whoever
+  maintains this and noise for whoever uses it. The cost of two lists is drift,
+  so the rule spells out which changes belong in which — and that purely
+  internal work gets a changelog entry and no release note.
+
 ## [2026-07-28] — Number effects stop silently eating your text
 
 ### Fixed

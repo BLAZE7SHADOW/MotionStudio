@@ -470,6 +470,24 @@ npm run render    # render the default composition to out/video.mp4
 
 ---
 
+## 14a. Feedback and "What's new"
+
+Both live in the **account menu** (your initial, top-right).
+
+- **Send feedback** — pick whether something broke, you want a feature, or it's
+  something else, describe it, and send. It reaches a real inbox and replies come
+  back to the address you give. Guests have no address on file, so you'll need to
+  type one — without it there's no way to tell you it's fixed.
+  The form attaches your build, browser, screen size and (in the editor) the
+  current project's format and contents. **Click the line above the Send button
+  to read exactly what's attached before you send it** — nothing is collected
+  that you can't see.
+- **What's new** — a short list of what changed recently, in plain terms. It
+  opens by itself once per release, and a dot appears on your avatar until you've
+  read it. Brand-new accounts never see it: a changelog needs a "before".
+
+---
+
 ## 15. Current limitations
 
 - **Dashboard and editor require a laptop/desktop-sized viewport** (≥1024px
