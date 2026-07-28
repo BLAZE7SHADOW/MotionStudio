@@ -45,6 +45,11 @@ export function useProjectLock(projectId: string) {
      tab doesn't have to wait out the staleness window. */
   useEffect(() => {
     if (status !== 'owner') return;
+    /* Re-assert on every run of this effect, not just in the `useState`
+       initialiser. StrictMode mounts → cleans up → mounts, and the cleanup
+       below releases, so without this the tab settles into believing it owns a
+       project it has actually let go of. */
+    claim(projectId);
     const stop = startHeartbeat(projectId);
     const drop = () => release(projectId);
     window.addEventListener('pagehide', drop);

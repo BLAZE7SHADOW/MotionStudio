@@ -5,6 +5,47 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Two lock bugs, found by running the thing
+
+Everything below was caught in a browser, not by the type checker or the test
+suite — which is the argument for opening the app rather than trusting a green
+build.
+
+### Fixed
+- **The editor always opened on the sequence overview instead of a shot.**
+  `EditorPage` calls `reset()` on mount, which clears `activeSceneId`. React
+  runs child effects *before* parent effects, so `TimelinePanel` picked a shot
+  and `EditorPage` wiped it a moment later — and the one-shot `landed` ref was
+  already spent, so it never recovered. Choosing the opening shot now happens
+  in `EditorPage` beside the `reset()` that would otherwise undo it, with
+  `projectReady` in the deps so it also runs once the project arrives from
+  IndexedDB.
+- **StrictMode left every tab holding no lock at all.** The heartbeat only
+  rewrote the claim `if (holder === 'me')`. StrictMode mounts → runs cleanup,
+  which calls `release()` → mounts again, so the tab settled into believing it
+  owned a project it had let go of, and the guard made recovery impossible. The
+  heartbeat now re-asserts whenever no *other* tab holds it, and
+  `useProjectLock` re-claims on every run of the effect rather than only in the
+  `useState` initialiser. Backing off when another tab *does* hold it is what
+  keeps two tabs from ping-ponging the claim.
+- **Any backgrounded tab silently lost its claim.** `STALE_MS` was 13s, but
+  **Chrome clamps `setInterval` in a hidden tab to roughly once a minute**, so
+  switching tabs was enough to look crashed. Raised to 75s, plus a
+  `visibilitychange` listener that re-asserts the moment a tab comes back. The
+  asymmetry is deliberate: too generous costs a dialog with "Take over here"
+  one click away, too eager costs the data the lock exists to protect.
+
+### Verified
+- Two tabs, live: the second shows the blocking dialog; **Take over here** flips
+  the first to a read-only banner; and in the read-only tab both "add text" and
+  "Add shot" are no-ops — 5 elements and 3 shots before and after.
+- Three regression tests added, all of which fail against the old code: the
+  heartbeat re-claiming after a transient release, backing off when another tab
+  holds the lock, and a claim throttled to a 60s background tick still counting
+  as alive.
+
+---
+
 ## [2026-07-28] — The shot model, stage 2: the sequence bar and drill-in
 
 The visible half. A video is now a sequence of shots you can add, open, rename,

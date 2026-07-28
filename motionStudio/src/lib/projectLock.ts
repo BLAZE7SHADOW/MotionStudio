@@ -24,12 +24,23 @@
 export const TAB_ID = Math.random().toString(36).slice(2) + Date.now().toString(36);
 
 const KEY_PREFIX = 'ms_lock_';
-/** How often the holder refreshes its claim. */
+/** How often the holder re-asserts its claim while it has focus. */
 const HEARTBEAT_MS = 4_000;
-/** A claim older than this is assumed dead — a crashed or force-quit tab never
-    releases, and without an expiry the project would be locked forever. Three
-    missed heartbeats, so a briefly-throttled background tab isn't evicted. */
-const STALE_MS = 13_000;
+/**
+ * A claim older than this is assumed dead — a crashed or force-quit tab never
+ * releases, and without an expiry the project would be locked forever.
+ *
+ * Generous on purpose, and it has to be: **Chrome clamps `setInterval` in a
+ * hidden tab to roughly once a minute**, so a 4s heartbeat becomes a 60s one
+ * the moment you switch tabs. A short window meant every backgrounded tab
+ * quietly lost its claim — which is precisely the situation this lock exists
+ * for. Anything under ~60s is unusable here regardless of how it reads.
+ *
+ * Being too generous costs almost nothing: a stale claim shows a dialog with
+ * "Take over here" one click away, whereas being too eager costs the thing we
+ * were protecting.
+ */
+const STALE_MS = 75_000;
 
 interface Claim {
   tabId: string;
@@ -99,12 +110,35 @@ export function release(projectId: string) {
   }
 }
 
-/** Keeps our claim fresh. Returns the stop function. */
+/**
+ * Keeps our claim alive. Returns the stop function.
+ *
+ * It **re-asserts** rather than merely refreshing, and that distinction is
+ * load-bearing. The first version only rewrote the claim `if (holder === 'me')`,
+ * which looks careful and is in fact fatal: React StrictMode mounts, runs
+ * cleanup — which releases — then mounts again, so the tab arrives at a steady
+ * state where it believes it is the owner while holding nothing, and the guard
+ * means it can never recover. Claiming whenever nobody *else* holds it makes
+ * the tab self-healing after any transient loss.
+ *
+ * Backing off when another tab does hold it is what stops two tabs
+ * ping-ponging the claim: the loser is demoted by the `storage` event instead.
+ */
 export function startHeartbeat(projectId: string): () => void {
-  const id = setInterval(() => {
-    if (holder(projectId) === 'me') claim(projectId);
-  }, HEARTBEAT_MS);
-  return () => clearInterval(id);
+  const beat = () => {
+    if (holder(projectId) !== 'other') claim(projectId);
+  };
+  // A hidden tab's interval is throttled to ~1/min, so re-assert the moment it
+  // comes back rather than waiting out the next tick.
+  const onVisible = () => {
+    if (document.visibilityState === 'visible') beat();
+  };
+  const id = setInterval(beat, HEARTBEAT_MS);
+  document.addEventListener('visibilitychange', onVisible);
+  return () => {
+    clearInterval(id);
+    document.removeEventListener('visibilitychange', onVisible);
+  };
 }
 
 /**

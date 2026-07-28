@@ -398,8 +398,12 @@ a lock you have to `await` has a race in it; and its `storage` event fires in
 
 Three decisions worth keeping:
 
-- **Claims expire (13 s, three missed heartbeats).** A crashed or force-quit tab
-  never releases, and without an expiry the project would be locked forever.
+- **Claims expire (75 s).** A crashed or force-quit tab never releases, and
+  without an expiry the project would be locked forever. The window has to
+  clear a minute because **Chrome clamps `setInterval` in a hidden tab to about
+  once a minute** — a shorter one silently evicted every backgrounded tab,
+  which is exactly the case the lock exists for. Being generous is nearly free:
+  a stale claim shows a dialog with "Take over here" one click away.
 - **The guard sits on `updateProject`**, the single chokepoint every element
   mutation already passes through, rather than being spread across the panels —
   and on `undo`/`redo`, which restore the entire projects array and so would
@@ -407,6 +411,12 @@ Three decisions worth keeping:
 - **`release()` only drops our own claim.** Removing the key unconditionally
   would hand the project to nobody and discard the guard of whichever tab had
   since taken over.
+- **The heartbeat re-asserts rather than refreshes.** Rewriting the claim only
+  `if (holder === 'me')` reads as careful and is fatal: StrictMode mounts, runs
+  cleanup — which releases — then mounts again, leaving the tab believing it
+  owns a project it is no longer holding, with a guard that prevents recovery.
+  Claiming whenever no *other* tab holds it makes it self-healing; backing off
+  when one does is what stops two tabs ping-ponging.
 
 When localStorage is unusable (private mode, quota) `isLockable()` returns
 false and the editor opens unguarded. Refusing to open at all would be a worse

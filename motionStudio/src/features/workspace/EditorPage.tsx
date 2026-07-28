@@ -13,12 +13,24 @@ export default function EditorPage() {
   const setActiveProjectId = useProjectStore((s) => s.setActiveProjectId);
   const reset             = useEditorStore((s) => s.reset);
 
+  /* `reset()` clears the editor's session state, which includes which shot is
+     open — correct, since carrying shot 3 into a project that has one shot
+     would be nonsense. But it also means the opening shot has to be chosen
+     *here*, right after the reset: child effects run before parent effects, so
+     anything the timeline decided on mount would be wiped a moment later.
+
+     `projectReady` is in the deps so this runs again once the project arrives
+     from IndexedDB. It's a boolean, so it settles after that one flip and
+     can't re-fire on every edit — which would reset the editor mid-keystroke. */
+  const projectReady = !!project;
   useEffect(() => {
     setActiveProjectId(projectId ?? null);
     reset();
+    const first = useProjectStore.getState().getProject(projectId ?? '')?.scenes?.[0];
+    if (first) useEditorStore.getState().setActiveScene(first.id);
     if (projectId) void rehydrateAssets(projectId); // relink media from IndexedDB
     return () => setActiveProjectId(null);
-  }, [projectId, setActiveProjectId, reset]);
+  }, [projectId, projectReady, setActiveProjectId, reset]);
 
   return (
     <DesktopOnlyGate

@@ -4,7 +4,7 @@ import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { createScale, frameToX, xToFrame, formatFrameLabel } from '@/engines/timeline';
 import type { Project } from '@/engines/project';
-import { scenesOf, sceneSpan, sceneAtFrame } from '@/engines/project';
+import { scenesOf, sceneSpan } from '@/engines/project';
 import TimelineRuler from './timeline/TimelineRuler';
 import TimelineClip from './timeline/TimelineClip';
 import ShotStrip from './timeline/ShotStrip';
@@ -50,17 +50,8 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
     // and therefore no header labels either.
     : [];
 
-  /* Open a shot on arrival rather than the sequence overview.
-     Every migrated project has exactly one shot, so this makes the editor look
-     and behave precisely as it did before shots existed; the overview becomes
-     something you choose once there is a sequence worth seeing. Guarded by a
-     ref so choosing "Sequence" isn't undone on the next render. */
-  const landed = useRef(false);
-  useEffect(() => {
-    if (landed.current || scenes.length === 0) return;
-    landed.current = true;
-    setActiveScene(sceneAtFrame(scenes, currentFrame) ?? scenes[0].id);
-  }, [scenes, currentFrame, setActiveScene]);
+  /* Which shot opens on arrival is chosen in EditorPage, next to the `reset()`
+     that would otherwise wipe it — see the comment there. */
 
   /* Selecting an element that lives in another shot moves the timeline to it.
      Without this, clicking something on the canvas could select a clip the
