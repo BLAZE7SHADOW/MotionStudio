@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { Project } from '@/engines/project';
 import {
   useProjectStore,
@@ -9,7 +9,7 @@ import {
   MIN_SCENE_FRAMES,
 } from '@/engines/project';
 import { useEditorStore } from '@/engines/editor';
-import { frameToX, framesToWidth } from '@/engines/timeline';
+import { frameToX, framesToWidth, xToFrame } from '@/engines/timeline';
 import type { TimelineScale } from '@/engines/timeline';
 
 /**
@@ -21,6 +21,9 @@ import type { TimelineScale } from '@/engines/timeline';
  * proportional alone would render it three pixels wide.
  */
 const MIN_BLOCK_PX = 44;
+
+/** Movement below this reads as a click, not a drag. */
+const DRAG_SLOP_PX = 4;
 
 export default function SequenceTrack({
   project,
@@ -36,6 +39,8 @@ export default function SequenceTrack({
   const setActiveScene = useEditorStore((s) => s.setActiveScene);
   const setCurrentFrame = useEditorStore((s) => s.setCurrentFrame);
   const resizeShot = useProjectStore((s) => s.resizeShot);
+
+  const moveShot = useProjectStore((s) => s.moveShot);
 
   /* Same reasoning as ScrubInput: the drag origin lives in a ref because it
      changes on every pointermove, and re-rendering the timeline at pointer
@@ -65,9 +70,77 @@ export default function SequenceTrack({
     drag.current = null;
   }
 
+  /* ── reordering ──
+     Committed once on release rather than continuously during the drag. Moving
+     a shot rewrites the absolute start frame of every element in it, so
+     reordering live would push a burst of those through undo history and make
+     the blocks shuffle under the pointer. A drop marker says where it will land
+     and one write does it. */
+  const move = useRef<{ sceneId: string; fromIndex: number; startX: number; moved: number; dropIndex: number | null } | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
+
+  function onBlockDown(e: React.PointerEvent, sceneId: string, index: number) {
+    /* The track body behind us starts a scrub on pointerdown and calls
+       `setPointerCapture` on itself, which would redirect every subsequent
+       pointermove away from this block — so the drag would silently become a
+       playhead scrub. Claim the gesture before it can. */
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    move.current = { sceneId, fromIndex: index, startX: e.clientX, moved: 0, dropIndex: null };
+  }
+
+  function onBlockMove(e: React.PointerEvent) {
+    const m = move.current;
+    if (!m) return;
+    m.moved = Math.max(m.moved, Math.abs(e.clientX - m.startX));
+    if (m.moved < DRAG_SLOP_PX) return;
+    setDragging(m.sceneId);
+
+    // Which slot the pointer is over: the first block whose midpoint it hasn't
+    // passed. Measured in frames so it works at any zoom.
+    const rect = (e.currentTarget as HTMLElement).parentElement!.getBoundingClientRect();
+    const frame = xToFrame(scale, e.clientX - rect.left);
+    let target = scenes.length - 1;
+    for (let i = 0; i < scenes.length; i++) {
+      const s = offsets.get(scenes[i].id) ?? 0;
+      if (frame < s + scenes[i].durationInFrames / 2) { target = i; break; }
+    }
+    m.dropIndex = target;
+    setDropIndex(target);
+  }
+
+  function onBlockUp(e: React.PointerEvent, sceneId: string, start: number) {
+    const m = move.current;
+    move.current = null;
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    setDragging(null);
+    setDropIndex(null);
+    if (!m) return;
+
+    // Never moved → it was a click, and a click opens the shot.
+    if (m.moved < DRAG_SLOP_PX) {
+      setActiveScene(sceneId);
+      setCurrentFrame(start);
+      return;
+    }
+    if (m.dropIndex !== null && m.dropIndex !== m.fromIndex) {
+      moveShot(project.id, sceneId, m.dropIndex);
+    }
+  }
+
   return (
     <div className="relative" style={{ height }}>
-      {scenes.map((scene) => {
+      {/* Where the dragged shot will land. Drawn on the boundary rather than
+          animating the blocks, so nothing moves until the move is real. */}
+      {dropIndex !== null && dragging && (
+        <div
+          className="absolute top-1 bottom-1 w-0.5 bg-studio-accent rounded-full pointer-events-none z-10"
+          style={{ left: frameToX(scale, offsets.get(scenes[dropIndex].id) ?? 0) }}
+        />
+      )}
+
+      {scenes.map((scene, index) => {
         const start = offsets.get(scene.id) ?? 0;
         const left = frameToX(scale, start);
         const width = Math.max(MIN_BLOCK_PX, framesToWidth(scale, scene.durationInFrames));
@@ -78,13 +151,21 @@ export default function SequenceTrack({
             key={scene.id}
             role="button"
             tabIndex={0}
-            onClick={() => { setActiveScene(scene.id); setCurrentFrame(start); }}
+            onPointerDown={(e) => onBlockDown(e, scene.id, index)}
+            onPointerMove={onBlockMove}
+            onPointerUp={(e) => onBlockUp(e, scene.id, start)}
+            onPointerCancel={(e) => onBlockUp(e, scene.id, start)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') { setActiveScene(scene.id); setCurrentFrame(start); }
             }}
-            title={`${sceneLabel(scenes, scene.id)} — click to open`}
-            className="absolute top-2 bottom-2 rounded-studio-md border border-studio-border bg-studio-surface hover:border-studio-border-strong overflow-hidden cursor-pointer transition-colors duration-120"
-            style={{ left, width }}
+            title={`${sceneLabel(scenes, scene.id)} — click to open, drag to reorder`}
+            className={[
+              'absolute top-2 bottom-2 rounded-studio-md border overflow-hidden transition-colors duration-120',
+              dragging === scene.id
+                ? 'border-studio-accent-border bg-studio-surface opacity-60 cursor-grabbing'
+                : 'border-studio-border bg-studio-surface hover:border-studio-border-strong cursor-pointer',
+            ].join(' ')}
+            style={{ left, width, touchAction: 'none' }}
           >
             <div className="px-2 py-1.5 flex flex-col gap-0.5 pointer-events-none">
               <span className="block text-[11px] font-medium text-studio-text truncate">
@@ -104,7 +185,6 @@ export default function SequenceTrack({
               onPointerMove={onResizeMove}
               onPointerUp={onResizeUp}
               onPointerCancel={onResizeUp}
-              onClick={(e) => e.stopPropagation()}
               title={`Drag to change how long ${sceneLabel(scenes, scene.id)} lasts`}
               className="absolute top-0 bottom-0 right-0 w-2 cursor-ew-resize bg-transparent hover:bg-studio-accent/40"
               style={{ touchAction: 'none' }}

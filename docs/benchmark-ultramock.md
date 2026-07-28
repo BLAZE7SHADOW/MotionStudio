@@ -177,7 +177,12 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
 - [~] **Tour steps that make you act** — *"Give it a go — add a second shot."*
       *(2026-07-28 — the new shots step does this; the other 14 still narrate.)*
 - [ ] **Contextual toasts at the moment of confusion**, with **DON'T SHOW AGAIN**.
-      Note they needed one for the shot-scope rule — we will hit that too.
+      *(2026-07-28 — the specific one they needed, "effects apply to the
+      selected shot, not all shots", does **not** apply to us and was
+      deliberately skipped: we have no global-vs-per-shot split, because
+      background is still a single project-level setting. Revisit if per-shot
+      backgrounds ever ship. The pattern itself is still worth having for
+      something else.)*
 - [x] Templates; use template; save as template.
 - [ ] **Templates deep-linkable by URL** (`?template=cmqic15au00004lpenr29kwjz`).
 - [~] Keyboard shortcuts sheet.
@@ -285,4 +290,5 @@ Append a line whenever something above is ticked.
 | 2026-07-28 | B — default-closed sections, section reset | Transform/Layer/Motion default closed. Reset built on Motion only, where it has one meaning. |
 | 2026-07-28 | F — multi-tab safety | `projectLock.ts`. Guard on `updateProject`/`undo`/`redo` + the cloud autosave. 12 headless tests pass. |
 | 2026-07-28 | A — shot model, stage 1 | `scenes.ts` + migration, invisible. Flat elements + `sceneId`, not nested — render path untouched. `npm test` added (57 assertions). |
-| 2026-07-28 | A — shot model, stage 2 | `ShotStrip` + `SequenceTrack` + `TimelineScale.originFrame`. Section A now complete. 71 assertions. Next: the scope toast (E), then beat detection as its own plan. |
+| 2026-07-28 | A — shot model, stage 2 | `ShotStrip` + `SequenceTrack` + `TimelineScale.originFrame`. Section A now complete. 71 assertions. |
+| 2026-07-28 | A — shot reorder + 3 live bugs | Drag to reorder. Three bugs found by running the app in a browser, none caught by types or tests. Next: beat detection, its own plan. |

@@ -37,7 +37,7 @@ export const RELEASES: Release[] = [
     changes: [
       {
         kind: 'new',
-        text: 'Build a video shot by shot. Add shot puts a new moment on the end, and you work on one at a time \u2014 the timeline shows only that shot, so twenty quick cuts never become twenty rows to scroll through. Sequence steps back to see the whole video, where you can drag a shot\u2019s edge to change how long it lasts. Double-click a shot to name it.',
+        text: 'Build a video shot by shot. Add shot puts a new moment on the end, and you work on one at a time \u2014 the timeline shows only that shot, so twenty quick cuts never become twenty rows to scroll through. Sequence steps back to see the whole video, where you can drag a shot\u2019s edge to change how long it lasts and drag the shot itself to reorder it. Double-click a shot to name it.',
       },
       {
         kind: 'fixed',

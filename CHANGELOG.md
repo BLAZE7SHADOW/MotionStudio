@@ -5,6 +5,40 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Shots can be reordered
+
+### Added
+- **Drag a shot in the sequence view to reorder it.** `moveShot` had existed on
+  the store since stage 1 with nothing able to reach it — a capability with no
+  caller, which is how dead code starts.
+  - Committed **once on release**, not continuously during the drag. Moving a
+    shot rewrites the absolute start frame of every element inside it, so
+    reordering live would push a burst of writes through undo history and make
+    the blocks shuffle under the pointer. A drop marker shows where it will
+    land; one write does it.
+  - The drop target is computed in **frames**, not pixels, so it behaves the
+    same however the sequence is scaled.
+
+### Fixed
+- **The drag was silently becoming a playhead scrub.** The track body behind the
+  blocks starts a scrub on `pointerdown` and calls `setPointerCapture` on
+  itself, which redirects every later `pointermove` away from the block. The
+  block now claims the gesture with `stopPropagation` — the same thing the
+  resize handle was already doing, which is why resizing worked and dragging
+  didn't.
+- `dropIndex` is held in the drag ref as well as state: `pointerup` can run
+  before React has re-rendered with the last `pointermove`, so reading it from
+  state could commit a stale target.
+
+### Not doing
+- Ultramock's shot-scope toast ("effects apply to the selected shot, not all
+  shots") is **deliberately skipped** — it describes a global-vs-per-shot split
+  we don't have, since background is still a single project-level setting.
+  Shipping it would explain a rule that isn't true here. Revisit if per-shot
+  backgrounds land.
+
+---
+
 ## [2026-07-28] — Two lock bugs, found by running the thing
 
 Everything below was caught in a browser, not by the type checker or the test

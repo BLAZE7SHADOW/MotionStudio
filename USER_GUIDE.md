@@ -359,7 +359,9 @@ arrange them.
   quick cuts doesn't become twenty rows to scroll through.
 - **Sequence** steps back to the whole video, drawn as its shots end to end.
   From there, **drag a shot's right edge** to change how long it lasts;
-  everything after it moves along to make room.
+  everything after it moves along to make room. **Drag the shot itself** to
+  reorder it — a line shows where it will land, and everything inside it moves
+  with it.
 - **Double-click a shot** to rename it. Leave the name empty and it goes back to
   "Shot 1", "Shot 2" and so on by position.
 - **Hover a shot and click ×** to delete it — this removes everything inside it
