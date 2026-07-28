@@ -180,6 +180,11 @@ The percentage at the bottom of the canvas is the current zoom-to-fit scale.
 
 Shows controls for the selected element. Sections vary by type:
 
+**Transform**, **Layer** and **Motion** start collapsed, so the controls that
+say what an element *is* are on screen without scrolling. Click a header to
+open it; your choice is remembered. Headers that can be cleared show a **↺** on
+hover — currently Motion, which resets to no animations.
+
 **Text** — Content, Font size, Color, and **Text Effect** (see §7a).
 
 **Transform** (text / image / video) — X, Y, Width, Height, Rotation, Opacity.

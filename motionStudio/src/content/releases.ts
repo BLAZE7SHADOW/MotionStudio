@@ -37,6 +37,14 @@ export const RELEASES: Release[] = [
     changes: [
       {
         kind: 'improved',
+        text: 'The Properties panel opens on the controls you came for. Transform, Layer and Motion now start collapsed, so what an element actually says and looks like is on screen without scrolling. Open any of them once and it stays that way.',
+      },
+      {
+        kind: 'new',
+        text: 'Motion has a reset. Presets stack up when you click more than one, and clearing them meant removing each animation by hand — now there is a single button on the section header.',
+      },
+      {
+        kind: 'improved',
         text: 'Every number in the Properties panel can now be dragged. Press on a value and slide sideways to change it, holding Shift to move in bigger steps. Click without dragging and you can still type an exact number, exactly as before.',
       },
       {

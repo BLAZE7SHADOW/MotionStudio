@@ -122,11 +122,17 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
       hint, fill and editable number in one ~32px row. No separate slider+input.
       *(2026-07-28 — same control. Fill draws only when `min`/`max` are given,
       so unbounded values like X don't imply a range that doesn't exist.)*
-- [~] **Sections collapsed by default, all headers visible** — BLUR, SCENE,
+- [x] **Sections collapsed by default, all headers visible** — BLUR, SCENE,
       3D DEVICES, BORDER, EFFECTS are single header rows; only CAMERA is open.
       The whole capability surface is legible at a glance.
-      *(Planned as item 1d in the UI-revamp plan; not built.)*
-- [ ] **Per-section ↺ reset** on every header.
+      *(2026-07-28 — Transform, Layer and Motion now default closed. Note only
+      those three are collapsible at all: Text, Effects, Shader, Sound and the
+      block sections pass no children and render as plain labels.)*
+- [~] **Per-section ↺ reset** on every header.
+      *(2026-07-28 — built, but deliberately only on Motion. "Reset" needs one
+      obvious meaning: on Transform it would have to leave the authored
+      position and size alone, making it a partial reset wearing an absolute
+      label. Revisit when a section owns settings rather than geometry.)*
 - [ ] **Animated-property markers** — small accent diamonds on exactly the
       keyframed dials, so you can see what is animated without expanding anything.
 - [ ] **`MANUAL │ PRESETS` segmented control** — presets for beginners, dials for
@@ -261,4 +267,5 @@ Append a line whenever something above is ticked.
 |---|---|---|
 | 2026-07-28 | — | Benchmark captured. Nothing ticked yet. |
 | 2026-07-28 | B — gesture chips, row-as-slider | `ScrubInput`. All 16 numeric call sites upgraded via `NumInput`/`MiniNum`, which became wrappers. |
-| 2026-07-28 | C — one accent colour | Rule written at the token definition in `index.css`. Four decorative usages removed; the rest were already legitimate. Next: default-closed sections + per-section reset (B). |
+| 2026-07-28 | C — one accent colour | Rule written at the token definition in `index.css`. Four decorative usages removed; the rest were already legitimate. |
+| 2026-07-28 | B — default-closed sections, section reset | Transform/Layer/Motion default closed. Reset built on Motion only, where it has one meaning. Next: multi-tab guard (F), then the shot model (A). |

@@ -5,6 +5,42 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Secondary sections start closed, and Motion can be reset
+
+### Changed
+- **Transform, Layer and Motion now default to closed** (`DEFAULT_CLOSED` in
+  `PropertiesPanel.tsx`). Selecting a text element used to open ~1000px of
+  controls into a ~630px panel, so what the element actually *says* competed
+  for space with geometry you rarely touch.
+  - Worth recording, because it constrained the change: only those three
+    sections are collapsible at all. `Text`, `Effects`, `Shader`, `Sound`,
+    `Layout` and the block sections pass no children to `<Section>` and render
+    as plain labels, with their controls following outside. That the three
+    collapsible ones are exactly the secondary ones is why closing all of them
+    is the whole fix.
+  - Anyone who has already toggled a section keeps their stored preference —
+    `readClosedSections()` only falls back to the defaults when nothing is
+    saved. The new defaults reach people who never touched it.
+  - It is also a performance change, for the reason already documented on
+    `DEFAULT_CLOSED`: the Motion section renders an `<AnimationPreview>` per
+    preset, each a full Remotion `<Player>`, and a closed section unmounts all
+    seven.
+
+### Added
+- **A reset on the Motion section header.** Presets *append*, so three clicks
+  leaves three stacked animations and the only way back was removing each one
+  by hand.
+  - `<Section>` gained an optional `onReset`, rendered as a hover-revealed ↺.
+    The header became a flex row containing two buttons rather than one big
+    button, since nesting a button inside a button is invalid.
+  - Deliberately wired on Motion only. "Reset" has to have one obvious
+    meaning, and on Transform it would have to leave the authored position and
+    size alone — a partial reset wearing an absolute label. Callers pass
+    `undefined` when there is nothing to clear, so the control never appears
+    dead.
+
+---
+
 ## [2026-07-28] — Accent discipline
 
 ### Changed

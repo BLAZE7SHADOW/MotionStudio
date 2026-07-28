@@ -1,4 +1,4 @@
-import { MousePointer, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown, ChevronRight, Sparkles, Maximize2, Trash2 } from 'lucide-react';
+import { MousePointer, X, ChevronsUp, ChevronUp, ChevronDown, ChevronsDown, ChevronRight, Sparkles, Maximize2, Trash2, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
@@ -201,7 +201,13 @@ function NumInput({
    section is hidden too. Motion starts closed (it's the expensive one and the
    presets are a one-time choice); everything else starts open. */
 const SECTION_STORAGE_KEY = 'ms_properties_sections';
-const DEFAULT_CLOSED = ['Motion', 'Animation'];
+/* Only Transform, Layer and Motion are genuinely collapsible — Text, Effects,
+   Shader, Sound and the block sections pass no children and render as plain
+   labels. Those three are also exactly the secondary ones, so closing all of
+   them by default leaves the content-bearing controls on screen and the rest
+   legible as headers: you can see the whole capability surface without
+   scrolling past it. */
+const DEFAULT_CLOSED = ['Motion', 'Animation', 'Transform', 'Layer'];
 
 function readClosedSections(): string[] {
   try {
@@ -216,12 +222,19 @@ function Section({
   title,
   children,
   tourId,
+  onReset,
 }: {
   title: string;
   children?: React.ReactNode;
   /** Anchors a tour step to this section. Sections only exist while a matching
       element is selected, so the tour resolves these against the live DOM. */
   tourId?: string;
+  /** Clears everything this section owns. Only pass it where "reset" has one
+      obvious meaning and there is something to clear — a reset on Transform
+      would have to leave the authored position and size alone, which makes it
+      a partial reset wearing an absolute label. Callers pass `undefined` when
+      the section is already empty, so the control never appears dead. */
+  onReset?: () => void;
 }) {
   const [closed, setClosed] = useState(() => readClosedSections().includes(title));
 
@@ -255,19 +268,34 @@ function Section({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={!closed}
-        className="w-full px-4 py-2 border-b border-studio-border shrink-0 flex items-center gap-1.5 text-left hover:bg-studio-surface/50 transition-colors duration-120"
-      >
-        <ChevronRight
-          className={`w-3 h-3 text-studio-text-faint transition-transform duration-120 ${closed ? '' : 'rotate-90'}`}
-        />
-        <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">
-          {title}
-        </span>
-      </button>
+      {/* A row rather than one big button: the reset is a second action, and
+          nesting a button inside a button is invalid. */}
+      <div className="group w-full border-b border-studio-border shrink-0 flex items-center hover:bg-studio-surface/50 transition-colors duration-120">
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={!closed}
+          className="flex-1 min-w-0 px-4 py-2 flex items-center gap-1.5 text-left"
+        >
+          <ChevronRight
+            className={`w-3 h-3 text-studio-text-faint transition-transform duration-120 ${closed ? '' : 'rotate-90'}`}
+          />
+          <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">
+            {title}
+          </span>
+        </button>
+        {onReset && (
+          <button
+            type="button"
+            onClick={onReset}
+            title={`Reset ${title.toLowerCase()}`}
+            aria-label={`Reset ${title.toLowerCase()}`}
+            className="mr-2 w-6 h-6 shrink-0 flex items-center justify-center rounded-studio-xs text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-studio-text hover:bg-studio-surface transition-all duration-120"
+          >
+            <RotateCcw className="w-3 h-3" />
+          </button>
+        )}
+      </div>
       {!closed && children}
     </>
   );
@@ -395,7 +423,13 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
   const anims = el.animations ?? [];
   return (
     <>
-      <Section title={hideHeader ? 'Motion' : 'Animation'}>
+      {/* Motion is where mess accumulates — presets append, so three clicks
+          leaves three stacked animations and the only way back was removing
+          each one. Undefined when there is nothing to clear. */}
+      <Section
+        title={hideHeader ? 'Motion' : 'Animation'}
+        onReset={anims.length > 0 ? () => update({ animations: [] }) : undefined}
+      >
       <div className="flex flex-col gap-2.5 px-4 py-3">
         {anims.length > 0 && (
           <div className="flex flex-col gap-2">
