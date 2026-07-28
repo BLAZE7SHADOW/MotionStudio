@@ -388,6 +388,44 @@ authored flat and shot-unaware). It gives a pre-shot project one shot spanning
 its length and touches no element's timing, so nothing renders differently
 after the upgrade — asserted directly in `tests/scenes.test.mjs`.
 
+### Beat detection: infer a grid, don't report the onsets
+
+Cutting to music is the point of the shot model, and the naive build is to
+detect onsets, draw a tick at each and snap to those. It is wrong. Onset
+detection is jittery — tens of milliseconds — and misses beats wherever the kick
+drops out, and **a jittery grid is worse than no grid**: a clip lands two frames
+off and the user cannot tell whether that was them or the tool.
+
+So peaks are only ever *evidence* for two numbers, **BPM and first-beat
+offset**, and the grid generated from them is perfectly regular. It is more
+accurate than the detections it came from, survives passages with no kick, and
+yields bars and sub-beats for free.
+
+**Everything is in seconds.** A beat is 14.06 frames at 128 BPM/30fps, so frames
+are computed at the moment of snapping and never stored. A grid stored in frames
+puts beat 32 two frames late, which looks fine in a five-second test and is
+broken in a real edit; `tests/beatDetect.test.mjs` asserts precisely that gap.
+
+`engines/audio/beatDetect.ts` is pure — samples in, numbers out — so the half
+holding all the judgement is tested against click tracks whose tempo we chose.
+`analyzeAudio.ts` is the Web Audio plumbing around it, using the same
+`OfflineAudioContext` route as `audioMix.ts` but sharing no code with it:
+mixing and measuring want different things, and coupling them means a change to
+one can break the other.
+
+Three things the tests forced, none of which were obvious:
+
+- **Only adjacent peaks are compared.** Comparing all pairs in a window looks
+  more thorough; at 160 BPM the two-beat gap *is* 80 BPM and outvoted the truth.
+- **Peaks must be true local maxima.** "First sample over the threshold, then
+  skip ahead" manufactures a peak every refractory period, so white noise came
+  back as a rock-solid tempo.
+- **The tempo is refined by fitting the grid back to the peaks.** The envelope
+  quantises peak positions, so a period that isn't a whole number of hops gives
+  alternating intervals — 158 and 162 for a 160 BPM track — and no amount of
+  binning recovers the truth. Phase coherence does, because a 1% tempo error
+  walks a whole beat away over a hundred peaks.
+
 ### One editor per project, across tabs
 
 Both persistence paths serialise the **whole** projects array: zustand's

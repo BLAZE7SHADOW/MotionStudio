@@ -347,6 +347,28 @@ to send one further back / bring one forward.
 
 ## 8. The timeline
 
+### Beats
+
+Add a music track and MotionStudio measures its tempo in the background, then
+marks the beats along the timeline — a brighter line every fourth beat, so you
+can count bars at a glance. This is how you cut in time with the music instead
+of guessing.
+
+The **♪ button** in the timeline header shows the tempo it found, and opens the
+controls:
+
+- **Show beats on the timeline** — turn the marks on or off.
+- **Tempo** — drag the number or click to type it.
+- **Offset** — where the first beat sits, in milliseconds. Nudge it if the marks
+  sit slightly ahead of or behind the music.
+- **Tap along** — click in time with the track for a few beats and it takes the
+  tempo from you. Often the fastest fix when the reading is wrong.
+
+Detection works best on music with a strong, steady kick — dance, pop, hip-hop.
+It's less reliable on ambient, orchestral, live-played music or speech, and when
+it isn't confident it says so and asks you to tap or type instead. A wrong tempo
+is always yours to correct; nothing is locked in.
+
 ### Shots
 
 A video is a sequence of moments, and the strip above the timeline is where you

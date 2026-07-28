@@ -36,6 +36,14 @@ export const RELEASES: Release[] = [
     title: 'Effects you can actually preview',
     changes: [
       {
+        kind: 'new',
+        text: 'Add a music track and MotionStudio works out its tempo, then marks the beats along the timeline — brighter lines every fourth beat so you can count bars at a glance. If it reads the tempo wrong you can type it, drag it, or just tap along in time.',
+      },
+      {
+        kind: 'fixed',
+        text: 'Some audio and video files could stop uploading entirely — no error, the file just never appeared. Anything slow to read now gets added anyway.',
+      },
+      {
         kind: 'fixed',
         text: 'Adding a second shot used to leave you on a black screen with no music, because the background and the soundtrack belonged to the first shot. Backgrounds and audio now play through the whole video. Any other element can be switched between "this shot only" and "the whole video" with the layers icon on its timeline row.',
       },

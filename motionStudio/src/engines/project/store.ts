@@ -13,7 +13,7 @@ import {
   rescaleForFps,
 } from './scenes';
 
-export type UpdateProjectInput = Partial<Pick<Project, 'name' | 'aspectRatio' | 'fps' | 'durationInFrames' | 'assets' | 'canvas' | 'scenes'>>;
+export type UpdateProjectInput = Partial<Pick<Project, 'name' | 'aspectRatio' | 'fps' | 'durationInFrames' | 'assets' | 'canvas' | 'scenes' | 'beatGrid'>>;
 
 interface ProjectStore {
   projects: Project[];

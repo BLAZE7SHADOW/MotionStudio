@@ -5,6 +5,71 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Beat detection, stage 1: find the tempo and show the grid
+
+The point of the shot model. Stage 2 snaps shots to this grid; stage 1 is
+finding it and putting it on screen.
+
+### Added
+- **`engines/audio/beatDetect.ts`** — pure: samples in, `{ bpm, offsetSec,
+  confidence }` out. No Web Audio, no DOM, so the half that contains all the
+  judgement is testable against a signal whose tempo we chose rather than
+  "it looked right on one song".
+  - **A grid is inferred, not reported.** Onsets are jittery and drop out; a
+    jittery grid is worse than none, because a clip landing two frames off is
+    indistinguishable from the user's own mistake. Peaks are only ever evidence
+    for a tempo and a phase, and what comes out is perfectly regular.
+  - **Everything is in seconds.** A beat is 14.06 frames at 128 BPM/30fps, so
+    frames appear once, at the moment of snapping. A grid stored in frames puts
+    beat 32 two frames late — a test asserts exactly that difference.
+  - Three findings from making the tests pass, each a comment in the file:
+    **only adjacent peaks** are compared (at 160 BPM the two-beat gap *is* 80 BPM
+    and reliably outvoted the truth); peaks are **true local maxima** (the naive
+    "first sample over the line, then skip" manufactures a peak every refractory
+    period, so noise read as a rock-solid tempo); and the tempo is **refined by
+    fitting the grid back to the peaks**, because the 5 ms envelope quantises
+    peak positions and no amount of binning recovers 160 from alternating 158/162.
+  - Confidence is the geometric mean of interval agreement and phase coherence,
+    so either being weak drags it down — and it is **surfaced, never used to
+    silently discard a result**.
+- **`engines/audio/analyzeAudio.ts`** — the browser half. Decodes, then renders
+  through a 150 Hz lowpass into an 8 kHz mono `OfflineAudioContext`, doing the
+  downmix, resample and filter in one pass off the main thread. Same approach as
+  `audioMix.ts`, deliberately sharing no code with it: mixing and measuring want
+  different things.
+- **A beat control in the timeline header** — enable, a scrubbable BPM, an
+  offset nudge, and **tap tempo**. Manual entry is a first-class answer, not a
+  fallback: detection is good on four-to-the-floor and poor on ambient,
+  orchestral or spoken audio, and someone who can hear the tempo should never be
+  stuck arguing with a number. A low-confidence reading says so in the panel.
+- **Beat ticks on the ruler**, bars brighter than beats, thinning to bars only
+  when beats would crowd. Walked in beat indices over seconds — stepping a
+  rounded frame interval would drift the grid away from the music it describes.
+
+### Changed
+- `Asset` gains `bpm` / `beatOffsetSec` / `beatConfidence`, cached so a file is
+  measured once. `Project` gains `beatGrid`, seeded from the first analysed
+  track and never overwritten afterwards — it may hold a tempo the user typed,
+  which outranks anything detected.
+- Analysis runs in the **background** on upload, patched in with
+  `history: false`, exactly as the S3 upload already does. A file must appear in
+  the library the moment it is dropped.
+- Audio duration now falls back to the decoded length. The decode is a more
+  reliable source than the `<audio>` metadata probe, which can stall — see the
+  entry below.
+
+### Verified
+- **19 assertions** in `tests/beatDetect.test.mjs` against synthetic click
+  tracks: 120/128/90/160 BPM read back correctly, a track starting at 0.3 s
+  reports that offset, 60 BPM folds to its double, and **white noise comes back
+  at 0.13 confidence rather than a confident wrong answer**. Silence, an empty
+  buffer and a zero sample rate all return nothing instead of throwing.
+- Live: generated a 20 s 120 BPM WAV, put it through the real upload path, and
+  got **120.00 BPM, 5 ms offset, confidence 1.0**. The ruler drew 4 ticks across
+  a 2-second shot, 343 px apart — exactly 15 frames.
+
+---
+
 ## [2026-07-28] — One unreadable file no longer freezes every upload
 
 ### Fixed

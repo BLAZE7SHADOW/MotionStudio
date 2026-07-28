@@ -20,6 +20,30 @@ export interface Asset {
   width?: number;               // natural pixel size (image / video)
   height?: number;
   durationInSeconds?: number;   // media length (video / audio)
+  /* Beat analysis (audio only), cached so a file is measured once. Absent
+     means "not analysed"; a present `bpm` of 0 means "analysed, no tempo
+     found" — a distinction worth keeping, because one is worth retrying. */
+  bpm?: number;
+  beatOffsetSec?: number;
+  beatConfidence?: number;
+}
+
+/**
+ * The beat grid a project snaps to.
+ *
+ * Seeded from the first analysed audio asset, then editable — which is why it
+ * lives on the project rather than on the asset. A user correcting the tempo is
+ * not making a claim about the file, and the next project using the same track
+ * should still start from what was detected.
+ *
+ * In **seconds**, always. Beats do not land on frames (at 128 BPM a beat is
+ * 14.06 frames at 30fps), so frames are computed at the moment of snapping and
+ * never stored — otherwise the error accumulates and the edit drifts.
+ */
+export interface BeatGrid {
+  bpm: number;
+  offsetSec: number;
+  enabled: boolean;
 }
 
 /* ── Animation ── */
@@ -252,6 +276,8 @@ export interface Project {
   /** Ordered, never empty. Optional only for projects saved before shots
       existed — `ensureScenes()` fills it before anything reads it. */
   scenes?: Scene[];
+  /** Absent until a track has been analysed or a tempo entered by hand. */
+  beatGrid?: BeatGrid;
   canvas: {
     elements: CanvasElement[];
   };

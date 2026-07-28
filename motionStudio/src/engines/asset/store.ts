@@ -1,6 +1,7 @@
 import { useProjectStore } from '../project/store';
 import type { Asset } from '../project/types';
 import { assetTypeFromFile, probeAsset } from './probe';
+import { analyzeAudioUrl } from '../audio/analyzeAudio';
 import { putBlob, deleteBlob } from './blobStore';
 import { createObjectUrl } from './objectUrls';
 import { uploadAssetToStorage, deleteAssetFromStorage } from '@/lib/storage';
@@ -40,9 +41,52 @@ export function useAssetEngine() {
     const current = useProjectStore.getState().getProject(project.id)?.assets ?? [];
     updateProject(project.id, { assets: [...current, ...created] });
 
+    const projectId = project.id;
+
+    /* Background: measure the tempo of any audio.
+       Deliberately not awaited alongside `probeAsset` above — decoding a track
+       takes a second or two, and the file must appear in the library the moment
+       it is dropped. Patched in when it lands, with `history: false` so undo
+       never steps back through an analysis the user didn't ask for. */
+    void Promise.all(
+      pairs
+        .filter(({ asset }) => asset.type === 'audio')
+        .map(async ({ asset }) => {
+          const result = await analyzeAudioUrl(asset.url);
+          if (!result) return;
+          const { beat, durationSec } = result;
+          const latest = useProjectStore.getState().getProject(projectId);
+          if (!latest) return;
+          updateProject(
+            projectId,
+            {
+              assets: latest.assets.map((a) =>
+                a.id === asset.id
+                  ? {
+                      ...a,
+                      // The decode is a more reliable length than the <audio>
+                      // metadata probe, which can stall and time out.
+                      durationInSeconds: a.durationInSeconds ?? durationSec,
+                      bpm: beat.bpm,
+                      beatOffsetSec: beat.offsetSec,
+                      beatConfidence: beat.confidence,
+                    }
+                  : a,
+              ),
+              /* Seed the project's grid from the first track that yields one,
+                 and never overwrite a grid already there — it may be a tempo
+                 the user typed, which outranks anything we detected. */
+              ...(beat.bpm > 0 && !latest.beatGrid
+                ? { beatGrid: { bpm: beat.bpm, offsetSec: beat.offsetSec, enabled: true } }
+                : null),
+            },
+            { history: false },
+          );
+        }),
+    );
+
     // Background: upload each file to S3 so Lambda can reach them.
     // Each upload patches its own asset with storageUrl when done — no undo entry.
-    const projectId = project.id;
     void Promise.all(
       pairs.map(async ({ asset, file }) => {
         // uploadAssetToStorage resolves the token itself. Reading it here via

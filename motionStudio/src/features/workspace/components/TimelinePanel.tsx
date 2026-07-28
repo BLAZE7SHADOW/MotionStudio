@@ -9,6 +9,7 @@ import TimelineRuler from './timeline/TimelineRuler';
 import TimelineClip from './timeline/TimelineClip';
 import ShotStrip from './timeline/ShotStrip';
 import SequenceTrack from './timeline/SequenceTrack';
+import BeatControl from './timeline/BeatControl';
 import { clipLabel } from './timeline/clipLabel';
 
 const TRACK_HEADER_W = 140;
@@ -145,6 +146,8 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
           <span className="ml-2 text-[11px] font-semibold text-studio-text-faint uppercase tracking-widest">
             Timeline
           </span>
+          <span className="w-px h-3.5 bg-studio-border-strong mx-2" />
+          <BeatControl project={project} />
         </div>
 
         <span className="text-[11px] font-mono text-studio-text-faint tabular-nums">
@@ -233,7 +236,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
           {trackWidth > 0 && (
             <>
               <div className="shrink-0">
-                <TimelineRuler scale={scale} fps={project.fps} height={RULER_H} />
+                <TimelineRuler scale={scale} fps={project.fps} height={RULER_H} grid={project.beatGrid} />
               </div>
 
               {/* scrollable clip rows */}
