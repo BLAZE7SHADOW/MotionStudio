@@ -21,7 +21,9 @@ interface TimelineClipProps {
   el: CanvasElement;
   scale: TimelineScale;
   selected: boolean;
-  totalFrames: number;
+  /** The span a clip may occupy — the open shot, not the whole video, so
+      dragging can't push an element out of the shot that owns it. */
+  bounds: { start: number; end: number };
   onSelect: () => void;
   onUpdate: (patch: { startFrame?: number; durationInFrames?: number; animations?: Animation[] }) => void;
 }
@@ -29,7 +31,7 @@ interface TimelineClipProps {
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
 export default function TimelineClip({
-  el, scale, selected, totalFrames, onSelect, onUpdate,
+  el, scale, selected, bounds, onSelect, onUpdate,
 }: TimelineClipProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const drag    = useRef<Drag | null>(null);
@@ -57,12 +59,12 @@ export default function TimelineClip({
     if (d.kind === 'clip') {
       const rightEdge = d.origStart + d.origDuration;
       if (d.mode === 'move') {
-        onUpdate({ startFrame: clamp(d.origStart + deltaFrames, 0, totalFrames - d.origDuration), durationInFrames: d.origDuration });
+        onUpdate({ startFrame: clamp(d.origStart + deltaFrames, bounds.start, bounds.end - d.origDuration), durationInFrames: d.origDuration });
       } else if (d.mode === 'trim-start') {
-        const start = clamp(d.origStart + deltaFrames, 0, rightEdge - MIN_CLIP_FRAMES);
+        const start = clamp(d.origStart + deltaFrames, bounds.start, rightEdge - MIN_CLIP_FRAMES);
         onUpdate({ startFrame: start, durationInFrames: rightEdge - start });
       } else {
-        onUpdate({ startFrame: d.origStart, durationInFrames: clamp(d.origDuration + deltaFrames, MIN_CLIP_FRAMES, totalFrames - d.origStart) });
+        onUpdate({ startFrame: d.origStart, durationInFrames: clamp(d.origDuration + deltaFrames, MIN_CLIP_FRAMES, bounds.end - d.origStart) });
       }
     } else {
       const clipDur = el.durationInFrames;

@@ -36,6 +36,10 @@ export const RELEASES: Release[] = [
     title: 'Effects you can actually preview',
     changes: [
       {
+        kind: 'new',
+        text: 'Build a video shot by shot. Add shot puts a new moment on the end, and you work on one at a time \u2014 the timeline shows only that shot, so twenty quick cuts never become twenty rows to scroll through. Sequence steps back to see the whole video, where you can drag a shot\u2019s edge to change how long it lasts. Double-click a shot to name it.',
+      },
+      {
         kind: 'fixed',
         text: 'Changing the frame rate used to silently change how long everything ran for — switch 30 to 60 and a three-second clip played for a second and a half. Every clip now keeps the length in seconds you gave it.',
       },

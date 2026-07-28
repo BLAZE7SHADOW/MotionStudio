@@ -95,21 +95,27 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
 
 ### A. The shot model
 
-- [~] **Scenes / "shots"** — their model is `timeline: { scenes: [...] }`,
+- [x] **Scenes / "shots"** — their model is `timeline: { scenes: [...] }`,
       sequential, `+ ADD SHOT` appends. Internally `scenes`, called "shots" in UI.
-      *(2026-07-28 — data model, ops and migration shipped in
-      `engines/project/scenes.ts`; no UI yet. We keep elements flat with
-      absolute frames + a `sceneId` rather than nesting, which left the entire
-      render path untouched. 45 assertions in `npm test`.)*
-- [ ] **Drill-in navigation** — `< SEQUENCE │ 1 2 │ + ADD SHOT` breadcrumb;
+      *(2026-07-28 — `engines/project/scenes.ts` + `ShotStrip`. We keep elements
+      flat with absolute frames + a `sceneId` rather than nesting, which left
+      the entire render path untouched.)*
+- [x] **Drill-in navigation** — `< SEQUENCE │ 1 2 │ + ADD SHOT` breadcrumb;
       double-click a shot to enter and edit it. This is the answer to timeline
       row explosion: a two-level timeline.
-- [ ] **Per-shot timeline** — the ruler is scoped to the shot
+      *(2026-07-28 — single click rather than double, since our sequence view is
+      a separate level rather than always-on. Double-click renames instead.)*
+- [x] **Per-shot timeline** — the ruler is scoped to the shot
       (`00:00.00 / 00:03.00`), not the whole video.
+      *(2026-07-28 — `TimelineScale.originFrame`. Ruler labels stay absolute so
+      you still know where you are in the whole video.)*
 - [ ] **Explicit scope split** — "Background & scene settings apply to all shots"
       vs "Effects apply to the selected shot, not all shots."
-- [ ] **Shared duration budget** — *"Couldn't add a shot for this video. Free up
+- [x] **Shared duration budget** — *"Couldn't add a shot for this video. Free up
       some duration first."*
+      *(2026-07-28 — adding extends the video instead, refused past 90s with the
+      same kind of message. Deliberate: subdividing would resize shots the user
+      had already set.)*
 
 > Their tour copy, verbatim: *"Here's the new shot, sitting right after the
 > first. It picks up where you left…"* and *"Double-click any shot to drill back
@@ -168,8 +174,8 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
 ### E. Onboarding
 
 - [x] Editor tour, restart tour, skip tour.
-- [ ] **Tour steps that make you act** — *"Give it a go — add a second shot."*
-      Ours only narrates.
+- [~] **Tour steps that make you act** — *"Give it a go — add a second shot."*
+      *(2026-07-28 — the new shots step does this; the other 14 still narrate.)*
 - [ ] **Contextual toasts at the moment of confusion**, with **DON'T SHOW AGAIN**.
       Note they needed one for the shot-scope rule — we will hit that too.
 - [x] Templates; use template; save as template.
@@ -278,4 +284,5 @@ Append a line whenever something above is ticked.
 | 2026-07-28 | C — one accent colour | Rule written at the token definition in `index.css`. Four decorative usages removed; the rest were already legitimate. |
 | 2026-07-28 | B — default-closed sections, section reset | Transform/Layer/Motion default closed. Reset built on Motion only, where it has one meaning. |
 | 2026-07-28 | F — multi-tab safety | `projectLock.ts`. Guard on `updateProject`/`undo`/`redo` + the cloud autosave. 12 headless tests pass. |
-| 2026-07-28 | A — shot model, stage 1 | `scenes.ts` + migration, invisible. Flat elements + `sceneId`, not nested — render path untouched. `npm test` added (57 assertions). Next: stage 2, the sequence bar + drill-in. |
+| 2026-07-28 | A — shot model, stage 1 | `scenes.ts` + migration, invisible. Flat elements + `sceneId`, not nested — render path untouched. `npm test` added (57 assertions). |
+| 2026-07-28 | A — shot model, stage 2 | `ShotStrip` + `SequenceTrack` + `TimelineScale.originFrame`. Section A now complete. 71 assertions. Next: the scope toast (E), then beat detection as its own plan. |

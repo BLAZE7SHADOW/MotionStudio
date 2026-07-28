@@ -23,6 +23,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 
 const TARGETS = [
   { test: 'scenes.test.mjs', src: 'src/engines/project/scenes.ts', bundle: 'scenes.bundle.js' },
+  { test: 'scale.test.mjs', src: 'src/engines/timeline/scale.ts', bundle: 'scale.bundle.js' },
   { test: 'projectLock.test.mjs', src: 'src/lib/projectLock.ts', bundle: 'lock.cjs.js' },
 ];
 

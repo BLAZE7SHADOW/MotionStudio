@@ -15,10 +15,15 @@ interface TimelineRulerProps {
 export default function TimelineRuler({ scale, fps, height }: TimelineRulerProps) {
   const interval = chooseTickIntervalFrames(scale, fps);
 
-  // build the list of frames that get a tick: 0, interval, 2·interval, …
+  /* Ticks are placed on absolute frames that are whole multiples of the
+     interval, not on offsets from the window's left edge — so a shot starting
+     at 3.5s still labels 4s, 5s, 6s rather than 3.5s, 4.5s. Labels stay
+     absolute too: knowing where you are in the whole video is the point. */
   const ticks: number[] = [];
   if (interval > 0) {
-    for (let f = 0; f <= scale.totalFrames; f += interval) {
+    const end = scale.originFrame + scale.totalFrames;
+    const first = Math.ceil(scale.originFrame / interval) * interval;
+    for (let f = first; f <= end; f += interval) {
       ticks.push(f);
     }
   }

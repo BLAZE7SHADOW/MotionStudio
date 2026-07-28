@@ -347,6 +347,27 @@ to send one further back / bring one forward.
 
 ## 8. The timeline
 
+### Shots
+
+A video is a sequence of moments, and the strip above the timeline is where you
+arrange them.
+
+- **Add shot** appends a new one and makes the video that much longer (up to the
+  90s maximum — past that it tells you to shorten a shot first).
+- **Click a shot** to work on it. The timeline below then shows *only* that
+  shot's clips, and the ruler covers only its span — so a video made of twenty
+  quick cuts doesn't become twenty rows to scroll through.
+- **Sequence** steps back to the whole video, drawn as its shots end to end.
+  From there, **drag a shot's right edge** to change how long it lasts;
+  everything after it moves along to make room.
+- **Double-click a shot** to rename it. Leave the name empty and it goes back to
+  "Shot 1", "Shot 2" and so on by position.
+- **Hover a shot and click ×** to delete it — this removes everything inside it
+  too, and the video gets shorter. The last remaining shot can't be deleted.
+- Anything you add lands in the shot you're looking at, and spans it.
+- Existing projects are one shot covering the whole video, so nothing you have
+  already made looks or behaves differently.
+
 The timeline controls **time** and **layers**.
 
 - **Ruler** (top) — second markers; spacing adapts as the video gets longer.

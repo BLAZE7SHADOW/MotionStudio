@@ -4,8 +4,11 @@ import { useEditorStore } from '@/engines/editor';
 import { useCanvasEngine } from '@/engines/canvas';
 import { createScale, frameToX, xToFrame, formatFrameLabel } from '@/engines/timeline';
 import type { Project } from '@/engines/project';
+import { scenesOf, sceneSpan, sceneAtFrame } from '@/engines/project';
 import TimelineRuler from './timeline/TimelineRuler';
 import TimelineClip from './timeline/TimelineClip';
+import ShotStrip from './timeline/ShotStrip';
+import SequenceTrack from './timeline/SequenceTrack';
 import { clipLabel } from './timeline/clipLabel';
 
 const TRACK_HEADER_W = 140;
@@ -24,9 +27,50 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
   const isPlaying          = useEditorStore((s) => s.isPlaying);
   const setIsPlaying       = useEditorStore((s) => s.setIsPlaying);
   const { updateElement, removeElement } = useCanvasEngine();
+  const activeSceneId = useEditorStore((s) => s.activeSceneId);
+  const setActiveScene = useEditorStore((s) => s.setActiveScene);
 
-  /* top layer (highest zIndex) shown as the top row — Figma/CapCut convention */
-  const ordered = [...project.canvas.elements].sort((a, b) => b.zIndex - a.zIndex);
+  const scenes = scenesOf(project);
+  /* The shot being edited, if it still exists — deleting the open shot leaves
+     a dangling id, and falling back to the overview is friendlier than an
+     empty track. */
+  const activeScene = scenes.find((s) => s.id === activeSceneId) ?? null;
+  const viewWindow = activeScene
+    ? sceneSpan(scenes, activeScene.id)
+    : { start: 0, end: project.durationInFrames };
+
+  /* top layer (highest zIndex) shown as the top row — Figma/CapCut convention.
+     Scoped to the open shot, which is the whole point of drilling in: sixteen
+     beat cuts stop being sixteen permanent rows. */
+  const ordered = activeScene
+    ? [...project.canvas.elements]
+        .filter((el) => el.sceneId === activeScene.id)
+        .sort((a, b) => b.zIndex - a.zIndex)
+    // The sequence view shows shots, not elements, so it has no element rows
+    // and therefore no header labels either.
+    : [];
+
+  /* Open a shot on arrival rather than the sequence overview.
+     Every migrated project has exactly one shot, so this makes the editor look
+     and behave precisely as it did before shots existed; the overview becomes
+     something you choose once there is a sequence worth seeing. Guarded by a
+     ref so choosing "Sequence" isn't undone on the next render. */
+  const landed = useRef(false);
+  useEffect(() => {
+    if (landed.current || scenes.length === 0) return;
+    landed.current = true;
+    setActiveScene(sceneAtFrame(scenes, currentFrame) ?? scenes[0].id);
+  }, [scenes, currentFrame, setActiveScene]);
+
+  /* Selecting an element that lives in another shot moves the timeline to it.
+     Without this, clicking something on the canvas could select a clip the
+     timeline refuses to show — the selection and the view disagreeing about
+     what you are working on. */
+  useEffect(() => {
+    if (!selectedElementId) return;
+    const el = project.canvas.elements.find((e) => e.id === selectedElementId);
+    if (el?.sceneId && el.sceneId !== activeSceneId) setActiveScene(el.sceneId);
+  }, [selectedElementId, project.canvas.elements, activeSceneId, setActiveScene]);
 
   /* ── measure the track body → trackWidth ── */
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -53,7 +97,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
     return () => ro.disconnect();
   }, []);
 
-  const scale = createScale(trackWidth, project.durationInFrames);
+  const scale = createScale(trackWidth, viewWindow.end - viewWindow.start, viewWindow.start);
   const playheadX = frameToX(scale, currentFrame);
 
   /* ── scrubbing: pixel under the pointer → frame ── */
@@ -91,8 +135,8 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
         <div className="flex items-center gap-0.5">
           <button
             type="button"
-            title="Jump to start"
-            onClick={() => setCurrentFrame(0)}
+            title={activeScene ? 'Jump to the start of this shot' : 'Jump to start'}
+            onClick={() => setCurrentFrame(viewWindow.start)}
             className="w-7 h-7 flex items-center justify-center rounded-studio-sm text-studio-text-muted hover:text-studio-text hover:bg-studio-surface transition-colors duration-120"
           >
             <SkipBack className="w-3.5 h-3.5" />
@@ -114,6 +158,8 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
           {formatFrameLabel(currentFrame, project.fps)} · {currentFrame}/{project.durationInFrames} f
         </span>
       </div>
+
+      <ShotStrip project={project} />
 
       {/* Body: headers column + track area */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -185,12 +231,16 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                 onScroll={() => syncScroll('body')}
                 className="flex-1 overflow-y-auto overflow-x-hidden"
               >
-                {ordered.length === 0 ? (
+                {!activeScene ? (
+                  /* Sequence view: the video as its shots. Element rows would
+                     be meaningless here — they belong to individual shots. */
+                  <SequenceTrack project={project} scale={scale} height={TRACK_ROW_H + 12} />
+                ) : ordered.length === 0 ? (
                   <div
                     className="flex items-center justify-center text-[11px] text-studio-text-faint select-none"
                     style={{ height: TRACK_ROW_H * 2 }}
                   >
-                    Add an element to see clips here
+                    This shot is empty — add something from the toolbar
                   </div>
                 ) : (
                   ordered.map((el) => (
@@ -203,7 +253,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                         el={el}
                         scale={scale}
                         selected={selectedElementId === el.id}
-                        totalFrames={project.durationInFrames}
+                        bounds={viewWindow}
                         onSelect={() => setSelectedElement(el.id)}
                         onUpdate={(patch) => updateElement(el.id, patch)}
                       />

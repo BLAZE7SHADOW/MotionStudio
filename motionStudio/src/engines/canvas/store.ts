@@ -1,6 +1,7 @@
 import { useProjectStore } from '../project/store';
+import { useEditorStore } from '../editor/store';
 import { getCompositionDimensions } from '../project/dimensions';
-import { sceneAtFrame, scenesOf } from '../project/scenes';
+import { sceneAtFrame, sceneSpan, scenesOf } from '../project/scenes';
 import type { CanvasElement, TextElement, ImageElement, VideoElement, AudioElement, ShaderElement, ShaderPreset, BlockElement, BlockPreset } from './types';
 import type { AddTextInput } from './types';
 import { getBlock } from '@/content/blocks/registry';
@@ -23,17 +24,36 @@ export function useCanvasEngine() {
     s.projects.find((p) => p.id === s.activeProjectId) ?? null
   );
   const updateProject = useProjectStore((s) => s.updateProject);
+  const activeSceneId = useEditorStore((s) => s.activeSceneId);
+  const currentFrame  = useEditorStore((s) => s.currentFrame);
   const elements = project?.canvas.elements ?? [];
 
-  /* Every new element is stamped with the shot covering its start frame.
-     Doing it here rather than letting `ensureScenes` adopt orphans on the next
-     load means an element is never briefly shot-less — which would make it
-     invisible to a shot-scoped timeline in the session that created it. */
-  const inShot = <T extends CanvasElement>(el: T): T =>
-    ({ ...el, sceneId: sceneAtFrame(scenesOf(project!), el.startFrame) });
+  /**
+   * The shot a new element belongs to: the one you are looking at.
+   *
+   * Anything added while shot 3 is open has to land in shot 3 — spanning it,
+   * not the whole video. Falling back to the shot at the playhead keeps this
+   * sensible from the sequence overview, where no single shot is open.
+   *
+   * Stamping at creation rather than letting `ensureScenes` adopt orphans on
+   * the next load matters: an element that is briefly shot-less is invisible
+   * to a shot-scoped timeline in the session that created it.
+   */
+  function targetShot(p: NonNullable<typeof project>) {
+    const scenes = scenesOf(p);
+    const id = activeSceneId ?? sceneAtFrame(scenes, currentFrame);
+    const scene = scenes.find((s) => s.id === id) ?? scenes[0];
+    if (!scene) return { id: undefined, start: 0, length: p.durationInFrames };
+    return { id: scene.id, ...sceneSpanLength(scenes, scene.id) };
+  }
+  const sceneSpanLength = (scenes: ReturnType<typeof scenesOf>, id: string) => {
+    const { start, end } = sceneSpan(scenes, id);
+    return { start, length: end - start };
+  };
 
   function addText(input: AddTextInput = {}): CanvasElement | null {
     if (!project) return null;
+    const shot = targetShot(project);
 
     /* default: a centered text box in composition space */
     const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
@@ -50,8 +70,8 @@ export function useCanvasEngine() {
       rotation:         0,
       opacity:          1,
       zIndex:           elements.length,
-      startFrame:       0,
-      durationInFrames: project.durationInFrames,
+      startFrame:       shot.start,
+      durationInFrames: shot.length,
       content:          input.content    ?? 'Text',
       fontSize:         input.fontSize   ?? 96,
       fontFamily:       input.fontFamily ?? 'Inter, sans-serif',
@@ -59,7 +79,7 @@ export function useCanvasEngine() {
     };
 
     updateProject(project.id, {
-      canvas: { elements: [...elements, inShot(element)] },
+      canvas: { elements: [...elements, { ...element, sceneId: shot.id }] },
     });
 
     return element;
@@ -67,6 +87,7 @@ export function useCanvasEngine() {
 
   function addImage(assetId: string, at?: { x: number; y: number }): CanvasElement | null {
     if (!project) return null;
+    const shot = targetShot(project);
     const asset = project.assets.find((a) => a.id === assetId);
     if (!asset || asset.type !== 'image') return null;
    // aspect ratio preserving fit (also called contain)
@@ -103,17 +124,18 @@ export function useCanvasEngine() {
       rotation:         0,
       opacity:          1,
       zIndex:           elements.length,
-      startFrame:       0,
-      durationInFrames: project.durationInFrames,
+      startFrame:       shot.start,
+      durationInFrames: shot.length,
       objectFit:        'cover',
     };
 
-    updateProject(project.id, { canvas: { elements: [...elements, inShot(element)] } });
+    updateProject(project.id, { canvas: { elements: [...elements, { ...element, sceneId: shot.id }] } });
     return element;
   }
 
   function addVideo(assetId: string, at?: { x: number; y: number }): CanvasElement | null {
     if (!project) return null;
+    const shot = targetShot(project);
     const asset = project.assets.find((a) => a.id === assetId);
     if (!asset || asset.type !== 'video') return null;
 
@@ -127,8 +149,8 @@ export function useCanvasEngine() {
     /* the clip can't be longer than the source video */
     const sourceFrames = asset.durationInSeconds
       ? Math.round(asset.durationInSeconds * project.fps)
-      : project.durationInFrames;
-    const durationInFrames = Math.min(project.durationInFrames, sourceFrames);
+      : shot.length;
+    const durationInFrames = Math.min(shot.length, sourceFrames);
 
     const element: VideoElement = {
       id:               crypto.randomUUID(),
@@ -141,24 +163,25 @@ export function useCanvasEngine() {
       rotation:         0,
       opacity:          1,
       zIndex:           elements.length,
-      startFrame:       0,
+      startFrame:       shot.start,
       durationInFrames,
       objectFit:        'cover',
     };
 
-    updateProject(project.id, { canvas: { elements: [...elements, inShot(element)] } });
+    updateProject(project.id, { canvas: { elements: [...elements, { ...element, sceneId: shot.id }] } });
     return element;
   }
 
   function addAudio(assetId: string): CanvasElement | null {
     if (!project) return null;
+    const shot = targetShot(project);
     const asset = project.assets.find((a) => a.id === assetId);
     if (!asset || asset.type !== 'audio') return null;
 
     const sourceFrames = asset.durationInSeconds
       ? Math.round(asset.durationInSeconds * project.fps)
-      : project.durationInFrames;
-    const durationInFrames = Math.min(project.durationInFrames, sourceFrames);
+      : shot.length;
+    const durationInFrames = Math.min(shot.length, sourceFrames);
 
     /* audio has no canvas presence — spatial fields are zero */
     const element: AudioElement = {
@@ -168,12 +191,12 @@ export function useCanvasEngine() {
       x: 0, y: 0, width: 0, height: 0,
       rotation: 0, opacity: 1,
       zIndex:           elements.length,
-      startFrame:       0,
+      startFrame:       shot.start,
       durationInFrames,
       volume:           1,
     };
 
-    updateProject(project.id, { canvas: { elements: [...elements, inShot(element)] } });
+    updateProject(project.id, { canvas: { elements: [...elements, { ...element, sceneId: shot.id }] } });
     return element;
   }
 
@@ -187,6 +210,7 @@ export function useCanvasEngine() {
    */
   function addShader(preset: ShaderPreset): CanvasElement | null {
     if (!project) return null;
+    const shot = targetShot(project);
     const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
     const shifted = elements.map((el) => ({ ...el, zIndex: el.zIndex + 1 }));
 
@@ -198,11 +222,11 @@ export function useCanvasEngine() {
       rotation:         0,
       opacity:          1,
       zIndex:           0,
-      startFrame:       0,
-      durationInFrames: project.durationInFrames,
+      startFrame:       shot.start,
+      durationInFrames: shot.length,
     };
 
-    updateProject(project.id, { canvas: { elements: [...shifted, inShot(element)] } });
+    updateProject(project.id, { canvas: { elements: [...shifted, { ...element, sceneId: shot.id }] } });
     return element;
   }
 
@@ -216,6 +240,7 @@ export function useCanvasEngine() {
    */
   function addBlock(preset: BlockPreset): CanvasElement | null {
     if (!project) return null;
+    const shot = targetShot(project);
     const def = getBlock(preset);
     const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
     const w = Math.min(def.defaultSize.width, compW);
@@ -233,11 +258,11 @@ export function useCanvasEngine() {
       rotation:         0,
       opacity:          1,
       zIndex:           elements.length,
-      startFrame:       0,
+      startFrame:       shot.start,
       durationInFrames: Math.max(def.naturalLength, project.durationInFrames),
     };
 
-    updateProject(project.id, { canvas: { elements: [...elements, inShot(element)] } });
+    updateProject(project.id, { canvas: { elements: [...elements, { ...element, sceneId: shot.id }] } });
     return element;
   }
 

@@ -11,29 +11,43 @@
 export interface TimelineScale {
   /** total drawable width of the track area, in pixels */
   trackWidth: number;
-  /** total length of the composition, in frames */
+  /** length of the visible window, in frames */
   totalFrames: number;
+  /**
+   * Absolute frame drawn at x = 0.
+   *
+   * Zero when showing the whole video. When drilled into a shot it is that
+   * shot's start, which is what lets the timeline show one shot at full width
+   * while every frame number in the data stays absolute. Putting the window
+   * here rather than subtracting at each call site means the ruler, the clips
+   * and the playhead all scope themselves for free.
+   */
+  originFrame: number;
   /** how many screen pixels one frame occupies */
   pxPerFrame: number;
 }
 
-/** Build a scale from the measured track width and the composition length. */
-export function createScale(trackWidth: number, totalFrames: number): TimelineScale {
+/** Build a scale from the measured track width and the window to show. */
+export function createScale(
+  trackWidth: number,
+  totalFrames: number,
+  originFrame = 0,
+): TimelineScale {
   // guard against divide-by-zero before the composition/DOM is ready
   const pxPerFrame = totalFrames > 0 ? trackWidth / totalFrames : 0;
-  return { trackWidth, totalFrames, pxPerFrame };
+  return { trackWidth, totalFrames, originFrame, pxPerFrame };
 }
 
-/** frame → x pixel (left edge). */
+/** absolute frame → x pixel (left edge). */
 export function frameToX(scale: TimelineScale, frame: number): number {
-  return frame * scale.pxPerFrame;
+  return (frame - scale.originFrame) * scale.pxPerFrame;
 }
 
-/** x pixel → frame, clamped to a valid frame in the composition. */
+/** x pixel → absolute frame, clamped to the visible window. */
 export function xToFrame(scale: TimelineScale, x: number): number {
-  if (scale.pxPerFrame === 0) return 0;
-  const frame = Math.round(x / scale.pxPerFrame);
-  return Math.min(scale.totalFrames, Math.max(0, frame));
+  if (scale.pxPerFrame === 0) return scale.originFrame;
+  const frame = scale.originFrame + Math.round(x / scale.pxPerFrame);
+  return Math.min(scale.originFrame + scale.totalFrames, Math.max(scale.originFrame, frame));
 }
 
 /** a duration in frames → a width in pixels (for drawing a clip bar). */

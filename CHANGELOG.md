@@ -5,6 +5,61 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — The shot model, stage 2: the sequence bar and drill-in
+
+The visible half. A video is now a sequence of shots you can add, open, rename,
+resize and delete — and the timeline shows one shot at a time, which is what
+stops sixteen beat cuts becoming sixteen permanent rows.
+
+### Added
+- **`timeline/ShotStrip.tsx`** — the breadcrumb above the timeline:
+  `‹ Sequence │ 1 2 3 │ + Add shot`. Click a chip to open a shot, double-click
+  to rename, hover for the ×. The × never appears on the last remaining shot,
+  because a project with no shots has nowhere to put the next element.
+- **`timeline/SequenceTrack.tsx`** — the whole video drawn as its shots,
+  proportional to duration with a `MIN_BLOCK_PX` floor so a half-second beat cut
+  stays clickable. Drag a block's trailing edge to change its length.
+  - Trailing edge only: a leading edge would have to decide whether it moves
+    this shot or the one before it, and either answer surprises half the people
+    who drag it.
+- `useEditorStore` gained `activeSceneId` — session state, not project state.
+  Which shot you were last looking at is not a property of the video, and
+  persisting it would put two tabs in a fight over it.
+- A tour step for the strip, written to make the user act rather than narrate:
+  *"Add shot puts a new one on the end — go on, try it."*
+
+### Changed
+- **`TimelineScale` gained an `originFrame`** — the absolute frame drawn at
+  x = 0. Putting the window in the coordinate system rather than subtracting at
+  each call site means the ruler, the clips and the playhead all scope
+  themselves for free, and every frame number in the data stays absolute.
+  - `TimelineRuler` places ticks on absolute multiples of the interval, so a
+    shot starting at 3.5s still labels 4s, 5s, 6s rather than 3.5s, 4.5s.
+    Labels stay absolute: knowing where you are in the whole video is the point.
+- `TimelineClip` takes `bounds` instead of `totalFrames`, so dragging a clip
+  can't push it out of the shot that owns it — invariant 3, enforced at the one
+  place a user can violate it.
+- `useCanvasEngine` places new elements in the **open** shot, spanning it, rather
+  than at frame 0 spanning the video. Video and audio clips are capped by the
+  shot's length rather than the project's.
+- The timeline **opens a shot on arrival** rather than the sequence overview.
+  Every migrated project has exactly one shot, so the editor looks and behaves
+  precisely as it did before; the overview becomes something you choose once
+  there is a sequence worth seeing.
+- Selecting an element that lives in another shot moves the timeline to it —
+  otherwise the selection and the view could disagree about what you are
+  working on.
+- "Jump to start" means the start of the shot you are in.
+
+### Verified
+- `npm test` — now 71 assertions across three modules. New: **14 on the windowed
+  scale**, since the ruler, every clip and the playhead all go through
+  `frameToX`/`xToFrame` and the window arithmetic is what a shot-scoped timeline
+  rests on. Covers round-tripping to absolute frames, clamping to both edges of
+  the window, and widths staying independent of the origin.
+
+---
+
 ## [2026-07-28] — The shot model, stage 1: data model and migration
 
 Groundwork for the shot/sequence timeline. Ships **invisibly** — a migrated

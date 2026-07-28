@@ -115,6 +115,16 @@ const ALL_STEPS: DriveStep[] = [
     },
   },
   {
+    element: '[data-tour="shots"]',
+    popover: {
+      title: 'Build it shot by shot',
+      description:
+        'A video is a sequence of moments, and this is where you arrange them. <strong>Add shot</strong> puts a new one on the end — go on, try it. Click between them to work on one at a time, and the timeline below shows only that shot, so twenty quick cuts never become twenty rows to scroll. <strong>Sequence</strong> steps back to see the whole thing.',
+      side: 'top',
+      align: 'start',
+    },
+  },
+  {
     element: '[data-tour="timeline"]',
     popover: {
       title: 'When things happen',
