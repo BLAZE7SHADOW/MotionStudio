@@ -100,6 +100,30 @@ export function isListEffect(effect: TextEffect | undefined): boolean {
   return !!effect && (LIST_TEXT_EFFECTS as readonly string[]).includes(effect);
 }
 
+/** Effects that count between two numbers rather than swapping two strings. */
+export const NUMBER_TEXT_EFFECTS = ['rolling-number', 'number-wheel'] as const;
+
+export function isNumberEffect(effect: TextEffect | undefined): boolean {
+  return !!effect && (NUMBER_TEXT_EFFECTS as readonly string[]).includes(effect);
+}
+
+/**
+ * The number a numeric effect will actually display for a given string, or
+ * `null` if there is no number in it at all.
+ *
+ * Shared deliberately: the renderer needs a value it can always draw, and the
+ * Properties panel needs to warn about exactly the cases the renderer will
+ * quietly turn into 0. Two separate implementations would drift, and the panel
+ * would end up reassuring the user about a frame that says something else.
+ * Symbols and separators are stripped, so "$1,200" reads as 1200.
+ */
+export function parseEffectNumber(raw: string): number | null {
+  const cleaned = raw.replace(/[^\d.-]/g, '');
+  if (cleaned === '') return null;
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : null;
+}
+
 export type TextElement = BaseElement & {
   type: 'text';
   content: string;

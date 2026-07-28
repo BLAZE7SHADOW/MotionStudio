@@ -9,7 +9,8 @@ export type {
 } from './types';
 export {
   TEXT_EFFECTS, SHADER_PRESETS, BLOCK_PRESETS,
-  LIST_TEXT_EFFECTS, TWO_VALUE_TEXT_EFFECTS, isTwoValueEffect, isListEffect,
+  LIST_TEXT_EFFECTS, TWO_VALUE_TEXT_EFFECTS, NUMBER_TEXT_EFFECTS,
+  isTwoValueEffect, isListEffect, isNumberEffect, parseEffectNumber,
 } from './types';
 export type { UpdateProjectInput } from './store';
 export { saveProject, loadProjects, deleteCloudProject } from './cloudSync';

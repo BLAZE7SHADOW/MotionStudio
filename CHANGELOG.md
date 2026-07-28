@@ -5,6 +5,35 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Number effects stop silently eating your text
+
+### Fixed
+- **Applying a number effect to ordinary text replaced it with `0`, with no
+  warning.** `Rolling Number` and `Number Wheel` count between two numbers, so
+  the renderer strips non-digits and falls back to `0` rather than drawing NaN —
+  correct at render time, but it meant selecting "Launching soon" and picking
+  Rolling Number silently turned the canvas into a static zero. The panel did
+  warn, but only under the *To* field: below the problem, and only after the
+  user had already lost the text on screen.
+  - The Content field now warns as soon as the content isn't numeric, quoting
+    what it can't show and saying it will render as `0`.
+  - The labels become **Count from (number)** / **Count to (number)** for
+    numeric effects, so the fields read as numeric slots rather than prose.
+  - The original text is **not** overwritten, so switching to another effect
+    brings it straight back — worth saying in the warning, since the canvas
+    suggests otherwise.
+- **A literal `"0"` was treated as invalid.** The old `Number(...) || 0` can't
+  tell zero from garbage. The shared `parseEffectNumber` returns `null` only
+  when there is genuinely no number present, so a counter starting at 0 no
+  longer looks like a mistake.
+
+### Changed
+- **`parseEffectNumber` is shared between the renderer and the Properties
+  panel** (`engines/project/types.ts`), along with `isNumberEffect` and
+  `NUMBER_TEXT_EFFECTS`. Two implementations of "is this a number" would drift,
+  and the panel would end up reassuring the user about a frame that says
+  something else.
+
 ## [2026-07-28] — Every text effect previews, and says what it does
 
 ### Fixed

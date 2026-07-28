@@ -5,7 +5,7 @@ import { useCanvasEngine } from '@/engines/canvas';
 import { ANIMATION_PRESETS, defaultAnimationFor } from '@/engines/animation';
 import type { TextElement, AudioElement, ShaderElement, BlockElement, BaseElement, ElementPatch } from '@/engines/canvas';
 import type { Animation, AnimationProperty, AnimationEasing, TextEffect, ShaderPreset } from '@/engines/project';
-import { isTwoValueEffect, isListEffect } from '@/engines/project';
+import { isTwoValueEffect, isListEffect, isNumberEffect, parseEffectNumber } from '@/engines/project';
 import { getBlock } from '@/content/blocks/registry';
 import { Input } from '@/components/ui/input';
 import ShaderPreview from './ShaderPreview';
@@ -484,7 +484,11 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
       <div className="flex flex-col gap-3 px-4 py-3">
         <div className="flex flex-col gap-1.5">
           <span className="text-[11px] text-studio-text-faint">
-            {isTwoValueEffect(el.textEffect) ? 'Content (from)' : 'Content'}
+            {isNumberEffect(el.textEffect)
+              ? 'Count from (number)'
+              : isTwoValueEffect(el.textEffect)
+                ? 'Content (from)'
+                : 'Content'}
           </span>
           <textarea
             value={el.content}
@@ -497,22 +501,39 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
               This effect cycles through your lines — put one value per line.
             </p>
           )}
+
+          {/* A counter can't display words, and the renderer falls back to 0
+              rather than drawing NaN — so applying one to prose silently
+              replaces it with a zero. Say so where the text is, not further
+              down the panel where the damage is already invisible. */}
+          {isNumberEffect(el.textEffect) && parseEffectNumber(el.content) === null && (
+            <p className="text-[10px] text-amber-300/90 leading-relaxed">
+              This effect counts between two numbers, so it can’t show
+              “{el.content.trim().split('\n')[0].slice(0, 24) || 'this text'}” —
+              it will render as <strong className="font-medium">0</strong>. Enter
+              a number here, or pick a different effect to get your text back
+              (it’s kept either way).
+            </p>
+          )}
         </div>
 
         {/* Two-value effects animate content → contentTo */}
         {isTwoValueEffect(el.textEffect) && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-[11px] text-studio-text-faint">Content (to)</span>
+            <span className="text-[11px] text-studio-text-faint">
+              {isNumberEffect(el.textEffect) ? 'Count to (number)' : 'Content (to)'}
+            </span>
             <Input
               value={el.contentTo ?? ''}
               placeholder={el.textEffect === 'rolling-number' || el.textEffect === 'number-wheel' ? '10000' : 'The value it changes to…'}
               onChange={(e) => update({ contentTo: e.target.value || undefined })}
               className="h-7 text-[12px] bg-studio-surface border-studio-border text-studio-text rounded-studio-sm"
             />
-            {(el.textEffect === 'rolling-number' || el.textEffect === 'number-wheel') && (
+            {isNumberEffect(el.textEffect) && (
               <p className="text-[10px] text-studio-text-faint leading-relaxed">
-                Counts from Content to this value. Numbers only — symbols are stripped.
-                Use Slot Machine Roll for values like “$99”.
+                Numbers only — symbols and separators are stripped, so “$1,200”
+                counts as 1200. Use <strong className="font-medium">Slot Machine
+                Roll</strong> if you need the “$” on screen.
               </p>
             )}
           </div>

@@ -257,6 +257,14 @@ shows you the shape they need: a **list** effect reads one item per line of the
 text box, and a **two-value** effect animates from the text box to the **To**
 field beneath it.
 
+**Number effects (Rolling Number, Number Wheel) count between two numbers**, so
+they can't display words. The two fields become **Count from** and **Count to**,
+and if what's in them isn't a number the panel says so and tells you it will
+render as `0` — rather than letting you find out on the canvas. Symbols and
+separators are stripped, so `$1,200` counts as 1200; if you need the `$` visible
+on screen, use **Slot Machine Roll** instead. Your original text is never
+overwritten — switch to a different effect and it comes straight back.
+
 Same idea as the shader preview in §7b.
 
 Controls:

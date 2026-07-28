@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { useCurrentFrame, useVideoConfig } from 'remotion';
 import type { TextElement } from '../../../project/types';
+import { parseEffectNumber } from '../../../project/types';
 import { textElementStyle, elementBoxStyle } from '../../style';
 import {
   Effects, SwapEffects, FromToEffects, NumberEffects,
@@ -81,9 +82,10 @@ export default function TextRenderer({ el }: { el: TextElement }) {
   const NumberComponent = NumberEffects[el.textEffect as keyof typeof NumberEffects];
   if (NumberComponent) {
     // Non-numeric text would render NaN — fall back to 0 so a mistyped value
-    // shows a harmless counter instead of breaking the frame.
-    const from = Number(el.content.replace(/[^\d.-]/g, '')) || 0;
-    const target = Number(to.replace(/[^\d.-]/g, '')) || 0;
+    // shows a harmless counter instead of breaking the frame. The Properties
+    // panel warns about exactly these cases using the same parser.
+    const from = parseEffectNumber(el.content) ?? 0;
+    const target = parseEffectNumber(to) ?? 0;
     return (
       <div style={boxStyle}>
         <Suspense fallback={null}>
