@@ -5,6 +5,26 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — One unreadable file no longer freezes every upload
+
+### Fixed
+- **`probeAsset` could hang forever, and took the whole upload with it.** Each
+  probe resolved on `load`/`loadedmetadata` *or* `error`, which looks exhaustive
+  and isn't: a media element can reach `stalled` with `readyState: 0` and fire
+  neither. `uploadFiles` awaits each probe in turn, so a single such file froze
+  every upload permanently — no error, no console message, the file simply never
+  appeared in the library.
+  - Found while feeding a generated WAV through the real upload path. The file
+    was perfectly valid — **Web Audio decoded it without complaint** — while the
+    `<audio>` element sat at `networkState: 2` indefinitely. So "the file must be
+    broken" is not a safe thing to hang on.
+  - Every probe now races a 5s timeout and resolves empty. Metadata is an
+    optimisation — it seeds an element's initial size and clip length, both of
+    which have sane fallbacks — so adding the asset without it beats waiting
+    forever for a nicety.
+
+---
+
 ## [2026-07-28] — Elements can span the whole video
 
 Found by opening the app and adding a shot. The shot model was wrong in a way

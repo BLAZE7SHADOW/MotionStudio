@@ -44,9 +44,35 @@ function probeAudio(url: string): Promise<ProbedMeta> {
   });
 }
 
+/**
+ * How long to wait for metadata before giving up on it.
+ *
+ * Every probe above resolves on success *or* error — which looks exhaustive
+ * and isn't. A media element can reach `stalled` with `readyState: 0` and fire
+ * neither, and then the promise never settles at all. Because `uploadFiles`
+ * awaits each probe in turn, one such file froze every upload permanently: no
+ * error, no console message, the file simply never appeared in the library.
+ *
+ * Observed with a perfectly valid WAV that Web Audio decoded without complaint,
+ * so "the file is broken" is not a safe assumption to hang on.
+ */
+const PROBE_TIMEOUT_MS = 5000;
+
+/**
+ * Metadata is an optimisation, not a requirement: it seeds an element's initial
+ * size and clip length, and both have sane fallbacks. Timing out and adding the
+ * asset anyway is strictly better than waiting forever for a nicety.
+ */
+function withTimeout(probe: Promise<ProbedMeta>): Promise<ProbedMeta> {
+  return Promise.race([
+    probe,
+    new Promise<ProbedMeta>((resolve) => setTimeout(() => resolve({}), PROBE_TIMEOUT_MS)),
+  ]);
+}
+
 /** read natural size / duration from a media URL before we store the asset */
 export function probeAsset(type: AssetType, url: string): Promise<ProbedMeta> {
-  if (type === 'image') return probeImage(url);
-  if (type === 'video') return probeVideo(url);
-  return probeAudio(url);
+  if (type === 'image') return withTimeout(probeImage(url));
+  if (type === 'video') return withTimeout(probeVideo(url));
+  return withTimeout(probeAudio(url));
 }
