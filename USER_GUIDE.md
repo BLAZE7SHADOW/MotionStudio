@@ -402,6 +402,12 @@ arrange them.
   with it.
 - **Double-click a shot** to rename it. Leave the name empty and it goes back to
   "Shot 1", "Shot 2" and so on by position.
+- **Transitions**: with a shot open, the control in the strip sets how that shot
+  *arrives* — **Cut** (nothing), **Fade**, **Zoom punch**, **Whip** or **Spin**.
+  With beats showing, a transition lasts half a beat, so it lands with the music.
+  The first shot has no incoming cut, so it has no control. Transitions don't
+  appear in the Motion section — they belong to the shot, and that's where you
+  change them.
 - **Hover a shot and click ×** to delete it — this removes everything inside it
   too, and the video gets shorter. The last remaining shot can't be deleted.
 - Anything you add lands in the shot you're looking at, and spans it.

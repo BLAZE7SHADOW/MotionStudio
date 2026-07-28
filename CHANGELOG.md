@@ -5,6 +5,71 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Transitions between shots
+
+The last piece of the beat-reel story. Cuts landed on the beat but every one of
+them was a hard cut; the genre is defined by what happens *at* the cut.
+
+### Added
+- **`engines/animation/transitions.ts`** — five transitions: Cut, Fade, Zoom
+  punch, Whip, Spin.
+  - **The finding that made this cheap: a transition already *is* an
+    animation.** A zoom punch is `scale 1.18 → 1`; a whip is `x +768 → 0`. Both
+    are exactly what `Animation` describes — and `evaluateAnimations` is already
+    called by the Remotion renderer *and* by `canvasFrame.ts:93`. So
+    materialising transitions as animations means they render and export
+    everywhere with **not one line changed** in `MotionComposition`,
+    `ElementRenderer`, any of the three exporters, or `api/`. Confirmed with
+    `git diff --stat`, not assumed.
+  - **Duration follows the tempo** — half a beat when a grid is active, clamped
+    to 3–12 frames. The same move at 90 and 160 BPM reads as sloppy at one of
+    them.
+  - **Travel scales with the format.** The whip's distance is 40% of the
+    composition width, because 768px is a shove across 1920 and would throw an
+    element clean off a 1080-wide portrait frame.
+  - Every animation ends on the element's own pose (`to: 1` for factors, `0` for
+    offsets), so a transition can always be removed and can never leave an
+    element permanently displaced. Asserted for all five.
+- **`Animation.source`** — `'transition'` marks generated animations, so
+  changing a transition replaces exactly its own work and never touches
+  something hand-made. Guessing would have been the alternative, and would have
+  been wrong the first time anyone added their own scale.
+- **`setSceneTransition`** in `scenes.ts`, beside the other pure shot ops.
+  Applies only to elements whose `startFrame` is the shot's start — those are
+  the ones arriving at the cut, and an element trimmed to begin mid-shot
+  lurching on its own would read as a bug. All participants get the same
+  animation, so the frame moves as one, which is what a punch looks like.
+- A **transition picker** in the shot strip, acting on the open shot. It lives
+  there rather than on a sequence block because a block can be 44px wide, and
+  because the cut belongs to the shot you are working in. The first shot has no
+  incoming cut and gets no control.
+
+### Changed
+- The Motion panel **hides transition-authored animations** — one thing should
+  be edited in one place, and a tweak the next transition change would wipe is
+  worse than no tweak. They are still preserved through every write from that
+  panel: `anims` feeds the edit, remove, preset and reset paths as well as the
+  list, so filtering it alone would have silently deleted the shot's transition
+  the first time anyone touched Motion.
+
+### Verified
+- **26 assertions** in `tests/transitions.test.mjs` and 10 more in
+  `tests/scenes.test.mjs` (157 total): every preset lands on the identity pose,
+  travel scales with width, tempo drives duration and is clamped at both ends,
+  re-applying doesn't accumulate, changing one replaces only its own animations,
+  `cut` clears them, and a hand-made animation survives all of it.
+- Live: a zoom punch on shot 2 of a 120 BPM project produced `scale 1.18 → 1`
+  over **8 frames — half a beat**. At the cut the shot's three elements read
+  `1.18` while the video-wide background and soundtrack stayed at `1`; four
+  frames later they read `0.987`, the spring overshooting before it settles.
+
+### Not doing
+- A true cross-dissolve. Shots are sequential and never overlap, so two can't be
+  on screen at once without breaking the model — and it is the least useful
+  transition for this kind of edit. `Fade` still gives a clean rise out of black.
+
+---
+
 ## [2026-07-28] — Selecting the soundtrack no longer throws you out of the shot
 
 ### Fixed

@@ -431,6 +431,25 @@ Shots snap on their **end**, not their length, because the boundary is what has
 to meet the music; `+ Add shot` sizes itself so the new boundary lands on a
 beat, which aligns later shots even when the first one isn't aligned.
 
+### Transitions are animations, so the render path never learned about them
+
+A transition *is* an animation: a zoom punch is `scale 1.18 → 1`, a whip is
+`x +768 → 0`. `evaluateAnimations` is already called by the Remotion renderer
+**and** by `canvasFrame.ts`, so materialising a shot's transition as animations
+on its elements means it renders and exports everywhere with nothing else
+changing — the same property that kept shots and beat snapping cheap.
+
+`Animation.source: 'transition'` tags the generated ones, which is what lets a
+transition be replaced without disturbing anything hand-made, and what keeps
+them out of the Motion panel. The subtlety there: that panel's `anims` array
+feeds its writes as well as its list, so filtering the display alone would have
+silently deleted the shot's transition the first time anyone edited Motion.
+
+The cost of the choice is that a true cross-dissolve is impossible — shots never
+overlap, so two can't be on screen at once. Accepted deliberately: it is the
+least useful transition for beat-cut editing, and `fade` still rises out of
+black.
+
 ### One editor per project, across tabs
 
 Both persistence paths serialise the **whole** projects array: zustand's

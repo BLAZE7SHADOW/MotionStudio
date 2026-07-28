@@ -204,5 +204,53 @@ check('framesInBeats reads a bar back as 4', S.framesInBeats(grid, FPS, S.barFra
 check('framesInBeats rounds rather than reporting a fraction',
   S.framesInBeats(grid, FPS, S.barFrames(grid, FPS) + 1) === 4);
 
+/* ── 11. shot transitions ────────────────────────────────────────────────
+   Materialised as animations on the incoming shot's elements, which is what
+   makes them export everywhere without the render path changing. The risk in
+   that choice is trampling animations the user made by hand, so most of these
+   are about exactly that. */
+const mine = { property: 'opacity', from: 0.2, to: 1, startOffset: 4, duration: 9, easing: 'ease' };
+let tp = S.ensureScenes({
+  ...legacy, durationInFrames: 200,
+  scenes: [{ id: 's1', durationInFrames: 100 }, { id: 's2', durationInFrames: 100 }],
+  canvas: { elements: [
+    el('a', 100, 100, { sceneId: 's2', animations: [mine] }),   // starts at the cut
+    el('b', 140, 60,  { sceneId: 's2' }),                       // starts mid-shot
+    el('c', 0, 100,   { sceneId: 's1' }),                       // the previous shot
+  ] },
+});
+const of = (p, id) => p.canvas.elements.find((e) => e.id === id).animations ?? [];
+
+tp = S.setSceneTransition(tp, 's2', 'zoom-punch', 1920);
+check('the transition is recorded on the shot',
+  tp.scenes.find((s) => s.id === 's2').transition === 'zoom-punch');
+check('an element arriving at the cut gets the transition',
+  of(tp, 'a').some((a) => a.source === 'transition' && a.property === 'scale'));
+check('a hand-made animation on it survives',
+  of(tp, 'a').some((a) => a.source === undefined && a.startOffset === 4));
+check('an element starting mid-shot is left alone', of(tp, 'b').length === 0);
+check('the previous shot is untouched', of(tp, 'c').length === 0);
+
+const twice = S.setSceneTransition(tp, 's2', 'zoom-punch', 1920);
+check('re-applying does not accumulate animations',
+  of(twice, 'a').filter((a) => a.source === 'transition').length ===
+  of(tp, 'a').filter((a) => a.source === 'transition').length);
+
+const swapped = S.setSceneTransition(tp, 's2', 'whip', 1920);
+check('changing the transition replaces its own animations',
+  swapped.canvas.elements.find((e) => e.id === 'a').animations
+    .filter((a) => a.source === 'transition').every((a) => a.property !== 'scale'));
+check('...and still leaves the hand-made one alone',
+  of(swapped, 'a').some((a) => a.source === undefined && a.startOffset === 4));
+
+const back = S.setSceneTransition(swapped, 's2', 'cut', 1920);
+check('cut clears the transition from the shot',
+  back.scenes.find((s) => s.id === 's2').transition === undefined);
+check('cut removes its animations', !of(back, 'a').some((a) => a.source === 'transition'));
+check('cut still leaves the hand-made one', of(back, 'a').length === 1);
+
+const noSuch = S.setSceneTransition(tp, 'nope', 'whip', 1920);
+check('an unknown shot changes nothing', noSuch === tp);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

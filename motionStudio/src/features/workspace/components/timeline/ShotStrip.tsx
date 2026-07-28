@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Plus, X, ChevronLeft } from 'lucide-react';
+import { Plus, X, ChevronLeft, Sparkle } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { Project } from '@/engines/project';
 import {
   useProjectStore, sceneLabel, scenesOf, sceneOffsets,
   gridActive, barFrames, snapFrameToBeat, MIN_SCENE_FRAMES, MAX_PROJECT_SECONDS,
+  TRANSITIONS,
 } from '@/engines/project';
 import { useEditorStore } from '@/engines/editor';
 
@@ -27,6 +29,7 @@ export default function ShotStrip({ project }: { project: Project }) {
   const addShot = useProjectStore((s) => s.addShot);
   const removeShot = useProjectStore((s) => s.removeShot);
   const renameShot = useProjectStore((s) => s.renameShot);
+  const setShotTransition = useProjectStore((s) => s.setShotTransition);
 
   const [renaming, setRenaming] = useState<string | null>(null);
   const [refused, setRefused] = useState(false);
@@ -39,6 +42,7 @@ export default function ShotStrip({ project }: { project: Project }) {
   }, [refused]);
 
   const offsets = sceneOffsets(scenes);
+  const activeShot = scenes.find((s) => s.id === activeSceneId);
 
   function open(sceneId: string) {
     setActiveScene(sceneId);
@@ -153,6 +157,56 @@ export default function ShotStrip({ project }: { project: Project }) {
           </div>
         );
       })}
+
+      {/* How the open shot arrives. Placed here rather than on the sequence
+          block because a block can be 44px wide, and because the transition
+          belongs to the shot you are working in. The first shot has no incoming
+          cut, so it gets no control. */}
+      {activeShot && scenes[0]?.id !== activeShot.id && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              title={`How ${sceneLabel(scenes, activeShot.id)} arrives`}
+              className={[
+                'shrink-0 h-6 pl-1.5 pr-2.5 flex items-center gap-1 rounded-studio-sm text-[11px] font-medium transition-colors duration-120',
+                activeShot.transition
+                  ? 'text-studio-accent hover:bg-studio-surface'
+                  : 'text-studio-text-faint hover:text-studio-text hover:bg-studio-surface',
+              ].join(' ')}
+            >
+              <Sparkle className="w-3 h-3" />
+              {TRANSITIONS.find((t) => t.id === (activeShot.transition ?? 'cut'))?.label}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="start"
+            className="w-56 p-1.5 bg-studio-panel border-studio-border-strong rounded-studio-lg"
+          >
+            {TRANSITIONS.map((t) => {
+              const on = (activeShot.transition ?? 'cut') === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setShotTransition(project.id, activeShot.id, t.id)}
+                  className={[
+                    'w-full text-left px-2.5 py-2 rounded-studio-md transition-colors duration-120',
+                    on ? 'bg-studio-accent-subtle' : 'hover:bg-studio-surface',
+                  ].join(' ')}
+                >
+                  <span className={`block text-[12px] font-medium ${on ? 'text-studio-accent' : 'text-studio-text'}`}>
+                    {t.label}
+                  </span>
+                  <span className="block text-[10px] text-studio-text-faint leading-snug mt-0.5">
+                    {t.hint}
+                  </span>
+                </button>
+              );
+            })}
+          </PopoverContent>
+        </Popover>
+      )}
 
       <button
         type="button"

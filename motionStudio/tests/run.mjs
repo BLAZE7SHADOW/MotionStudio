@@ -25,6 +25,7 @@ const TARGETS = [
   { test: 'scenes.test.mjs', src: 'src/engines/project/scenes.ts', bundle: 'scenes.bundle.js' },
   { test: 'scale.test.mjs', src: 'src/engines/timeline/scale.ts', bundle: 'scale.bundle.js' },
   { test: 'beatDetect.test.mjs', src: 'src/engines/audio/beatDetect.ts', bundle: 'beatDetect.bundle.js' },
+  { test: 'transitions.test.mjs', src: 'src/engines/animation/transitions.ts', bundle: 'transitions.bundle.js' },
   { test: 'projectLock.test.mjs', src: 'src/lib/projectLock.ts', bundle: 'lock.cjs.js' },
 ];
 

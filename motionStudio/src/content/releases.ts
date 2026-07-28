@@ -36,6 +36,14 @@ export const RELEASES: Release[] = [
     title: 'Effects you can actually preview',
     changes: [
       {
+        kind: 'new',
+        text: 'Shots can now arrive with a transition instead of a hard cut \u2014 fade, zoom punch, whip or spin. Pick one from the shot strip and it lasts half a beat, so it lands with the music rather than near it.',
+      },
+      {
+        kind: 'fixed',
+        text: 'Clicking the music track or the background used to throw you out of the shot you were editing, back to the whole-sequence view.',
+      },
+      {
         kind: 'fixed',
         text: 'A music track stopped where the video used to end, so adding shots left the last part of your video silent. One track now plays across the whole sequence, however many shots you add \u2014 up to the end of the track itself.',
       },

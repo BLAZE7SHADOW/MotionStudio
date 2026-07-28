@@ -1,3 +1,5 @@
+import type { TransitionId } from '../animation/transitions';
+
 export type AspectRatio = '16:9' | '9:16' | '1:1';
 
 /* ── Assets ── */
@@ -65,6 +67,16 @@ export interface Animation {
   startOffset: number;
   duration: number;
   easing: AnimationEasing;
+  /**
+   * Who authored this. Absent means the user did.
+   *
+   * `'transition'` marks animations generated from a shot's transition, so
+   * changing that transition replaces exactly its own work and never touches
+   * something hand-made. It also keeps them out of the Motion panel: one thing
+   * should be edited in one place, and offering a tweak the next transition
+   * change would silently wipe is worse than not offering it.
+   */
+  source?: 'transition';
 }
 
 /* ── Canvas element types ── */
@@ -259,6 +271,9 @@ export interface Scene {
   durationInFrames: number;
   /** User-set. Falls back to "Shot N" by position, so it is never stale. */
   name?: string;
+  /** How this shot arrives. A cut belongs to the shot that follows it, which
+      is how editors think about it and leaves the first shot with none. */
+  transition?: TransitionId;
 }
 
 /* ── Project ── */

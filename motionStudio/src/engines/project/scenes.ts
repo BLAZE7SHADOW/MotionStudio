@@ -1,5 +1,7 @@
 import type { BeatGrid, CanvasElement, Project, Scene } from './types';
 import { BEATS_PER_BAR, beatPeriodSec, nearestBeatSec } from '../audio/beatDetect';
+import { buildTransition, transitionFrames } from '../animation/transitions';
+import type { TransitionId } from '../animation/transitions';
 
 /**
  * Everything the shot model knows how to do, as pure functions.
@@ -140,6 +142,60 @@ export function sceneAtFrame(scenes: Scene[], frame: number): string | undefined
 }
 
 const totalFrames = (scenes: Scene[]) => scenes.reduce((n, s) => n + s.durationInFrames, 0);
+
+/**
+ * Set how a shot arrives, materialising the transition as animations on its
+ * elements.
+ *
+ * Materialised rather than applied at render time, because the render path
+ * already evaluates animations — in Remotion *and* in `canvasFrame.ts` — so
+ * doing it here means transitions export everywhere with nothing else changing.
+ * Teaching `MotionComposition` about shots would have been the alternative, and
+ * would have put the export paths back in play.
+ *
+ * Only elements starting exactly at the shot boundary take part: those are the
+ * ones arriving at the cut. An element trimmed to begin mid-shot lurching on
+ * its own would read as a bug, not a transition. Every participant gets the
+ * *same* animation, so the frame moves as one, which is what a whip or a punch
+ * actually looks like.
+ */
+export function setSceneTransition(
+  project: Project,
+  sceneId: string,
+  id: TransitionId,
+  compositionWidth: number,
+): Project {
+  const base = ensureScenes(project);
+  const scenes = scenesOf(base);
+  if (!scenes.some((s) => s.id === sceneId)) return base;
+
+  const { start } = sceneSpan(scenes, sceneId);
+  const grid = base.beatGrid;
+  const frames = transitionFrames(base.fps, gridActive(grid) ? grid.bpm : undefined);
+  const added = buildTransition(id, { durationInFrames: frames, compositionWidth });
+
+  return {
+    ...base,
+    scenes: scenes.map((s) =>
+      // 'cut' is the absence of a transition, so it clears rather than stores.
+      s.id === sceneId ? { ...s, transition: id === 'cut' ? undefined : id } : s,
+    ),
+    canvas: {
+      ...base.canvas,
+      elements: base.canvas.elements.map((el) => {
+        if (el.sceneId !== sceneId) return el;
+        const kept = (el.animations ?? []).filter((a) => a.source !== 'transition');
+        const next = el.startFrame === start ? [...kept, ...added] : kept;
+        if (next.length === 0) {
+          // `undefined` rather than `[]`: an element with no animations should
+          // look the same as one that never had any, and JSON drops the key.
+          return el.animations ? { ...el, animations: undefined } : el;
+        }
+        return { ...el, animations: next };
+      }),
+    },
+  };
+}
 
 /* ── beat snapping ──────────────────────────────────────────────────────── */
 

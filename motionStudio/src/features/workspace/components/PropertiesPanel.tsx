@@ -420,7 +420,19 @@ function LayerSection({ reorder }: { reorder: (dir: LayerDir) => void }) {
 
 /* ── shared: animation stack (any element) ── */
 function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update: Update; hideHeader?: boolean }) {
-  const anims = el.animations ?? [];
+  /* Animations authored by a shot transition are deliberately not listed: they
+     are edited on the shot, and offering a tweak here that the next transition
+     change would silently overwrite is worse than not offering it.
+
+     They must still survive every write from this panel, though — `anims` feeds
+     the edit, remove, preset and reset paths as well as the list, so filtering
+     it alone would have quietly deleted the shot's transition the first time
+     anyone touched Motion. `writeAnims` puts them back on the way out. */
+  const allAnims = el.animations ?? [];
+  const transitionAnims = allAnims.filter((a) => a.source === 'transition');
+  const anims = allAnims.filter((a) => a.source !== 'transition');
+  const writeAnims = (next: Animation[]) =>
+    update({ animations: [...transitionAnims, ...next] });
   return (
     <>
       {/* Motion is where mess accumulates — presets append, so three clicks
@@ -428,7 +440,7 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
           each one. Undefined when there is nothing to clear. */}
       <Section
         title={hideHeader ? 'Motion' : 'Animation'}
-        onReset={anims.length > 0 ? () => update({ animations: [] }) : undefined}
+        onReset={anims.length > 0 ? () => writeAnims([]) : undefined}
       >
       <div className="flex flex-col gap-2.5 px-4 py-3">
         {anims.length > 0 && (
@@ -438,9 +450,9 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
                 key={i}
                 anim={anim}
                 onChange={(patch) =>
-                  update({ animations: anims.map((a, idx) => (idx === i ? { ...a, ...patch } : a)) })
+                  writeAnims(anims.map((a, idx) => (idx === i ? { ...a, ...patch } : a)))
                 }
-                onRemove={() => update({ animations: anims.filter((_, idx) => idx !== i) })}
+                onRemove={() => writeAnims(anims.filter((_, idx) => idx !== i))}
               />
             ))}
           </div>
@@ -456,7 +468,7 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
                 <button
                   key={preset.id}
                   type="button"
-                  onClick={() => update({ animations: [...anims, ...preset.build(el.durationInFrames)] })}
+                  onClick={() => writeAnims([...anims, ...preset.build(el.durationInFrames)])}
                   className="flex items-center gap-1.5 h-8 px-1.5 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
                 >
                   <AnimationPreview animations={PRESET_PREVIEW_ANIMATIONS.get(preset.id)!} size={22} />
@@ -472,7 +484,7 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
           onChange={(e) => {
             const prop = e.target.value as AnimationProperty;
             if (!prop) return;
-            update({ animations: [...anims, defaultAnimationFor(prop)] });
+            writeAnims([...anims, defaultAnimationFor(prop)]);
           }}
           className="h-8 text-[11px] bg-studio-surface border border-studio-border rounded-studio-md text-studio-text-muted px-2 focus:outline-none focus:border-studio-accent-border"
         >

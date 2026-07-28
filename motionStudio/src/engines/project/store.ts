@@ -11,7 +11,10 @@ import {
   setSceneDuration,
   setTotalDuration,
   rescaleForFps,
+  setSceneTransition,
 } from './scenes';
+import type { TransitionId } from '../animation/transitions';
+import { getCompositionDimensions } from './dimensions';
 
 export type UpdateProjectInput = Partial<Pick<Project, 'name' | 'aspectRatio' | 'fps' | 'durationInFrames' | 'assets' | 'canvas' | 'scenes' | 'beatGrid'>>;
 
@@ -42,6 +45,8 @@ interface ProjectStore {
   setProjectDuration: (projectId: string, durationInFrames: number) => void;
   /** Changes frame rate, rescaling shots and elements so nothing changes length. */
   setProjectFps: (projectId: string, fps: number) => void;
+  /** How a shot arrives — materialised as animations on its elements. */
+  setShotTransition: (projectId: string, sceneId: string, id: TransitionId) => void;
   undo: () => void;
   redo: () => void;
   /** Wipe all projects + history. Called on account switch to prevent data bleed. */
@@ -198,6 +203,16 @@ export const useProjectStore = create<ProjectStore>()(
           durationInFrames: next.durationInFrames,
           canvas: next.canvas,
         });
+      },
+
+      setShotTransition: (projectId, sceneId, id) => {
+        const p = get().getProject(projectId);
+        if (!p) return;
+        // Travel distance scales with the format, so the whip needs the width.
+        const { width } = getCompositionDimensions(p.aspectRatio);
+        const next = setSceneTransition(p, sceneId, id, width);
+        if (next === p) return;
+        get().updateProject(projectId, { scenes: next.scenes, canvas: next.canvas });
       },
 
       setProjectFps: (projectId, fps) => {
