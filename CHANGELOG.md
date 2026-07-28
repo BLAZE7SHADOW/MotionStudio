@@ -5,6 +5,40 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Every text effect previews, and says what it does
+
+### Fixed
+- **Eleven of the 34 text effects showed a blank preview.** `TextEffectPreview`
+  looked only in the `Effects` map, but the effects are grouped by the shape of
+  input they take across four maps — swap (`fade-through`, `per-word-crossfade`,
+  `shared-axis-y/z`), from-to (`strikethrough-replace`, `slot-machine-roll`),
+  numeric (`rolling-number`, `number-wheel`) and list (`value-swap`,
+  `rolodex-flip`, `perspective-marquee`). Anything outside the first map
+  resolved to `undefined` and rendered `null`, so a third of the catalogue
+  looked broken rather than "this one takes different input". The preview now
+  dispatches across all five shapes.
+
+### Added
+- **A one-line description under every effect preview**
+  (`content/textEffectInfo.ts`, typed `Record<TextEffect, string>` so the
+  compiler enforces coverage). A name like "shared axis Z" says nothing; the
+  preview shows the motion, and the line says what the effect is *for* and what
+  input it expects — which matters most for exactly the effects that were blank.
+- **A replay button on the preview.** Most entrance effects finish in well under
+  the loop length, leaving the preview parked on a static end frame that reads
+  as frozen.
+- The list and two-value effects preview with **sample data** — "Before" →
+  "After", 0 → 100, three list items — rather than the element's own text, so
+  the preview doubles as a demonstration of the input shape they need.
+
+### Changed
+- **Effect maps moved out of `TextRenderer` into
+  `engines/rendering/textEffects.ts`.** Exporting shared constants from a
+  component module breaks fast refresh, and the preview needed four more of
+  them. The split also puts all four maps in front of anyone importing one,
+  which is the mistake that caused the blank previews. Same shape as
+  `content/blocks/registry.ts`. Net lint warnings went down.
+
 ## [2026-07-27] — Getting-started strip on a sparse dashboard
 
 ### Added

@@ -188,9 +188,17 @@ Two constraints worth knowing:
 templates get used is the evidence for who the product is actually for.
 
 ### Blocks — a registry instead of another hardcoded union
-Text effects and shaders are string-literal unions with a hand-maintained lazy map,
-which is fine for "one component, one string" but can't express components that take
-arrays and objects (a terminal's lines, a pipeline's steps). Those became a sixth
+Text effects and shaders are string-literal unions with a hand-maintained lazy map
+(`engines/rendering/textEffects.ts`), which is fine for "one component, one string"
+but can't express components that take arrays and objects (a terminal's lines, a
+pipeline's steps).
+
+That map is grouped by the *shape of input* an effect takes — a single string, a
+from/to pair, a numeric from/to, or a list — across four separate objects, which is
+a trap for anything rendering an effect: the Properties preview checked only the
+first and so rendered nothing for eleven of the thirty-four. Splitting the maps out
+of `TextRenderer` into their own module was as much about making all four visible at
+the import site as about fast refresh. Those became a sixth
 element type, `BlockElement`, backed by `src/content/blocks/registry.ts`: each entry
 declares its lazy import, defaults, natural length, a **field schema** the Properties
 panel renders inputs from, and a `toProps` translator. Adding a block is a registry

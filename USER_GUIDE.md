@@ -245,9 +245,19 @@ Pick one from the dropdown, grouped by style:
   Inline / Marker Highlight…
 - **Tech / Glitch** — Typewriter, Matrix Decode, RGB Glitch.
 
-A live looping preview shows above the picker once an effect is selected, so you
-can see how it moves before committing to it — same idea as the shader
-preview in §7b.
+**Every effect previews, and every effect explains itself.** A live looping
+preview shows above the picker once an effect is selected, with a one-line
+description underneath saying what it's for and what input it expects. Use the
+↺ button in the corner to replay it — most entrance effects finish in under a
+second, so the loop leaves them sitting on a static end frame.
+
+The list and two-value effects preview with sample data ("Before" → "After",
+0 → 100, three list items) rather than your text, precisely because that's what
+shows you the shape they need: a **list** effect reads one item per line of the
+text box, and a **two-value** effect animates from the text box to the **To**
+field beneath it.
+
+Same idea as the shader preview in §7b.
 
 Controls:
 - **Speed** — multiplies the effect's pace (1 = normal, 2 = twice as fast).
