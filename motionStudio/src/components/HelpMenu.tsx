@@ -4,6 +4,7 @@ import { HelpCircle, MessageSquare, Sparkles, Compass } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { startEditorTour } from '@/features/workspace/tour/useEditorTour';
 import { hasUnseenRelease, markReleasesSeen } from '@/lib/releaseSeen';
+import { useFeedbackStore } from '@/lib/feedbackStore';
 import FeedbackDialog from './FeedbackDialog';
 import WhatsNewDialog from './WhatsNewDialog';
 
@@ -26,7 +27,7 @@ export default function HelpMenu() {
   const inEditor = pathname.startsWith('/editor');
 
   const [open, setOpen] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const openFeedback = useFeedbackStore((s) => s.openFeedback);
 
   // One side-effecting read at mount, shared by the dot and the auto-open.
   // hasUnseenRelease() marks a first-ever visit as seen rather than returning
@@ -81,7 +82,7 @@ export default function HelpMenu() {
 
           <button
             type="button"
-            onClick={() => { setOpen(false); setFeedbackOpen(true); }}
+            onClick={() => { setOpen(false); openFeedback(); }}
             className={item}
           >
             <MessageSquare className="w-3.5 h-3.5" />
@@ -100,7 +101,8 @@ export default function HelpMenu() {
         </PopoverContent>
       </Popover>
 
-      <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      {/* Mounted once here; anything can open it through the store. */}
+      <FeedbackDialog />
       <WhatsNewDialog open={whatsNewOpen} onClose={closeWhatsNew} />
     </>
   );

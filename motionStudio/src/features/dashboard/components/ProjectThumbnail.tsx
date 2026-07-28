@@ -73,6 +73,10 @@ export default function ProjectThumbnail({ project }: { project: Project }) {
         style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
         controls={false}
         loop
+        // Cards animate on hover as you sweep across the grid. Audio firing
+        // from whatever your cursor happens to cross is startling, and there's
+        // no control on the card to stop it.
+        initiallyMuted
         clickToPlay={false}
         doubleClickToFullscreen={false}
         allowFullscreen={false}

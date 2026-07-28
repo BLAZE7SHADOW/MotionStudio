@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/apiClient';
 import type { QuotaResult } from '@/lib/apiClient';
 import { track } from '@/lib/analytics';
+import { useFeedbackStore } from '@/lib/feedbackStore';
 
 const RESOLUTIONS = [
   { id: 'full', label: 'Full', scale: 1 },
@@ -79,6 +80,7 @@ export default function ExportDialog({ project }: { project: Project }) {
   // Set when the beta renderer failed and the canvas path produced the file
   // instead — the user gets a video, but not the one they asked for, so say so.
   const [fellBackToCanvas, setFellBackToCanvas] = useState(false);
+  const openFeedback = useFeedbackStore((s) => s.openFeedback);
   const [cloudError, setCloudError] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
@@ -220,6 +222,23 @@ export default function ExportDialog({ project }: { project: Project }) {
     }
   }
 
+  /**
+   * A failure is the one moment a user has both the motivation to report and
+   * the details fresh. Seeding the message with what went wrong means they only
+   * add what we can't know — what they were trying to do.
+   */
+  function reportLink(what: string, detail: string) {
+    return (
+      <button
+        type="button"
+        onClick={() => openFeedback(`Export problem: ${what}\n\n${detail}\n\nWhat I was trying to do:\n`)}
+        className="underline underline-offset-2 hover:text-studio-text transition-colors"
+      >
+        Report this
+      </button>
+    );
+  }
+
   return (
     <Dialog onOpenChange={(open) => { if (open) track.exportDialogOpened(); }}>
       <DialogTrigger asChild>
@@ -329,7 +348,14 @@ export default function ExportDialog({ project }: { project: Project }) {
               {!supported && (
                 <p className="text-[11px] text-studio-text-faint">Your browser doesn't support WebCodecs. Use Chrome or Edge.</p>
               )}
-              {browserError && <p className="text-[11px] text-red-400">{browserError}</p>}
+              {browserError && (
+                <p className="text-[11px] text-red-400 leading-relaxed">
+                  {browserError}{' '}
+                  <span className="text-red-400/70">
+                    {reportLink('browser export failed', browserError)}
+                  </span>
+                </p>
+              )}
 
               {/* The fallback saved the export, but produced a different video
                   than the one asked for. Silence here would be a lie. */}
@@ -349,6 +375,13 @@ export default function ExportDialog({ project }: { project: Project }) {
                     >
                       Cloud Render
                     </button>
+                    . If this keeps happening,{' '}
+                    <span className="text-amber-300/70">
+                      {reportLink(
+                        'the beta renderer fell back to canvas',
+                        'The web renderer could not finish and the export completed without effects.',
+                      )}
+                    </span>
                     .
                   </p>
                 </div>
@@ -547,7 +580,14 @@ export default function ExportDialog({ project }: { project: Project }) {
                     </a>
                   )}
 
-                  {cloudError && <p className="text-[11px] text-red-400">{cloudError}</p>}
+                  {cloudError && (
+                    <p className="text-[11px] text-red-400 leading-relaxed">
+                      {cloudError}{' '}
+                      <span className="text-red-400/70">
+                        {reportLink('cloud render failed', cloudError)}
+                      </span>
+                    </p>
+                  )}
 
                   {quota?.remaining === 0 && (
                     <p className="text-[11px] text-studio-text-faint">

@@ -7,6 +7,7 @@ import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/apiClient';
+import { useFeedbackStore } from '@/lib/feedbackStore';
 import type { StockResult, StockType } from '@/lib/apiClient';
 import type { Asset, AssetType } from '@/engines/asset';
 
@@ -56,6 +57,7 @@ function AssetCard({
   // without a marker here the media would just silently vanish from the canvas
   // with no way to tell which file needs replacing.
   const missing = !isUrlUsable(asset.url);
+  const openFeedback = useFeedbackStore((s) => s.openFeedback);
 
   if (missing) {
     return (
@@ -68,6 +70,21 @@ function AssetCard({
         <span className="block w-full text-[10px] text-studio-text-faint truncate text-center">
           {asset.name}
         </span>
+        {/* If a file went missing without the user deleting it, that's worth
+            hearing about — this is the moment they notice, and the only moment
+            they still remember what they uploaded. */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            openFeedback(
+              `Media went missing: "${asset.name}"\n\nIt shows "Re-upload needed" in the Assets panel.\n\nWhat I was doing:\n`,
+            );
+          }}
+          className="text-[9px] text-amber-300/60 hover:text-amber-200 underline underline-offset-2 transition-colors"
+        >
+          Report this
+        </button>
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onRemove(); }}

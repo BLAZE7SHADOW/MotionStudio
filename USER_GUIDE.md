@@ -97,7 +97,7 @@ something on the canvas. Replay it any time from the **?** menu in the toolbar
   and don't remember the flow. Dismiss it with the **×** and it won't return; it
   also disappears on its own once you have five projects.
 - **Open**: click a project card on the Dashboard. Each card shows a real frame
-  of that project, and animates when you hover it — so you can tell your
+  of that project, and animates (muted) when you hover it — so you can tell your
   projects apart at a glance instead of reading names.
 - **Grouped by shape**: the Dashboard splits your projects into **Landscape**,
   **Portrait** and **Square** sections, so cards of the same format line up
@@ -476,6 +476,11 @@ Both live under the **?** button in the toolbar, just left of Preview (and in
 the dashboard header). Your avatar next to it is identity and sign-out only —
 help and identity are separate jobs, and hiding one behind the other made it
 undiscoverable.
+
+**Failure surfaces carry a "Report this" link** — a failed browser export, a
+failed cloud render, the beta-renderer fallback notice, and a file marked
+"Re-upload needed" in the Assets panel. Clicking it opens the feedback form with
+the problem already described, so you only add what happened from your side.
 
 - **Send feedback** — pick whether something broke, you want a feature, or it's
   something else, describe it, and send. It reaches a real inbox and replies come

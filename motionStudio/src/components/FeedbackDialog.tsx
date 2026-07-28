@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Check } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjectStore } from '@/engines/project';
+import { useFeedbackStore } from '@/lib/feedbackStore';
 
 type Category = 'bug' | 'idea' | 'other';
 
@@ -46,13 +47,10 @@ function collectContext(pathname: string, project: { id: string; aspectRatio: st
   return lines;
 }
 
-export default function FeedbackDialog({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+export default function FeedbackDialog() {
+  const open = useFeedbackStore((s) => s.open);
+  const prefill = useFeedbackStore((s) => s.prefill);
+  const onClose = useFeedbackStore((s) => s.closeFeedback);
   const { pathname } = useLocation();
   const { user, isAnonymous } = useAuth();
 
@@ -68,11 +66,22 @@ export default function FeedbackDialog({
   const [error, setError] = useState<string | null>(null);
   const [showContext, setShowContext] = useState(false);
 
+  // Remount-free reseeding: when the dialog is opened from a failure surface
+  // the prefill changes, and that — not every render — is when the box should
+  // be repopulated. Comparing against the last seed keeps whatever the user has
+  // since typed.
+  const [seededWith, setSeededWith] = useState<string | null>(null);
+  if (open && prefill !== '' && seededWith !== prefill) {
+    setSeededWith(prefill);
+    setMessage(prefill);
+  }
+
   const context = collectContext(pathname, project);
   const canSubmit = message.trim().length > 0 && email.trim().length > 0 && !sending;
 
   function reset() {
     setMessage('');
+    setSeededWith(null);
     setSent(false);
     setError(null);
     setShowContext(false);

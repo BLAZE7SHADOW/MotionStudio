@@ -5,6 +5,31 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Report links on failures, and silent card previews
+
+### Added
+- **"Report this" on every failure surface**: a failed browser export, a failed
+  cloud render, the beta-renderer fallback notice, and an asset marked
+  "Re-upload needed". Each opens the feedback form with the problem already
+  described, leaving the user to add only what we can't know — what they were
+  trying to do.
+  - A `?` menu only catches people who go looking, and by then they have usually
+    given up or forgotten the detail that mattered. The failure itself is the
+    one moment when motivation and detail coincide.
+  - `lib/feedbackStore.ts` (zustand) carries the open request and the seed text,
+    because the reporting points are nowhere near where the dialog is mounted.
+    `FeedbackDialog` is now mounted once inside `HelpMenu` and driven by the
+    store rather than by props.
+  - Reseeding compares against the last seed rather than firing on every render,
+    so opening from a second failure repopulates the box but typing in it is
+    never clobbered.
+
+### Fixed
+- **Dashboard card previews played audio on hover.** Sweeping across the grid
+  fired sound from whatever the cursor crossed, with no control on the card to
+  stop it. They're `initiallyMuted` now. The template preview keeps its audio —
+  it's click-to-play with a visible transport.
+
 ## [2026-07-28] — Help, feedback and release notes get their own button
 
 ### Changed

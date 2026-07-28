@@ -36,6 +36,14 @@ export const RELEASES: Release[] = [
     title: 'Effects you can actually preview',
     changes: [
       {
+        kind: 'new',
+        text: 'A feedback form and a "What\u2019s new" list under the ? button in the toolbar. When an export or an upload fails, "Report this" sends the details straight through — you just add what you were doing.',
+      },
+      {
+        kind: 'fixed',
+        text: 'Project cards on the dashboard played sound when you hovered them. They\u2019re silent now.',
+      },
+      {
         kind: 'fixed',
         text: 'Eleven text effects showed an empty preview box — the counters, the before/after swaps and the list effects. All 34 now preview properly.',
       },
