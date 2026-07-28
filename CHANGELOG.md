@@ -5,6 +5,36 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Ultramock benchmark
+
+### Added
+- **`docs/benchmark-ultramock.md`** — a teardown of ultramock.io kept as a
+  reference target, with a tickable scorecard so we can see where we actually
+  are rather than how far behind we feel.
+  - Findings are read off shipped artifacts, not marketing copy: their
+    prerendered HTML, their webpack chunk map, and the ~1.53 MB of JS it
+    resolves to. The doc records the commands so it can be re-run later.
+  - **They do not use Remotion** — zero markers across the whole bundle. It is
+    framer-motion plus CSS 3D transforms, with a lazy, Pro-gated WebGL renderer
+    for effects. Our rendering stack is the more capable one; the gap is
+    product and interface, which is the cheaper gap to close.
+  - Their export is client-side like ours. `POST /api/capture` carries no scene
+    data — it is purely a quota gate returning 402, fired *concurrently* with
+    the local render so the paywall costs no latency.
+  - Recorded the framing that matters most: Ultramock is a parametric renderer
+    with no direct manipulation, so a large share of our visual noise
+    (selection handles, bounding boxes) is the price of a capability they do
+    not have. Compare technique, not surface area.
+  - The highest-value borrowings, in order: gesture chips printed on controls
+    (`TILT X · DRAG`), collapsing Properties to headers with row-as-slider, a
+    one-accent-colour audit, a multi-tab guard, and the shot/scene model with
+    drill-in navigation.
+  - Their "shots" model (`timeline: { scenes: [...] }`, sequential, breadcrumb
+    drill-in) independently matches the scene design we had already sketched,
+    which is the strongest available evidence for it.
+
+---
+
 ## [2026-07-28] — Report links on failures, and silent card previews
 
 ### Added
