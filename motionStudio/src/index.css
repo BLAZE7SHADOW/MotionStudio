@@ -29,7 +29,20 @@
   --studio-text-muted:     oklch(0.705 0.015 286.006);   /* zinc-400  muted */
   --studio-text-faint:     oklch(0.552 0.014 285.938);   /* zinc-500  placeholder */
 
-  /* Accent — violet, use sparingly */
+  /* Accent — violet.
+     Two uses only, and "sparingly" is not a strong enough rule to hold:
+
+       1. the PRIMARY ACTION of the surface you are on — one per surface;
+       2. LIVE STATE — what is selected, active, playing, or unread.
+
+     Nothing else. Not decorative icons, not badges, not identity chips, not
+     secondary buttons. Every extra accent surface makes the two that matter
+     harder to find, and the effect compounds invisibly: no single addition
+     looks wrong, and twenty of them read as noise.
+
+     Reach for `studio-text-faint` for decoration, `studio-surface` +
+     `studio-border` for secondary controls, and the feedback colours below
+     for anything that is a caution rather than a brand moment. */
   --studio-accent:         oklch(0.627 0.265 298.232);   /* violet-500 */
   --studio-accent-hover:   oklch(0.702 0.227 298.587);   /* violet-400 */
   --studio-accent-deep:    oklch(0.541 0.281 293.009);   /* violet-600 */

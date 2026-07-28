@@ -27,7 +27,7 @@ export default function UserMenu() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="w-6 h-6 rounded-full bg-studio-accent-subtle border border-studio-accent-border flex items-center justify-center text-[10px] font-bold text-studio-accent hover:bg-studio-accent hover:text-white transition-colors"
+          className="w-6 h-6 rounded-full bg-studio-surface border border-studio-border flex items-center justify-center text-[10px] font-bold text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors"
           title={isAnonymous ? 'Guest user' : (user.email ?? 'User')}
         >
           {initials}

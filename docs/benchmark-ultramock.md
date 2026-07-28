@@ -136,10 +136,12 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
 
 ### C. Visual system
 
-- [ ] **Exactly one accent colour**, used only for the primary verb and live
+- [x] **Exactly one accent colour**, used only for the primary verb and live
       state — active shot chip, `+ ADD KF`, capture button, playhead, keyframes.
       Everything else greyscale. This discipline is most of why it reads as
-      expensive. **Audit where `studio-accent` appears.**
+      expensive.
+      *(2026-07-28 — rule written at the token definition in `index.css`; four
+      decorative usages removed. Most existing accent was already legitimate.)*
 - [ ] **All-caps micro-labels**, one consistent size, everywhere.
 - [x] Geist font family.
 - [ ] A stylesheet small enough to be uninteresting (theirs: 3.7 KB).
@@ -258,4 +260,5 @@ Append a line whenever something above is ticked.
 | Date | Item | Notes |
 |---|---|---|
 | 2026-07-28 | — | Benchmark captured. Nothing ticked yet. |
-| 2026-07-28 | B — gesture chips, row-as-slider | `ScrubInput`. All 16 numeric call sites upgraded via `NumInput`/`MiniNum`, which became wrappers. Next: accent audit (C), then default-closed sections + per-section reset (B). |
+| 2026-07-28 | B — gesture chips, row-as-slider | `ScrubInput`. All 16 numeric call sites upgraded via `NumInput`/`MiniNum`, which became wrappers. |
+| 2026-07-28 | C — one accent colour | Rule written at the token definition in `index.css`. Four decorative usages removed; the rest were already legitimate. Next: default-closed sections + per-section reset (B). |

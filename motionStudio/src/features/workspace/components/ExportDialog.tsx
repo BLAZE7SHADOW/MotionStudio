@@ -403,7 +403,11 @@ export default function ExportDialog({ project }: { project: Project }) {
                     <span className="text-[11px] font-medium text-studio-text">
                       Include effects
                     </span>
-                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-studio-sm bg-studio-accent-subtle text-studio-accent border border-studio-accent-border">
+                    {/* Amber, not accent: "Beta" is a caution about
+                        reliability, and the accent is reserved for the primary
+                        action and live state. It also matches the amber
+                        fallback notice this feature can produce. */}
+                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-studio-sm bg-amber-500/10 text-amber-300 border border-amber-500/30">
                       Beta
                     </span>
                   </span>

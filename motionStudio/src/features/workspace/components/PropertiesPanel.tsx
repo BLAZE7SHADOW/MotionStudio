@@ -564,7 +564,7 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <Sparkles className="w-3 h-3 text-studio-accent" />
+            <Sparkles className="w-3 h-3 text-studio-text-faint" />
             <span className="text-[11px] text-studio-text-faint">Animation preset</span>
           </div>
           <select
@@ -770,7 +770,7 @@ function ShaderProperties({ el, update, reorder }: { el: ShaderElement; update: 
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <Sparkles className="w-3 h-3 text-studio-accent" />
+            <Sparkles className="w-3 h-3 text-studio-text-faint" />
             <span className="text-[11px] text-studio-text-faint">Background</span>
           </div>
           <select

@@ -5,6 +5,34 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Accent discipline
+
+### Changed
+- **The accent is now reserved for two things**: the primary action of the
+  surface you are on, and live state (selected, active, playing, unread). The
+  rule is written at the token definition in `index.css`, because that is where
+  someone reaching for the colour will look — a rule kept in a doc nobody opens
+  is not a rule.
+  - The failure mode is invisible one change at a time: no single decorative
+    accent looks wrong, and twenty of them read as noise while making the two
+    that matter harder to find.
+  - Audited every `studio-accent*` usage. Most were already legitimate —
+    timeline selection and trim handles, the playhead, active tabs and format
+    chips, the drag-over overlay, unread dots, render buttons. Those stay.
+  - Four were decoration and were changed: the two `<Sparkles>` icons on the
+    Animation-preset and Background headers (`PropertiesPanel`), the stock
+    search submit button, which competed with "Add media" — the panel's actual
+    primary action — for the eye in a 220px rail (`AssetsPanel`), and the
+    account avatar, which is an identity chip rather than an action
+    (`UserMenu`).
+  - The "Beta" badge on Include effects is now amber rather than accent. It is
+    a caution about reliability, not a brand moment, and amber matches the
+    fallback notice that same feature can produce.
+- No `releases.ts` entry: this changes no capability, and "four things are less
+  violet" is not news to a user.
+
+---
+
 ## [2026-07-28] — Drag-to-scrub numbers
 
 ### Added

@@ -263,7 +263,7 @@ function StockTab({
             type="submit"
             disabled={!token || !query.trim()}
             title="Search"
-            className="h-8 w-8 shrink-0 flex items-center justify-center rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover disabled:opacity-40 disabled:hover:bg-studio-accent text-white transition-colors duration-120"
+            className="h-8 w-8 shrink-0 flex items-center justify-center rounded-studio-md bg-studio-surface border border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong disabled:opacity-40 transition-colors duration-120"
           >
             <Search className="w-3.5 h-3.5" />
           </button>
