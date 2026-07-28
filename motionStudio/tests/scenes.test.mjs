@@ -149,5 +149,32 @@ const fps60 = S.rescaleForFps(grown2, 60);
 check('changing fps re-spans the background exactly',
   fps60.canvas.elements.find(e => e.id === 'bg').durationInFrames === fps60.durationInFrames);
 
+/* ── 10. beat snapping ───────────────────────────────────────────────────
+   The grid lives in seconds precisely so that frames are computed once. These
+   pin down that the conversion happens where it should and nowhere else. */
+const grid = { bpm: 128, offsetSec: 0.25, enabled: true };
+const off = { ...grid, enabled: false };
+
+check('no snapping when the grid is off', S.snapFrameToBeat(off, FPS, 137) === 137);
+check('no snapping without a grid at all', S.snapFrameToBeat(undefined, FPS, 137) === 137);
+check('gridActive rejects a zero tempo', !S.gridActive({ ...grid, bpm: 0 }));
+
+const beat3 = 0.25 + (60 / 128) * 3;
+check('a frame near beat 3 snaps onto it',
+  S.snapFrameToBeat(grid, FPS, Math.round(beat3 * FPS) + 2) === Math.round(beat3 * FPS));
+check('a frame just past a beat snaps back to it',
+  S.snapFrameToBeat(grid, FPS, Math.round(beat3 * FPS) - 2) === Math.round(beat3 * FPS));
+
+/* The drift guard, from the other side: snapping far down the timeline must
+   still land on the true beat, not on an accumulated approximation. */
+const beat64 = 0.25 + (60 / 128) * 64;
+check('beat 64 snaps to within one frame of true time',
+  Math.abs(S.snapFrameToBeat(grid, FPS, Math.round(beat64 * FPS) + 3) - beat64 * FPS) <= 1);
+
+check('a bar is four beats of frames', S.barFrames(grid, FPS) === Math.round((60 / 128) * 4 * FPS));
+check('framesInBeats reads a bar back as 4', S.framesInBeats(grid, FPS, S.barFrames(grid, FPS)) === 4);
+check('framesInBeats rounds rather than reporting a fraction',
+  S.framesInBeats(grid, FPS, S.barFrames(grid, FPS) + 1) === 4);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

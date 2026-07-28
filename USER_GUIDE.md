@@ -364,6 +364,17 @@ controls:
 - **Tap along** — click in time with the track for a few beats and it takes the
   tempo from you. Often the fastest fix when the reading is wrong.
 
+**Shots cut in time with the track.** Once the beats are showing:
+
+- **Add shot** makes a new shot about a bar long, adjusted so it *ends* on a
+  beat — so shots line up with the music even if the video didn't start out
+  that way.
+- **Dragging a shot's edge** snaps it to the nearest beat. Hold **Alt** while
+  dragging if you want a length that deliberately isn't on the beat.
+- Each shot in the Sequence view says how long it is in **beats** as well as
+  seconds — "4 beats · 2.0s" — because with music that's the unit you're really
+  choosing.
+
 Detection works best on music with a strong, steady kick — dance, pop, hip-hop.
 It's less reliable on ambient, orchestral, live-played music or speech, and when
 it isn't confident it says so and asks you to tap or type instead. A wrong tempo

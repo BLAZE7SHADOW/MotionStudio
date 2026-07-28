@@ -37,7 +37,7 @@ export const RELEASES: Release[] = [
     changes: [
       {
         kind: 'new',
-        text: 'Add a music track and MotionStudio works out its tempo, then marks the beats along the timeline — brighter lines every fourth beat so you can count bars at a glance. If it reads the tempo wrong you can type it, drag it, or just tap along in time.',
+        text: 'Add a music track and MotionStudio works out its tempo, then marks the beats along the timeline — brighter lines every fourth beat so you can count bars at a glance. If it reads the tempo wrong you can type it, drag it, or just tap along in time.\n\nShots then cut in time with the track: Add shot lands on a beat, dragging a shot\u2019s edge snaps to one (hold Alt if you want an odd length), and each shot says how many beats it lasts.',
       },
       {
         kind: 'fixed',

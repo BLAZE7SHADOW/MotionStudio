@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Plus, X, ChevronLeft } from 'lucide-react';
 import type { Project } from '@/engines/project';
-import { useProjectStore, sceneLabel, scenesOf, sceneOffsets, MAX_PROJECT_SECONDS } from '@/engines/project';
+import {
+  useProjectStore, sceneLabel, scenesOf, sceneOffsets,
+  gridActive, barFrames, snapFrameToBeat, MIN_SCENE_FRAMES, MAX_PROJECT_SECONDS,
+} from '@/engines/project';
 import { useEditorStore } from '@/engines/editor';
 
 /** New shots are two seconds — long enough to see, short enough for a cut. */
@@ -44,9 +47,25 @@ export default function ShotStrip({ project }: { project: Project }) {
     setCurrentFrame(offsets.get(sceneId) ?? 0);
   }
 
+  /**
+   * How long a new shot should be.
+   *
+   * With a grid, one bar — musically the unit a cut belongs to, and close to
+   * the flat default anyway. The length is then adjusted so the shot *ends* on
+   * a beat: successive shots then line up with the music even when the very
+   * first boundary doesn't, which it usually won't on a project that existed
+   * before the track did.
+   */
+  function newShotFrames() {
+    const grid = project.beatGrid;
+    if (!gridActive(grid)) return Math.round(NEW_SHOT_SECONDS * project.fps);
+    const end = project.durationInFrames + barFrames(grid, project.fps);
+    return Math.max(MIN_SCENE_FRAMES, snapFrameToBeat(grid, project.fps, end) - project.durationInFrames);
+  }
+
   function handleAdd() {
     const before = scenesOf(project).length;
-    addShot(project.id, Math.round(NEW_SHOT_SECONDS * project.fps));
+    addShot(project.id, newShotFrames());
     // `addShot` is a no-op past the cap. Comparing counts is how we tell that
     // apart from a successful add without duplicating the cap logic here.
     const added = useProjectStore.getState().getProject(project.id);

@@ -7,6 +7,9 @@ import {
   sceneOffsets,
   elementsInScene,
   MIN_SCENE_FRAMES,
+  gridActive,
+  snapFrameToBeat,
+  framesInBeats,
 } from '@/engines/project';
 import { useEditorStore } from '@/engines/editor';
 import { frameToX, framesToWidth, xToFrame } from '@/engines/timeline';
@@ -60,7 +63,16 @@ export default function SequenceTrack({
     if (!d || scale.pxPerFrame === 0) return;
     e.stopPropagation();
     const deltaFrames = Math.round((e.clientX - d.startX) / scale.pxPerFrame);
-    resizeShot(project.id, d.sceneId, Math.max(MIN_SCENE_FRAMES, d.startFrames + deltaFrames));
+    let next = d.startFrames + deltaFrames;
+
+    /* Snap the shot's END to a beat, not its length — the boundary is the thing
+       that has to land on the music. Alt escapes it, because snapping you can't
+       get out of is worse than none when you want a deliberately odd length. */
+    if (gridActive(project.beatGrid) && !e.altKey) {
+      const start = offsets.get(d.sceneId) ?? 0;
+      next = snapFrameToBeat(project.beatGrid, project.fps, start + next) - start;
+    }
+    resizeShot(project.id, d.sceneId, Math.max(MIN_SCENE_FRAMES, next));
   }
 
   function onResizeUp(e: React.PointerEvent) {
@@ -172,6 +184,11 @@ export default function SequenceTrack({
                 {sceneLabel(scenes, scene.id)}
               </span>
               <span className="block text-[10px] text-studio-text-faint truncate tabular-nums">
+                {/* Beats first when there's a grid: with music, "4 beats" is the
+                    length you're actually choosing and seconds are the detail. */}
+                {gridActive(project.beatGrid)
+                  ? `${framesInBeats(project.beatGrid, project.fps, scene.durationInFrames)} beats · `
+                  : ''}
                 {(scene.durationInFrames / project.fps).toFixed(1)}s
                 {count > 0 && ` · ${count}`}
               </span>

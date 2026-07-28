@@ -1,4 +1,5 @@
-import type { CanvasElement, Project, Scene } from './types';
+import type { BeatGrid, CanvasElement, Project, Scene } from './types';
+import { BEATS_PER_BAR, beatPeriodSec, nearestBeatSec } from '../audio/beatDetect';
 
 /**
  * Everything the shot model knows how to do, as pure functions.
@@ -127,6 +128,42 @@ export function sceneAtFrame(scenes: Scene[], frame: number): string | undefined
 }
 
 const totalFrames = (scenes: Scene[]) => scenes.reduce((n, s) => n + s.durationInFrames, 0);
+
+/* ── beat snapping ──────────────────────────────────────────────────────── */
+
+/** Is there a usable grid to snap to? */
+export function gridActive(grid: BeatGrid | undefined): grid is BeatGrid {
+  return !!grid && grid.enabled && grid.bpm > 0;
+}
+
+/**
+ * The nearest beat to a frame, as a frame.
+ *
+ * **The one place seconds become frames.** The grid is defined in seconds
+ * because beats do not divide evenly into frames — 14.06 of them at 128 BPM
+ * and 30fps — so the rounding happens once, here, against the true beat time.
+ * Rounding anywhere earlier compounds: stepping a rounded interval puts beat 32
+ * two frames late and the cut visibly slides off the music.
+ */
+export function snapFrameToBeat(
+  grid: BeatGrid | undefined,
+  fps: number,
+  frame: number,
+): number {
+  if (!gridActive(grid) || fps <= 0) return frame;
+  return Math.round(nearestBeatSec(grid, frame / fps) * fps);
+}
+
+/** One bar in frames — the natural length for a new shot when there's a grid. */
+export function barFrames(grid: BeatGrid, fps: number): number {
+  return Math.round(beatPeriodSec(grid.bpm) * BEATS_PER_BAR * fps);
+}
+
+/** How many beats a span covers, for labelling. Rounded — a shot is "4 beats",
+    never "3.97 beats", and the fraction is noise to everyone reading it. */
+export function framesInBeats(grid: BeatGrid, fps: number, frames: number): number {
+  return Math.round(frames / fps / beatPeriodSec(grid.bpm));
+}
 
 /** Clamps an element into a span without changing its length where it fits. */
 function fitInto(el: CanvasElement, start: number, end: number): CanvasElement {

@@ -5,6 +5,43 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-28] — Beat detection, stage 2: shots snap to the beat
+
+The payoff. Cutting in time with the music is now a click rather than
+arithmetic.
+
+### Added
+- **`snapFrameToBeat`**, `barFrames` and `framesInBeats` in `scenes.ts`, beside
+  the other pure shot operations. `snapFrameToBeat` is **the one place seconds
+  become frames** — the grid is defined in seconds precisely so this rounding
+  happens once, against the true beat time, rather than compounding.
+- **`+ Add shot` lands on the beat.** With a grid it makes a shot roughly one
+  bar long, then adjusts the length so the shot *ends* on a beat. That matters
+  more than the length itself: it means successive shots line up with the music
+  even when the first boundary doesn't — which it usually won't on a project
+  that existed before the track did. Observed: a 452-frame project produced a
+  58-frame shot, not the flat 60, landing the boundary exactly on beat 34.
+- **Dragging a shot's edge snaps to the nearest beat**, with **Alt** to escape
+  it. Snapping is applied to the shot's *end*, not its length, because the
+  boundary is the thing that has to meet the music. Snapping you cannot get out
+  of is worse than none when you deliberately want an odd length.
+- **Shots are labelled in beats first** — "4 beats · 2.0s" rather than "2.0s".
+  With music, beats are the unit you are actually choosing and seconds are the
+  detail. It also makes the snap visible while dragging without a separate
+  readout.
+
+### Verified
+- 9 new assertions (114 total): no snapping when the grid is off or absent, a
+  frame either side of a beat lands on it, a bar is four beats of frames, and
+  `framesInBeats` rounds rather than reporting "3.97 beats". Plus the drift
+  guard from the other side — **beat 64 snaps to within one frame of true
+  time**, which a grid stored in frames would not manage.
+- Live: added a shot on a deliberately unaligned project and got a boundary on
+  beat 34.0; dragged a shot edge ~39 frames and it landed on **beat 7.0
+  exactly**, relabelling itself "7 beats · 3.5s".
+
+---
+
 ## [2026-07-28] — Beat detection, stage 1: find the tempo and show the grid
 
 The point of the shot model. Stage 2 snaps shots to this grid; stage 1 is

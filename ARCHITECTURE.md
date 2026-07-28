@@ -426,6 +426,11 @@ Three things the tests forced, none of which were obvious:
   binning recovers the truth. Phase coherence does, because a 1% tempo error
   walks a whole beat away over a hundred peaks.
 
+`snapFrameToBeat()` in `scenes.ts` is the single place seconds become frames.
+Shots snap on their **end**, not their length, because the boundary is what has
+to meet the music; `+ Add shot` sizes itself so the new boundary lands on a
+beat, which aligns later shots even when the first one isn't aligned.
+
 ### One editor per project, across tabs
 
 Both persistence paths serialise the **whole** projects array: zustand's
