@@ -234,8 +234,13 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
 ### I. Engineering hygiene
 
 - [ ] **Sentry with release = git SHA.**
-- [ ] **First-party analytics** — `/api/events/client`, `export_attempt`,
+- [~] **First-party analytics** — `/api/events/client`, `export_attempt`,
       `/api/export-completed`.
+      *(2026-07-30 — the function is covered by PostHog: `lib/analytics.ts`
+      captures the auth, project, editor and export funnels, including
+      `export_browser_failed` / `export_cloud_failed`. Not first-party, so we
+      inherit their outage and their ad-blocker miss rate. Worth revisiting only
+      if that miss rate turns out to matter.)*
 - [ ] **Project schema migrations** (`/api/migrations/projects`) — needed the day
       we ship shots.
 - [ ] **A payload-size instrument** — they log
@@ -292,3 +297,8 @@ Append a line whenever something above is ticked.
 | 2026-07-28 | A — shot model, stage 1 | `scenes.ts` + migration, invisible. Flat elements + `sceneId`, not nested — render path untouched. `npm test` added (57 assertions). |
 | 2026-07-28 | A — shot model, stage 2 | `ShotStrip` + `SequenceTrack` + `TimelineScale.originFrame`. Section A now complete. 71 assertions. |
 | 2026-07-28 | A — shot reorder + 3 live bugs | Drag to reorder. Three bugs found by running the app in a browser, none caught by types or tests. Next: beat detection, its own plan. |
+| 2026-07-28 | *(off-benchmark)* beat detection | `engines/audio/beatDetect.ts` + `analyzeAudio.ts`. BPM, offset and confidence from an RMS envelope; grid on the ruler; manual/tap override. **Ultramock has no audio at all**, so nothing here scores against the card — we are ahead of the benchmark on this axis, not behind. |
+| 2026-07-28 | *(off-benchmark)* beat snapping | Add shot lands on a beat; edge-drag snaps to one (Alt to override); shots labelled in beats. |
+| 2026-07-28 | A — video-wide elements | `ALL_SHOTS` sentinel + `respanGlobals`. Fixed the "second shot is a black screen with no music" cliff the shot model created, and let one soundtrack span the sequence. |
+| 2026-07-28 | *(off-benchmark)* transitions | `engines/animation/transitions.ts` — fade, zoom punch, whip, spin, half a beat long. Materialised as animations, so `MotionComposition`, all three exporters and `api/render.ts` were untouched (confirmed by `git diff --stat`). |
+| 2026-07-30 | — | Scorecard re-audited against the code. 14 of ~40 ticked; **all five items in §6 "order of attack" are now done**. Sections **D** (perceived performance) and **I** (hygiene) remain untouched; **G** deferred by the owner. Next candidates, ranked: schema versioning (§I — the doc predicted it was "needed the day we ship shots", and that day has passed), offline save states (§F), the prerendered skeleton (§D). |
