@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Plus, X, ChevronLeft, Sparkle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import type { Project } from '@/engines/project';
 import {
-  useProjectStore, sceneLabel, scenesOf, sceneOffsets,
+  useProjectStore, sceneLabel, scenesOf, sceneOffsets, spansAllShots,
   gridActive, barFrames, snapFrameToBeat, MIN_SCENE_FRAMES, MAX_PROJECT_SECONDS,
   TRANSITIONS,
 } from '@/engines/project';
@@ -33,6 +37,30 @@ export default function ShotStrip({ project }: { project: Project }) {
 
   const [renaming, setRenaming] = useState<string | null>(null);
   const [refused, setRefused] = useState(false);
+  /** The shot a delete has been asked about but not yet confirmed. */
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+
+  /* Only elements that belong to this shot alone die with it — the background
+     and the soundtrack span the whole video and survive. Counting the wrong set
+     would make the warning worse than none: it would name a consequence that
+     doesn't happen. */
+  const doomedCount = (sceneId: string) =>
+    project.canvas.elements.filter((el) => el.sceneId === sceneId && !spansAllShots(el)).length;
+
+  function deleteShot(sceneId: string) {
+    const wasActive = sceneId === activeSceneId;
+    removeShot(project.id, sceneId);
+    if (wasActive) setActiveScene(null);
+    setConfirmingDelete(null);
+  }
+
+  /* Confirm only when there is something to lose. A dialog guarding an empty
+     shot is a dialog people learn to dismiss without reading, which is exactly
+     how the one that matters gets dismissed too. */
+  function requestDelete(sceneId: string) {
+    if (doomedCount(sceneId) === 0) deleteShot(sceneId);
+    else setConfirmingDelete(sceneId);
+  }
 
   // The refusal is transient — it explains one click, then gets out of the way.
   useEffect(() => {
@@ -141,10 +169,7 @@ export default function ShotStrip({ project }: { project: Project }) {
             {scenes.length > 1 && renaming !== scene.id && (
               <button
                 type="button"
-                onClick={() => {
-                  removeShot(project.id, scene.id);
-                  if (active) setActiveScene(null);
-                }}
+                onClick={() => requestDelete(scene.id)}
                 title={`Delete ${sceneLabel(scenes, scene.id)} and everything in it`}
                 className={[
                   'absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-studio-xs opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-120',
@@ -224,6 +249,42 @@ export default function ShotStrip({ project }: { project: Project }) {
           A video can't be longer than {MAX_PROJECT_SECONDS}s — shorten a shot first.
         </span>
       )}
+
+      {/* Names the consequence rather than asking "are you sure?" — the count
+          is the whole point, and it is the thing the user cannot see from a
+          shot chip that says "Shot 3". */}
+      <Dialog open={!!confirmingDelete} onOpenChange={(v) => !v && setConfirmingDelete(null)}>
+        <DialogContent className="sm:max-w-95 bg-studio-panel border-studio-border-strong">
+          <DialogHeader>
+            <DialogTitle className="text-studio-text">
+              Delete {confirmingDelete ? sceneLabel(scenes, confirmingDelete) : 'this shot'}?
+            </DialogTitle>
+            <DialogDescription className="text-studio-text-muted">
+              {(() => {
+                const n = confirmingDelete ? doomedCount(confirmingDelete) : 0;
+                return `${n} ${n === 1 ? 'element goes' : 'elements go'} with it, and the video gets shorter. Anything that spans the whole video — your background and music — stays. You can undo this.`;
+              })()}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setConfirmingDelete(null)}
+              className="text-studio-text-muted hover:text-studio-text hover:bg-studio-surface"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => confirmingDelete && deleteShot(confirmingDelete)}
+            >
+              Delete shot
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
