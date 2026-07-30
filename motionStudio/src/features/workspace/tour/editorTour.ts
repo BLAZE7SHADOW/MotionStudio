@@ -125,6 +125,29 @@ const ALL_STEPS: DriveStep[] = [
     },
   },
   {
+    element: '[data-tour="beat"]',
+    popover: {
+      title: 'Cut in time with the music',
+      description:
+        'Drop a music track into your project and MotionStudio works out its tempo on its own, then marks the beats along the ruler — brighter lines every fourth beat, so you can count bars at a glance. From then on <strong>Add shot</strong> lands on a beat and dragging a shot’s edge snaps to one, which is what makes a reel feel locked to the track instead of near it. Got the tempo wrong? Open this and tap along.',
+      side: 'top',
+      align: 'start',
+    },
+  },
+  {
+    /* Only rendered inside a shot that has something before it, so this step
+       appears on a replay rather than the first run — which is the right way
+       round: there is nothing to transition into until you have two shots. */
+    element: '[data-tour="transition"]',
+    popover: {
+      title: 'How a shot arrives',
+      description:
+        'Every cut is a hard cut until you say otherwise. Pick a <strong>fade, zoom punch, whip or spin</strong> and the shot you’re in arrives that way. Each one lasts half a beat when a track is loaded, so it lands <em>with</em> the music — try a zoom punch on a beat drop and play it back.',
+      side: 'top',
+      align: 'start',
+    },
+  },
+  {
     element: '[data-tour="timeline"]',
     popover: {
       title: 'When things happen',

@@ -167,6 +167,7 @@ export default function ShotStrip({ project }: { project: Project }) {
           <PopoverTrigger asChild>
             <button
               type="button"
+              data-tour="transition"
               title={`How ${sceneLabel(scenes, activeShot.id)} arrives`}
               className={[
                 'shrink-0 h-6 pl-1.5 pr-2.5 flex items-center gap-1 rounded-studio-sm text-[11px] font-medium transition-colors duration-120',
