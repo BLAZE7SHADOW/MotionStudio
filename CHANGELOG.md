@@ -5,6 +5,48 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-30] — Seeing what is animated
+
+Phase 3 of the close-the-gaps plan: §B and §C of the benchmark, the Properties
+panel.
+
+### Added
+- **Animated-property markers** (`PropertiesPanel.tsx`) — an accent diamond on
+  the dials that are animated. Until now the only way to know whether Rotation
+  moved was to open Motion and read the list, so the panel could show you `0°`
+  on a value that spends most of the video somewhere else.
+  - **Also on the section header**, which is what keeps the marker honest:
+    `scale` is animatable but has no Transform row (width and height are the
+    authored size, not a factor), so without a header mark a scale animation
+    would be invisible everywhere except the Motion list. It also means a
+    *closed* section can still say something inside is animated — which matters,
+    because these sections default closed.
+  - Transition animations are excluded. They belong to the shot rather than the
+    element, they are already hidden from Motion for that reason, and marking
+    every element in a zoom-punch shot would make the marker mean nothing.
+- **`PRESETS │ MANUAL` on Motion.** They shared one scrolling column, so the
+  expert scrolled past twelve preset buttons every time and the beginner met a
+  list of raw properties first. It opens on whichever half has content, and
+  **applying a preset switches you to Manual** — a preset is the fastest way to
+  learn what these dials do, and that only works if you can see the dials it set.
+  - Not applied to the 34 text effects, though the benchmark suggests it: those
+    are already grouped into seven labelled sets, and manual-vs-preset does not
+    describe them — there is no "manual" text effect.
+
+### Changed
+- **Row labels are now all-caps micro-labels**, matching the section headers.
+  They were 11px sentence case against 10px uppercase headers, which read as two
+  systems inside one panel.
+
+### Verified live
+Applied Slide Up to a text element: the tab flipped to **MANUAL (2)** showing the
+Position Y and Opacity animations it created, **MOTION** and **TRANSFORM** both
+gained the diamond, and inside Transform the marks landed on exactly **Y** and
+**OPACITY** — not X, W, H or Rotation. Transform's header mark read "2 animated
+properties" while collapsed.
+
+---
+
 ## [2026-07-30] — The quiet half of data loss
 
 Phase 2 of the close-the-gaps plan. The multi-tab lock fixed the loud half of

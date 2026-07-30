@@ -152,11 +152,35 @@ const PROPERTY_LABELS: Record<AnimationProperty, string> = {
 
 const EASINGS: AnimationEasing[] = ['linear', 'ease', 'spring'];
 
+/* ── the animated-property marker ──
+   A small accent diamond, and one of the two things accent is allowed to mean
+   (live state). Without it the only way to know whether Rotation is animated is
+   to open Motion and read the list — so the panel could show you `0°` on a
+   value that spends most of the video somewhere else. */
+function AnimatedMark({ title }: { title: string }) {
+  return (
+    <span
+      title={title}
+      aria-label={title}
+      className="shrink-0 w-1.5 h-1.5 rotate-45 rounded-[1px] bg-studio-accent"
+    />
+  );
+}
+
 /* ── shared row: label + input ── */
-function PropRow({ label, children, compact }: { label: string; children: React.ReactNode; compact?: boolean }) {
+function PropRow({
+  label, children, compact, animated,
+}: {
+  label: string; children: React.ReactNode; compact?: boolean; animated?: boolean;
+}) {
   return (
     <div className="flex items-center gap-2">
-      <span className={`text-[11px] text-studio-text-faint shrink-0 ${compact ? 'w-4' : 'w-16'}`}>{label}</span>
+      <span
+        className={`flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-studio-text-faint shrink-0 ${compact ? 'w-5' : 'w-16'}`}
+      >
+        {label}
+        {animated && <AnimatedMark title={`${label} is animated`} />}
+      </span>
       {children}
     </div>
   );
@@ -223,6 +247,7 @@ function Section({
   children,
   tourId,
   onReset,
+  marker,
 }: {
   title: string;
   children?: React.ReactNode;
@@ -235,6 +260,10 @@ function Section({
       a partial reset wearing an absolute label. Callers pass `undefined` when
       the section is already empty, so the control never appears dead. */
   onReset?: () => void;
+  /** Tooltip for an accent diamond on the header, marking that something inside
+      is animated. Present precisely so a closed section can still say so —
+      which is the whole point when sections default closed. */
+  marker?: string;
 }) {
   const [closed, setClosed] = useState(() => readClosedSections().includes(title));
 
@@ -283,6 +312,7 @@ function Section({
           <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">
             {title}
           </span>
+          {marker && <AnimatedMark title={marker} />}
         </button>
         {onReset && (
           <button
@@ -357,22 +387,39 @@ function AnimationRow({
 
 /* ── shared: transform (any visual element) ── */
 function TransformSection({ el, update }: { el: BaseElement; update: Update }) {
+  /* Which properties the *user* animated. Transition animations are excluded:
+     they belong to the shot rather than the element, they are hidden from
+     Motion for that reason, and marking Scale as animated on every element in a
+     shot with a zoom punch would make the marker meaningless. */
+  const animated = new Set(
+    (el.animations ?? []).filter((a) => a.source !== 'transition').map((a) => a.property),
+  );
+
+  /* `scale` is animatable but has no Transform row — width and height are the
+     authored size, not a factor. A section-level mark is what keeps the marker
+     honest: without it a scale animation would be invisible everywhere except
+     the Motion list. */
+  const marked = animated.size > 0;
+
   return (
     <>
-      <Section title="Transform">
+      <Section
+        title="Transform"
+        marker={marked ? `${animated.size} animated ${animated.size === 1 ? 'property' : 'properties'}` : undefined}
+      >
       <div className="flex flex-col gap-3 px-4 py-3">
         <div className="flex gap-2">
-          <PropRow label="X" compact><NumInput value={Math.round(el.x)} onChange={(v) => update({ x: v })} compact /></PropRow>
-          <PropRow label="Y" compact><NumInput value={Math.round(el.y)} onChange={(v) => update({ y: v })} compact /></PropRow>
+          <PropRow label="X" compact animated={animated.has('x')}><NumInput value={Math.round(el.x)} onChange={(v) => update({ x: v })} compact /></PropRow>
+          <PropRow label="Y" compact animated={animated.has('y')}><NumInput value={Math.round(el.y)} onChange={(v) => update({ y: v })} compact /></PropRow>
         </div>
         <div className="flex gap-2">
           <PropRow label="W" compact><NumInput value={Math.round(el.width)} onChange={(v) => update({ width: v })} min={1} compact /></PropRow>
           <PropRow label="H" compact><NumInput value={Math.round(el.height)} onChange={(v) => update({ height: v })} min={1} compact /></PropRow>
         </div>
-        <PropRow label="Rotation">
+        <PropRow label="Rotation" animated={animated.has('rotate')}>
           <NumInput value={Math.round(el.rotation)} onChange={(v) => update({ rotation: v })} unit="°" />
         </PropRow>
-        <PropRow label="Opacity">
+        <PropRow label="Opacity" animated={animated.has('opacity')}>
           <NumInput
             value={Math.round(el.opacity * 100)}
             onChange={(v) => update({ opacity: Math.min(1, Math.max(0, v / 100)) })}
@@ -433,6 +480,16 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
   const anims = allAnims.filter((a) => a.source !== 'transition');
   const writeAnims = (next: Animation[]) =>
     update({ animations: [...transitionAnims, ...next] });
+
+  /* Open on whichever half has something in it. An element with animations
+     wants them shown; an empty one wants the one-click route.
+
+     A lazy initialiser is enough — no effect needed — because every properties
+     component is rendered with `key={selected.id}`, so selecting a different
+     element remounts this whole subtree and re-runs it. If that key ever goes,
+     this silently starts showing the previous element's tab. */
+  const [mode, setMode] = useState<'presets' | 'manual'>(anims.length > 0 ? 'manual' : 'presets');
+
   return (
     <>
       {/* Motion is where mess accumulates — presets append, so three clicks
@@ -441,58 +498,97 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
       <Section
         title={hideHeader ? 'Motion' : 'Animation'}
         onReset={anims.length > 0 ? () => writeAnims([]) : undefined}
+        marker={anims.length > 0 ? `${anims.length} animation${anims.length === 1 ? '' : 's'}` : undefined}
       >
       <div className="flex flex-col gap-2.5 px-4 py-3">
-        {anims.length > 0 && (
-          <div className="flex flex-col gap-2">
-            {anims.map((anim, i) => (
-              <AnimationRow
-                key={i}
-                anim={anim}
-                onChange={(patch) =>
-                  writeAnims(anims.map((a, idx) => (idx === i ? { ...a, ...patch } : a)))
-                }
-                onRemove={() => writeAnims(anims.filter((_, idx) => idx !== i))}
-              />
-            ))}
-          </div>
-        )}
-
-        {(['enter', 'exit'] as const).map((kind) => (
-          <div key={kind} className="flex flex-col gap-1.5">
-            <span className="text-[10px] text-studio-text-faint uppercase tracking-wider">
-              {kind === 'enter' ? 'Enter' : 'Exit'}
-            </span>
-            <div className="grid grid-cols-2 gap-1.5">
-              {ANIMATION_PRESETS.filter((p) => p.kind === kind).map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => writeAnims([...anims, ...preset.build(el.durationInFrames)])}
-                  className="flex items-center gap-1.5 h-8 px-1.5 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
-                >
-                  <AnimationPreview animations={PRESET_PREVIEW_ANIMATIONS.get(preset.id)!} size={22} />
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        <select
-          value=""
-          onChange={(e) => {
-            const prop = e.target.value as AnimationProperty;
-            if (!prop) return;
-            writeAnims([...anims, defaultAnimationFor(prop)]);
-          }}
-          className="h-8 text-[11px] bg-studio-surface border border-studio-border rounded-studio-md text-studio-text-muted px-2 focus:outline-none focus:border-studio-accent-border"
-        >
-          <option value="" disabled>＋ Add property…</option>
-          {(Object.keys(PROPERTY_LABELS) as AnimationProperty[]).map((p) => (
-            <option key={p} value={p}>{PROPERTY_LABELS[p]}</option>
+        {/* Presets for a beginner, dials for an expert, neither buried under the
+            other. They shared one scrolling column before, which meant the
+            expert scrolled past twelve preset buttons every time and the
+            beginner met a list of raw properties first. */}
+        <div className="flex p-0.5 rounded-studio-md bg-studio-surface border border-studio-border">
+          {(['presets', 'manual'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className={[
+                'flex-1 h-6 rounded-studio-sm text-[10px] font-semibold uppercase tracking-wider transition-colors duration-120',
+                mode === m
+                  ? 'bg-studio-panel text-studio-text'
+                  : 'text-studio-text-faint hover:text-studio-text-muted',
+              ].join(' ')}
+            >
+              {m === 'presets' ? 'Presets' : `Manual${anims.length > 0 ? ` (${anims.length})` : ''}`}
+            </button>
           ))}
-        </select>
+        </div>
+
+        {mode === 'presets' &&
+          (['enter', 'exit'] as const).map((kind) => (
+            <div key={kind} className="flex flex-col gap-1.5">
+              <span className="text-[10px] font-medium text-studio-text-faint uppercase tracking-wider">
+                {kind === 'enter' ? 'Enter' : 'Exit'}
+              </span>
+              <div className="grid grid-cols-2 gap-1.5">
+                {ANIMATION_PRESETS.filter((p) => p.kind === kind).map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => {
+                      writeAnims([...anims, ...preset.build(el.durationInFrames)]);
+                      /* Land on what the preset just made. A preset is the
+                         fastest way to learn what these dials do, and that only
+                         works if you can see the dials it set. */
+                      setMode('manual');
+                    }}
+                    className="flex items-center gap-1.5 h-8 px-1.5 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
+                  >
+                    <AnimationPreview animations={PRESET_PREVIEW_ANIMATIONS.get(preset.id)!} size={22} />
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+
+        {mode === 'manual' && (
+          <>
+            {anims.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                {anims.map((anim, i) => (
+                  <AnimationRow
+                    key={i}
+                    anim={anim}
+                    onChange={(patch) =>
+                      writeAnims(anims.map((a, idx) => (idx === i ? { ...a, ...patch } : a)))
+                    }
+                    onRemove={() => writeAnims(anims.filter((_, idx) => idx !== i))}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-[10px] text-studio-text-faint leading-relaxed">
+                Nothing animated yet. Add a property below, or start from a preset
+                and tune what it made.
+              </p>
+            )}
+
+            <select
+              value=""
+              onChange={(e) => {
+                const prop = e.target.value as AnimationProperty;
+                if (!prop) return;
+                writeAnims([...anims, defaultAnimationFor(prop)]);
+              }}
+              className="h-8 text-[11px] bg-studio-surface border border-studio-border rounded-studio-md text-studio-text-muted px-2 focus:outline-none focus:border-studio-accent-border"
+            >
+              <option value="" disabled>＋ Add property…</option>
+              {(Object.keys(PROPERTY_LABELS) as AnimationProperty[]).map((p) => (
+                <option key={p} value={p}>{PROPERTY_LABELS[p]}</option>
+              ))}
+            </select>
+          </>
+        )}
 
         {anims.length > 0 && (
           <button

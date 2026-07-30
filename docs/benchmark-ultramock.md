@@ -143,10 +143,23 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
       obvious meaning: on Transform it would have to leave the authored
       position and size alone, making it a partial reset wearing an absolute
       label. Revisit when a section owns settings rather than geometry.)*
-- [ ] **Animated-property markers** — small accent diamonds on exactly the
+- [x] **Animated-property markers** — small accent diamonds on exactly the
       keyframed dials, so you can see what is animated without expanding anything.
-- [ ] **`MANUAL │ PRESETS` segmented control** — presets for beginners, dials for
-      experts, neither buried. Also the answer to our 34-effect `<select>`.
+      *(2026-07-30 — on the dials *and* on the section header, which is what
+      keeps it honest: `scale` is animatable but has no Transform row, so
+      without a header mark a scale animation would be invisible outside the
+      Motion list. Transition animations are excluded — they belong to the shot,
+      and marking every element in a zoom-punch shot would make the mark
+      meaningless.)*
+- [x] **`MANUAL │ PRESETS` segmented control** — presets for beginners, dials for
+      experts, neither buried.
+      *(2026-07-30 — on Motion. Opens on whichever half has content, and
+      applying a preset switches you to Manual so you see the dials it just
+      set — a preset is the fastest way to learn what they do, and that only
+      works if you can see them. **Not** applied to the 34 text effects: those
+      are already grouped into 7 labelled sets in the picker, and a
+      manual/preset split does not describe them — there is no "manual" text
+      effect.)*
 - [ ] **Additive effect stack** — `+` to add, each row gets an eye (mute) and a
       minus (remove).
 
@@ -158,7 +171,10 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
       expensive.
       *(2026-07-28 — rule written at the token definition in `index.css`; four
       decorative usages removed. Most existing accent was already legitimate.)*
-- [ ] **All-caps micro-labels**, one consistent size, everywhere.
+- [x] **All-caps micro-labels**, one consistent size, everywhere.
+      *(2026-07-30 — `PropRow` now matches the section headers at 10px
+      uppercase. Row labels were 11px sentence case against 10px uppercase
+      headers, which read as two systems in one panel.)*
 - [x] Geist font family.
 - [ ] A stylesheet small enough to be uninteresting (theirs: 3.7 KB).
 
@@ -337,6 +353,7 @@ Append a line whenever something above is ticked.
 | 2026-07-28 | *(off-benchmark)* beat snapping | Add shot lands on a beat; edge-drag snaps to one (Alt to override); shots labelled in beats. |
 | 2026-07-28 | A — video-wide elements | `ALL_SHOTS` sentinel + `respanGlobals`. Fixed the "second shot is a black screen with no music" cliff the shot model created, and let one soundtrack span the sequence. |
 | 2026-07-28 | *(off-benchmark)* transitions | `engines/animation/transitions.ts` — fade, zoom punch, whip, spin, half a beat long. Materialised as animations, so `MotionComposition`, all three exporters and `api/render.ts` were untouched (confirmed by `git diff --stat`). |
+| 2026-07-30 | B/C — animated markers, MANUAL│PRESETS, all-caps labels | Phase 3. Markers on the dials and the section header. Motion split into presets and dials, with a preset click landing you on what it made. Section B is now complete bar the deferred effect stack. |
 | 2026-07-30 | F/I — save state, schema versioning, exception capture | Phase 2. `saveProject` returned void and swallowed failures — the root of the whole gap. Per-project `schemaVersion` because the envelope version doesn't survive Supabase. Also fixed the autosave re-uploading every project on every edit. |
 | 2026-07-30 | E — contextual hints, tour steps, shortcuts sheet | Phase 1 of the close-the-gaps plan. Notice primitive with DON'T SHOW AGAIN (17 new assertions); hints for tempo found / tempo shaky / taken over; tour steps for the beat grid and transitions; shortcuts sheet. Live run moved the notice stack top-right — it was covering the grid it described. |
 | 2026-07-30 | — | Scorecard re-audited against the code. 14 of ~40 ticked; **all five items in §6 "order of attack" are now done**. Sections **D** (perceived performance) and **I** (hygiene) remain untouched; **G** deferred by the owner. Next candidates, ranked: schema versioning (§I — the doc predicted it was "needed the day we ship shots", and that day has passed), offline save states (§F), the prerendered skeleton (§D). |

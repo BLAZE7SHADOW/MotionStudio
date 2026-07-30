@@ -37,6 +37,14 @@ export const RELEASES: Release[] = [
     changes: [
       {
         kind: 'new',
+        text: 'The Properties panel now marks which values are animated with a small diamond — so a rotation sitting at 0° that actually spins during playback no longer looks static. The mark shows on the section heading too, even when it’s collapsed.',
+      },
+      {
+        kind: 'improved',
+        text: 'Motion is split into Presets and Manual. Pick a preset and it drops you straight into Manual showing exactly what it set, which is the quickest way to learn what those controls do.',
+      },
+      {
+        kind: 'new',
         text: 'The toolbar now says whether your work has reached the cloud — saving, saved, or offline. If you lose your connection it says so plainly and keeps your changes on this device, then saves them by itself the moment you’re back.',
       },
       {
