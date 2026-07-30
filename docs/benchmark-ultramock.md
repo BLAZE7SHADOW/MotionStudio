@@ -180,11 +180,18 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
 
 ### D. Perceived performance
 
-- [ ] **Hand-written skeleton in the prerendered HTML** — a grey wireframe with
+- [x] **Hand-written skeleton in the prerendered HTML** — a grey wireframe with
       correct panel widths and a spinner, `aria-label="Loading editor"`, painting
       before any JS runs. Their body has zero real content and ~49 KB of skeleton.
-- [ ] **Theme read from localStorage inline, before paint** — no flash of the
-      wrong theme.
+      *(2026-07-30 — ours is ~2 KB, not 49: we only need the shell, not a
+      prerendered page. Sizes were **measured** from the running app rather than
+      read off the classnames — that caught the toolbar being 44px where the
+      class implied 41, and a skeleton that shifts on removal is worse than
+      none. Removed in a layout effect so it never shares a frame with the app.)*
+- [ ] ~~**Theme read from localStorage inline, before paint**~~ — **not
+      applicable.** `index.html` hard-codes `class="dark"` and there is no
+      theme toggle, so there is no flash to prevent. Revisit only if a light
+      theme ever ships.
 - [~] **Aggressive code splitting** — 24 lazy chunks.
 
 ### E. Onboarding
@@ -233,9 +240,16 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
       `console.error` and returning `void`, so nothing above it could tell a
       save from a failure. Reconnecting retries by itself. Copy stays calm —
       local persistence keeps working, and overstating it would be its own bug.)*
-- [ ] **Mobile honesty** — "Rotate your device for a wide screen experience.",
+- [x] **Mobile honesty** — "Rotate your device for a wide screen experience.",
       "Full timeline available on desktop", "Video mode currently only on
       desktop." They degrade explicitly instead of hiding.
+      *(2026-07-30 — `DesktopOnlyGate` already refused explicitly rather than
+      hiding, but gave a tablet in portrait the wrong advice: "switch to a
+      laptop" when a quarter-turn would do. It now detects a viewport that is
+      only too narrow because it is upright and says **Rotate your device**
+      instead. We stop short of their partial degradation — a compositor with
+      no timeline is not a smaller version of the product, it is a different
+      one.)*
 - [x] **Destructive confirmations that name the consequence** — "Adding this
       video will replace the images on every shot."
       *(2026-07-30 — shot deletion names the element count and says what
@@ -265,13 +279,28 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
 ### H. Growth
 
 - [x] Feedback form; changelog / what's-new.
-- [ ] **Discord + X links in-product.**
+- [ ] ~~**Discord + X links in-product.**~~ — **skipped, not deferred.** There
+      is no MotionStudio Discord or X account to link to, and a link to an empty
+      community is worse than no link. Reopen if one exists.
 - [ ] **Waitlist for the next version** (`/api/waitlist`) — captures intent
       before the feature exists.
-- [ ] **"Made by" / "Special thanks to"** — a face on the product.
-- [ ] **Paste-first input** — "Drag & drop or paste", plus a quick-capture
+- [~] **"Made by" / "Special thanks to"** — a face on the product.
+      *(2026-07-30 — the landing page and README both credit the author; the
+      *editor* does not. Genuinely open, and small.)*
+- [x] **Paste-first input** — "Drag & drop or paste", plus a quick-capture
       shortcut. Lower friction than any file picker.
-- [ ] Rich OG image and full keyword meta (they rank for "mockup generator").
+      *(2026-07-30 — bound at the document so it works anywhere in the editor,
+      and skipped while a field has focus so pasting text still pastes text. A
+      screenshot is the most common thing anyone puts in a video like this and
+      it starts life on the clipboard; the picker route means saving it to disk
+      purely to find it again. No quick-capture shortcut — we cannot take a
+      screenshot from a web page.)*
+- [~] Rich OG image and full keyword meta (they rank for "mockup generator").
+      *(2026-07-30 — title, description, `og:title`, `og:description` and
+      `twitter:card` shipped; `index.html` had a bare `<title>motionstudio</title>`
+      and no description at all. **No `og:image`**: it needs a real 1200×630
+      raster, and pointing the tag at a file that 404s is worse than omitting
+      it. Left open deliberately.)*
 
 ### I. Engineering hygiene
 
@@ -353,6 +382,7 @@ Append a line whenever something above is ticked.
 | 2026-07-28 | *(off-benchmark)* beat snapping | Add shot lands on a beat; edge-drag snaps to one (Alt to override); shots labelled in beats. |
 | 2026-07-28 | A — video-wide elements | `ALL_SHOTS` sentinel + `respanGlobals`. Fixed the "second shot is a black screen with no music" cliff the shot model created, and let one soundtrack span the sequence. |
 | 2026-07-28 | *(off-benchmark)* transitions | `engines/animation/transitions.ts` — fade, zoom punch, whip, spin, half a beat long. Materialised as animations, so `MotionComposition`, all three exporters and `api/render.ts` were untouched (confirmed by `git diff --stat`). |
+| 2026-07-30 | D/F/H — skeleton, rotate-your-device, paste-first | Phase 4. index.html went from 377 bytes painting nothing to a measured shell. Section D was previously untouched. Growth items partly closed; Discord/X skipped for lack of anything to link to, og:image left open for lack of a real raster. |
 | 2026-07-30 | B/C — animated markers, MANUAL│PRESETS, all-caps labels | Phase 3. Markers on the dials and the section header. Motion split into presets and dials, with a preset click landing you on what it made. Section B is now complete bar the deferred effect stack. |
 | 2026-07-30 | F/I — save state, schema versioning, exception capture | Phase 2. `saveProject` returned void and swallowed failures — the root of the whole gap. Per-project `schemaVersion` because the envelope version doesn't survive Supabase. Also fixed the autosave re-uploading every project on every edit. |
 | 2026-07-30 | E — contextual hints, tour steps, shortcuts sheet | Phase 1 of the close-the-gaps plan. Notice primitive with DON'T SHOW AGAIN (17 new assertions); hints for tempo found / tempo shaky / taken over; tour steps for the beat grid and transitions; shortcuts sheet. Live run moved the notice stack top-right — it was covering the grid it described. |

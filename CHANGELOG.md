@@ -5,6 +5,61 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-30] — First impressions
+
+Phase 4, the last of the close-the-gaps plan: §D, and the honest parts of §F/§H.
+
+### Added
+- **A pre-JS skeleton in `index.html`.** The file was 377 bytes with an empty
+  `<div>`, so the first paint was a black rectangle for as long as the bundle
+  took to arrive and execute. §D of the benchmark was the only section with
+  nothing ticked at all.
+  - **The sizes are measured from the running app, not read off the
+    classnames** — `getBoundingClientRect` gave assets 220, properties 260,
+    timeline 224 and toolbar **44**, where the classname implied 41. A skeleton
+    that shifts 3px on removal is worse than no skeleton, and reading the
+    classnames alone would have shipped exactly that.
+  - Removed in a **layout effect**, which runs after React writes the DOM and
+    before the browser paints, so the skeleton and the app never share a frame.
+    A timer or a plain effect would let them overlap.
+  - Hidden below 1024px, where the app shows a gate rather than panels — a
+    three-column skeleton there would promise a layout that never arrives.
+- **Real page metadata** — the title was `motionstudio` and there was no
+  description at all. Now a proper title, description, `og:title`,
+  `og:description` and `twitter:card`. **No `og:image`**: that needs a real
+  1200×630 raster, and a tag pointing at a 404 is worse than no tag.
+- **Paste to add media.** Bound at the document so it works anywhere in the
+  editor, and skipped while a field has focus so pasting text still pastes text.
+  A screenshot is the most common thing anyone puts in a video like this and it
+  starts life on the clipboard; the file-picker route means saving it to disk
+  purely to find it again.
+
+### Changed
+- **`DesktopOnlyGate` gives a tablet the right advice.** It already refused
+  explicitly rather than hiding, but told a portrait iPad to "switch to a laptop
+  or desktop" when a quarter-turn would do — an iPad is 820px upright and 1180px
+  on its side. It now detects a viewport that is only too narrow because it is
+  being held upright and says **Rotate your device**.
+
+### Deliberately not done, with reasons
+- **Theme-before-paint (§D)** — not applicable. `index.html` hard-codes
+  `class="dark"` and there is no toggle, so there is no flash to prevent.
+- **Discord + X links (§H)** — skipped rather than deferred. There is no
+  MotionStudio Discord or X account, and a link to an empty community is worse
+  than no link.
+- **Partial mobile degradation (§F)** — Ultramock ships a reduced mobile mode
+  ("Full timeline available on desktop"). A compositor without a timeline is not
+  a smaller version of this product, it is a different one.
+- **Template deep-links, `og:image`, "made by" in the editor** — all still open,
+  all small. Recorded in the scorecard rather than quietly dropped.
+
+### Verified live
+Skeleton removed before paint with no layout shift; measured panel geometry
+matched the skeleton's; title and description present; the paste hint reads
+"or drop files anywhere · ⌘V to paste".
+
+---
+
 ## [2026-07-30] — Seeing what is animated
 
 Phase 3 of the close-the-gaps plan: §B and §C of the benchmark, the Properties

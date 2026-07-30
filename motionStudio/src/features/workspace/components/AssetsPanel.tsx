@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Music, Upload, Search, FolderOpen, X, Play, Sparkle, Loader2, FileWarning } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -410,6 +410,30 @@ export default function AssetsPanel() {
     await handleFiles([file]);
   }
 
+  /* Paste as a first-class way in.
+     A screenshot is the single most common thing anyone puts in a video like
+     this, and it starts life on the clipboard — going via a file picker means
+     saving it to disk first, purely to find it again. Bound at the document so
+     it works wherever you are in the editor rather than only inside this panel.
+
+     Skipped while typing: a paste into the text content box or a number field
+     is text, and hijacking it would break editing outright. */
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      const el = document.activeElement as HTMLElement | null;
+      if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return;
+
+      const files = Array.from(e.clipboardData?.files ?? []);
+      if (files.length === 0) return;
+      e.preventDefault();
+      void handleFiles(files);
+    }
+    document.addEventListener('paste', onPaste);
+    return () => document.removeEventListener('paste', onPaste);
+  // handleFiles closes over state that changes every render; re-binding a
+  // listener each time is cheaper than the alternatives and has no user effect.
+  });
+
   return (
     <div
       className="relative flex flex-col h-full bg-studio-panel overflow-hidden"
@@ -461,7 +485,7 @@ export default function AssetsPanel() {
           {busy ? 'Adding…' : 'Add media'}
         </button>
         <p className="mt-1.5 text-[10px] text-studio-text-faint text-center">
-          or drop files anywhere in this panel
+          or drop files anywhere · ⌘V to paste
         </p>
       </div>
 

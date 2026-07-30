@@ -4,9 +4,78 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>motionstudio</title>
+    <title>MotionStudio — browser-based motion graphics editor</title>
+    <meta
+      name="description"
+      content="A video compositor that runs in your browser. Compose text, media and shader backgrounds on a frame-accurate timeline, cut shots to the beat of your music, and export MP4 — no install."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MotionStudio — browser-based motion graphics editor" />
+    <meta
+      property="og:description"
+      content="Compose text, media and shader backgrounds on a frame-accurate timeline, cut shots to the beat of your music, and export MP4 — no install."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!--
+      A hand-written skeleton, painted before a byte of JS is parsed.
+
+      This file was 377 bytes with an empty <div>, so the first paint was a
+      black rectangle for as long as the bundle took to arrive and execute.
+      This is the cheapest perceived-performance win available: no framework,
+      no hydration, just the panel geometry the editor is about to occupy.
+
+      Rules for keeping it honest:
+       - The sizes are *measured* from the running app, not read off the
+         classnames: `getBoundingClientRect` gives assets 220, properties 260,
+         timeline 224, toolbar 44. Reading the classnames alone got the toolbar
+         wrong by 3px, and a skeleton whose layout shifts when it is removed is
+         worse than no skeleton. `box-sizing: border-box` so the 1px borders sit
+         inside those numbers, as they do in the app.
+       - It is removed on the app's first layout effect, before paint, so there
+         is never a frame with both on screen. Never on a timer.
+       - It must not grow into something that needs maintaining. If the layout
+         changes shape, delete this rather than let it start lying.
+    -->
+    <style>
+      #ms-skeleton {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        background: #0a0a0c;
+      }
+      #ms-skeleton, #ms-skeleton * { box-sizing: border-box; }
+      #ms-skeleton .row { display: flex; flex: 1; min-height: 0; }
+      #ms-skeleton .bar { height: 44px; border-bottom: 1px solid #1e1e24; flex: none; }
+      #ms-skeleton .left { width: 220px; border-right: 1px solid #1e1e24; flex: none; }
+      #ms-skeleton .right { width: 260px; border-left: 1px solid #1e1e24; flex: none; }
+      #ms-skeleton .mid { flex: 1; display: flex; align-items: center; justify-content: center; }
+      #ms-skeleton .timeline { height: 224px; border-top: 1px solid #1e1e24; flex: none; }
+      #ms-skeleton .spinner {
+        width: 22px; height: 22px; border-radius: 50%;
+        border: 2px solid #26262e; border-top-color: #7c5cff;
+        animation: ms-spin 0.7s linear infinite;
+      }
+      @keyframes ms-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { #ms-skeleton .spinner { animation: none; } }
+      /* Under the editor's minimum width the app shows a gate, not panels, so a
+         three-column skeleton there would promise a layout that never arrives. */
+      @media (max-width: 1023px) {
+        #ms-skeleton .left, #ms-skeleton .right, #ms-skeleton .timeline { display: none; }
+      }
+    </style>
   </head>
   <body>
+    <div id="ms-skeleton" role="status" aria-label="Loading MotionStudio">
+      <div class="bar"></div>
+      <div class="row">
+        <div class="left"></div>
+        <div class="mid"><div class="spinner"></div></div>
+        <div class="right"></div>
+      </div>
+      <div class="timeline"></div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

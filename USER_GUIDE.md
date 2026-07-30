@@ -159,7 +159,10 @@ dragging invisible. A note on the canvas says so when it applies; press
 
 ### Images, video, audio
 1. Open the **Assets** panel → **Upload** tab.
-2. **Drag files** onto the drop zone, or click **Browse Images / Videos / Audio**.
+2. **Drag files** onto the drop zone, or click **Browse Images / Videos / Audio**
+   — or just **paste**: copy an image (a screenshot, say) and press **⌘V /
+   Ctrl+V** anywhere in the editor and it lands in your library, no trip through
+   a file picker. (Pasting inside a text box still pastes text.)
 3. Your uploads appear as thumbnails under the **Images / Videos / Audio** tabs.
 4. To place one on the canvas:
    - **Click** a thumbnail → it's added centered, or

@@ -37,6 +37,18 @@ export const RELEASES: Release[] = [
     changes: [
       {
         kind: 'new',
+        text: 'You can paste media straight in. Copy a screenshot and press ⌘V anywhere in the editor — no saving it to disk first just to find it in a file picker.',
+      },
+      {
+        kind: 'improved',
+        text: 'MotionStudio no longer opens on a black rectangle while it loads: the panels are drawn immediately, before any of the app has arrived.',
+      },
+      {
+        kind: 'fixed',
+        text: 'On a tablet held upright, MotionStudio used to tell you to switch to a laptop. It now says to turn your device sideways, which is all it actually needs.',
+      },
+      {
+        kind: 'new',
         text: 'The Properties panel now marks which values are animated with a small diamond — so a rotation sitting at 0° that actually spins during playback no longer looks static. The mark shows on the section heading too, even when it’s collapsed.',
       },
       {

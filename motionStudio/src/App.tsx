@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { createBrowserRouter, RouterProvider, Outlet, useLocation } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -175,6 +175,16 @@ function CloudSync() {
 }
 
 export default function App() {
+  /* Drop the pre-JS skeleton from `index.html`.
+
+     A layout effect, not an effect and not a timer: layout effects run after
+     React has written the DOM but *before* the browser paints, so there is
+     never a frame with both the skeleton and the app on screen. On a timer
+     they would overlap; on a plain effect they can. */
+  useLayoutEffect(() => {
+    document.getElementById('ms-skeleton')?.remove();
+  }, []);
+
   return (
     <>
       <AuthBridge />

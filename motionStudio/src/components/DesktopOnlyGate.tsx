@@ -12,8 +12,20 @@ interface DesktopOnlyGateProps {
   description: string;
 }
 
+/**
+ * True on a device that is only too narrow because it is being held upright —
+ * an iPad in portrait is 820px and would pass at 1180px in landscape.
+ *
+ * Worth distinguishing because the advice differs: telling a tablet user to
+ * "switch to a laptop" when a quarter-turn would do is advice that is simply
+ * wrong, and the kind of thing that makes a product feel like it has not
+ * thought about you.
+ */
+const ROTATABLE_QUERY = '(orientation: portrait) and (min-height: 1024px)';
+
 export default function DesktopOnlyGate({ children, title, description }: DesktopOnlyGateProps) {
   const isDesktop = useMediaQuery(MIN_WIDTH_QUERY);
+  const wouldFitRotated = useMediaQuery(ROTATABLE_QUERY);
 
   if (isDesktop) return <>{children}</>;
 
@@ -30,11 +42,19 @@ export default function DesktopOnlyGate({ children, title, description }: Deskto
         <MonitorSmartphone className="w-6 h-6 text-studio-accent" />
       </div>
 
-      <h1 className="text-[20px] font-bold text-studio-text tracking-tight mb-2">{title}</h1>
-      <p className="text-[13px] text-studio-text-muted leading-relaxed max-w-[320px]">{description}</p>
+      <h1 className="text-[20px] font-bold text-studio-text tracking-tight mb-2">
+        {wouldFitRotated ? 'Rotate your device' : title}
+      </h1>
+      <p className="text-[13px] text-studio-text-muted leading-relaxed max-w-[320px]">
+        {wouldFitRotated
+          ? 'This screen is wide enough on its side. Turn it landscape and you can keep going here.'
+          : description}
+      </p>
 
       <p className="mt-6 text-[12px] text-studio-text-faint">
-        Switch to a laptop or desktop — or widen this window — to continue.
+        {wouldFitRotated
+          ? 'Or switch to a laptop or desktop.'
+          : 'Switch to a laptop or desktop — or widen this window — to continue.'}
       </p>
     </div>
   );
