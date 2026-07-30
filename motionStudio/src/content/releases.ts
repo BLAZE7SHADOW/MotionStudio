@@ -37,6 +37,14 @@ export const RELEASES: Release[] = [
     changes: [
       {
         kind: 'new',
+        text: 'The toolbar now says whether your work has reached the cloud — saving, saved, or offline. If you lose your connection it says so plainly and keeps your changes on this device, then saves them by itself the moment you’re back.',
+      },
+      {
+        kind: 'improved',
+        text: 'Deleting a shot now tells you how many elements go with it before it happens, and reminds you that your background and music stay. Empty shots still delete in one click — no dialog for nothing.',
+      },
+      {
+        kind: 'new',
         text: 'MotionStudio now tells you when something changes on its own. Add a music track and it says what tempo it found and what that changes — instead of a grid of lines appearing on your timeline with no explanation. If a tempo is hard to read it says so, rather than quietly guessing. Every hint has a "don’t show again", and replaying the tour brings them all back.',
       },
       {

@@ -35,6 +35,7 @@ Vercel Functions (render/quota/upload/contact API), Supabase (auth + project syn
 | **Vercel Functions** | The API is 4 endpoints (`render`, `quota`, `upload-url`, `contact`); serverless means zero infrastructure for that footprint. |
 | **Remotion Lambda + S3** | Production export path: headless render on AWS, output to S3. A cloud render pipeline for ~20 minutes of config instead of months of infra. |
 | **Remocn** | 57 copy-paste Remotion components (text effects, shaders, UI blocks) — animation polish bought, not built, and owned as source in the repo. |
+| **PostHog** | Product analytics *and* exception capture. A dedicated error vendor (Sentry) would buy a nicer stack-trace UI for a second script on every page load; `__APP_VERSION__` already carries the Vercel commit SHA, so the "release = git SHA" half was free. |
 | **Resend** | Transactional email for the contact form — a single `emails.send()` call instead of managing SMTP or a mail server. |
 
 ---
@@ -454,11 +455,16 @@ black.
 
 Both persistence paths serialise the **whole** projects array: zustand's
 `persist` middleware to IndexedDB, and the cloud autosave in `App.tsx`, which
-pushes every project every two seconds. Neither reconciles, so a second tab
+pushed every project every two seconds. Neither reconciles, so a second tab
 holding a stale copy silently overwrote the first tab's work — and because the
 cloud save iterates all projects, a tab left idle on the *dashboard* could
 clobber edits to a project it wasn't even showing. Last writer won, and the
 loser was never told.
+
+*(2026-07-30 — the autosave now pushes only projects whose `updatedAt` has moved
+since the last successful write, which narrows the blast radius but does not
+replace the lock: the tab still holds a full stale copy of anything it has
+touched.)*
 
 **A lock, not a merge.** Merging concurrent edits to a video composition has no
 obvious right answer — whose element position wins? — while "this is open
@@ -585,6 +591,10 @@ Supabase-permissions bullet above — this project's `public` schema didn't
 have the usual default privilege grants applied). A reminder that
 `console.error` on a persistence path is invisible until someone goes
 looking — it should have surfaced as user-facing state instead.
+**Closed 2026-07-30:** `saveProject` now returns a `SaveResult` rather than
+logging and returning `void`, and `lib/saveState.ts` puts it in the toolbar.
+The lesson took two goes to land: the same swallowed-error shape survived in
+that function for months *after* this war story was written about it.
 
 **A prop name mismatch silently ate a color setting.** `TextRenderer.tsx`
 passes every text effect a shared `{ text, fontSize, color, speed }` object,

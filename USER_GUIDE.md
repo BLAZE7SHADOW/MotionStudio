@@ -119,6 +119,14 @@ than leaving you to work it out. Each one can be dismissed for good.
 - **Cloud sync**: when signed in, projects also save to your account a couple of
   seconds after every edit, and load back on any device you log in from. Media
   files stay on the device you uploaded them from (cloud renders can still use them).
+- **Knowing where you stand**: the toolbar says **Saving… / Saved just now /
+  Offline — saved on this device / Couldn't save to the cloud**. Offline is not
+  a crisis — your work is still saved *on this device*, and MotionStudio pushes
+  it to the cloud by itself the moment you reconnect. Nothing is shown while
+  there is nothing to report.
+- **A project from a newer version**: if you edit on two devices and one is on a
+  newer build, the older one will show that project but refuse to save over it,
+  and tells you why. Reload to get the newer version.
 - **One tab at a time**: a project can only be *edited* in one tab. Open the
   same project in a second tab and it asks whether to **take over here** or
   **open read-only**. Take over and the first tab switches to read-only with a

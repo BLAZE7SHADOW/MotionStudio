@@ -210,15 +210,27 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
       `updateProject`/`undo`/`redo` and on the cloud autosave, which pushed
       every project from every tab and was the worst vector. Lock logic
       covered by a headless test — 12 cases including crashed-tab recovery.)*
-- [ ] **Offline save states** — "Saving disabled until connection restored",
+- [x] **Offline save states** — "Saving disabled until connection restored",
       "Save failed: no internet connection", "Saved just now", "Up to date".
+      *(2026-07-30 — `lib/saveState.ts` + `SaveIndicator` in the toolbar. The
+      root cause was `cloudSync.saveProject` swallowing every failure into
+      `console.error` and returning `void`, so nothing above it could tell a
+      save from a failure. Reconnecting retries by itself. Copy stays calm —
+      local persistence keeps working, and overstating it would be its own bug.)*
 - [ ] **Mobile honesty** — "Rotate your device for a wide screen experience.",
       "Full timeline available on desktop", "Video mode currently only on
       desktop." They degrade explicitly instead of hiding.
-- [ ] **Destructive confirmations that name the consequence** — "Adding this
+- [x] **Destructive confirmations that name the consequence** — "Adding this
       video will replace the images on every shot."
-- [~] Missing-media handling — we have the tile; they add "Original media file
+      *(2026-07-30 — shot deletion names the element count and says what
+      survives. Empty shots skip the dialog: one guarding a no-op is one people
+      learn to dismiss unread, which is how the one that matters gets dismissed
+      too.)*
+- [x] Missing-media handling — we have the tile; they add "Original media file
       not found on this device."
+      *(2026-07-30 — on re-inspection `AssetsPanel` already says "file not
+      available on this device. Re-upload it to use it again", which names the
+      consequence *and* the fix. Nothing to add.)*
 
 ### G. Monetization
 
@@ -247,7 +259,12 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
 
 ### I. Engineering hygiene
 
-- [ ] **Sentry with release = git SHA.**
+- [x] **Sentry with release = git SHA.**
+      *(2026-07-30 — `lib/exceptions.ts`, without Sentry. PostHog is already
+      wired and `__APP_VERSION__` is already the Vercel commit SHA, so both
+      halves exist without a second vendor on every page load. Deduped by
+      message, capped at 20 distinct per session, resource-load errors filtered
+      out.)*
 - [~] **First-party analytics** — `/api/events/client`, `export_attempt`,
       `/api/export-completed`.
       *(2026-07-30 — the function is covered by PostHog: `lib/analytics.ts`
@@ -255,8 +272,13 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
       `export_browser_failed` / `export_cloud_failed`. Not first-party, so we
       inherit their outage and their ad-blocker miss rate. Worth revisiting only
       if that miss rate turns out to matter.)*
-- [ ] **Project schema migrations** (`/api/migrations/projects`) — needed the day
+- [x] **Project schema migrations** (`/api/migrations/projects`) — needed the day
       we ship shots.
+      *(2026-07-30 — `engines/project/migrations.ts`, client-side rather than an
+      endpoint. We already had a version, but on the store envelope, which
+      covers IndexedDB and nothing else; a project round-tripping through
+      Supabase arrived with no version at all. `isFromFuture` refuses to
+      overwrite a project a newer build wrote. 16 headless assertions.)*
 - [ ] **A payload-size instrument** — they log
       `[measure-snapshot] raw= gzip= dialCount= breakdown=` per section, so they
       watch how large a serialized project gets.
@@ -315,5 +337,6 @@ Append a line whenever something above is ticked.
 | 2026-07-28 | *(off-benchmark)* beat snapping | Add shot lands on a beat; edge-drag snaps to one (Alt to override); shots labelled in beats. |
 | 2026-07-28 | A — video-wide elements | `ALL_SHOTS` sentinel + `respanGlobals`. Fixed the "second shot is a black screen with no music" cliff the shot model created, and let one soundtrack span the sequence. |
 | 2026-07-28 | *(off-benchmark)* transitions | `engines/animation/transitions.ts` — fade, zoom punch, whip, spin, half a beat long. Materialised as animations, so `MotionComposition`, all three exporters and `api/render.ts` were untouched (confirmed by `git diff --stat`). |
+| 2026-07-30 | F/I — save state, schema versioning, exception capture | Phase 2. `saveProject` returned void and swallowed failures — the root of the whole gap. Per-project `schemaVersion` because the envelope version doesn't survive Supabase. Also fixed the autosave re-uploading every project on every edit. |
 | 2026-07-30 | E — contextual hints, tour steps, shortcuts sheet | Phase 1 of the close-the-gaps plan. Notice primitive with DON'T SHOW AGAIN (17 new assertions); hints for tempo found / tempo shaky / taken over; tour steps for the beat grid and transitions; shortcuts sheet. Live run moved the notice stack top-right — it was covering the grid it described. |
 | 2026-07-30 | — | Scorecard re-audited against the code. 14 of ~40 ticked; **all five items in §6 "order of attack" are now done**. Sections **D** (perceived performance) and **I** (hygiene) remain untouched; **G** deferred by the owner. Next candidates, ranked: schema versioning (§I — the doc predicted it was "needed the day we ship shots", and that day has passed), offline save states (§F), the prerendered skeleton (§D). |

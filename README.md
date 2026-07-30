@@ -67,7 +67,7 @@ Deep dives: [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/adrs/](docs/adrs/) · [U
 | Browser export | WebCodecs + Mediabunny | Frame-perfect encode + MP4 mux, no server |
 | Text effects & shaders | Remocn (+ `@paper-design/shaders-react`) | Copy-paste Remotion animation components and frame-synced WebGL backgrounds |
 | Backend | Vercel Functions · Supabase · AWS (Lambda, S3) | Auth, quota, cloud render, asset storage |
-| Analytics | PostHog · Vercel Analytics | Product + performance insight |
+| Analytics | PostHog · Vercel Analytics | Product + performance insight, plus unhandled-exception capture tagged with the build SHA |
 
 ## Backend
 

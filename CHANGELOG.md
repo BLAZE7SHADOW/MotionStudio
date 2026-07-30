@@ -5,6 +5,74 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-30] — The quiet half of data loss
+
+Phase 2 of the close-the-gaps plan. The multi-tab lock fixed the loud half of
+losing work; this is the half that never says anything.
+
+### Added
+- **Save state — `lib/saveState.ts` + `components/SaveIndicator.tsx`.**
+  - The root cause was in `cloudSync.ts`: `saveProject` swallowed every failure
+    into `console.error` and returned `void`, so **nothing above it could tell a
+    successful save from a failed one**. Lose your connection mid-edit and
+    MotionStudio looked exactly like it did when saving worked. It now returns a
+    `SaveResult`, distinguishing "no network" from "the server said no" —
+    only one of those is worth retrying by itself.
+  - **Reconnecting retries.** If you stop typing while the connection is down,
+    nothing will ever re-trigger the debounce, and your last edit sits unsaved
+    indefinitely. An `online` listener flushes.
+  - **Copy is deliberately calm** — *"Offline — saved on this device"*. Local
+    persistence is a separate path and keeps working; a user who believes their
+    work is gone will do something drastic to recover it.
+- **Per-project schema versioning — `engines/project/migrations.ts`.**
+  - We already had a version, but on the **store envelope** (zustand `persist`'s
+    `version`), which covers IndexedDB and nothing else. A project pushed to
+    Supabase and pulled back arrives as a bare `Project` with no version
+    anywhere, so the cloud path could only run `ensureScenes` and hope. That
+    works today because there is exactly one migration and it happens to be
+    idempotent — **the second one would have no way to know whether a given
+    cloud project had already had it.** So the version now lives on the project,
+    where it travels with the data.
+  - **`isFromFuture`** handles two devices on two builds. Running an unknown
+    higher version through the chain would match no step and then stamp it with
+    *our* lower number, quietly telling the next load it is older than it is.
+    Such a project is returned untouched, **excluded from the autosave** so an
+    older tab can't write its misreading over the newer copy, and announced.
+  - `tests/migrations.test.mjs` — 16 assertions: a v0 fixture migrates, element
+    timing is untouched, migrating twice is a no-op, an already-current project
+    is returned as the *same object*, and a future version survives intact.
+- **Exception capture — `lib/exceptions.ts`.** Not Sentry: PostHog is already
+  wired and `__APP_VERSION__` is already the Vercel commit SHA, so both halves
+  of the benchmark's "Sentry with release = git SHA" exist without a second
+  vendor on every page load. Deduped by message and capped at 20 distinct
+  errors per session — a bad render throws once per frame. Resource-load errors
+  are filtered out; they are not exceptions and would drown the real ones.
+- **A delete confirmation that names the consequence** (`ShotStrip`) — *"1
+  element goes with it, and the video gets shorter. Anything that spans the
+  whole video — your background and music — stays."* It counts only elements
+  belonging to that shot alone; counting the video-wide ones would name a
+  consequence that doesn't happen. **Empty shots delete with no dialog** — a
+  dialog guarding a no-op is one people learn to dismiss without reading, which
+  is how the one that matters gets dismissed too.
+
+### Fixed
+- **The autosave re-uploaded every project on every edit.** It pushed the whole
+  `projects` array two seconds after any change, so with five projects open,
+  editing one sent four untouched blobs over the wire every two seconds. Now
+  tracked per project by `updatedAt`.
+
+### Verified live
+Guest login on `localhost:5173`:
+- All four existing projects stamped `schemaVersion: 1` on load, nothing lost.
+- Toolbar showed **Saved just now** → forced offline → **Offline — saved on this
+  device** → edited while offline (stayed offline) → reconnected → **Saved just
+  now**. The whole cycle including the reconnect retry.
+- Delete on a shot with content showed the dialog with the right count and
+  singular grammar; delete on an empty shot went straight through, 352 → 52
+  frames, no dialog.
+
+---
+
 ## [2026-07-30] — Teaching what we shipped
 
 `docs/benchmark-ultramock.md` was re-audited against the code: 14 of ~40 items
