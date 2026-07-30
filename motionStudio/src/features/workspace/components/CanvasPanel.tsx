@@ -156,7 +156,9 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     }
   }, [isPlaying, setSelectedElement]);
 
-  /* ── keyboard: Delete / Escape ── */
+  /* ── keyboard: Delete / Escape ──
+     Listed in `features/workspace/shortcuts.ts`, which the help menu renders.
+     Change a binding here, change the row there. */
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (editingElementId || isPlaying) return;

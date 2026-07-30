@@ -4,6 +4,9 @@ import { useProjectStore } from '@/engines/project';
 /**
  * ⌘Z / Ctrl+Z → undo, ⌘⇧Z / Ctrl+Y → redo. Skipped while typing in a field so
  * the browser's native text undo keeps working inside inputs/contenteditable.
+ *
+ * Listed in `features/workspace/shortcuts.ts`, which the help menu renders.
+ * Change a binding here, change the row there.
  */
 export function useUndoRedoShortcuts() {
   const undo = useProjectStore((s) => s.undo);

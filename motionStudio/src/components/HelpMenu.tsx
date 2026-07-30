@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { HelpCircle, MessageSquare, Sparkles, Compass } from 'lucide-react';
+import { HelpCircle, MessageSquare, Sparkles, Compass, Keyboard } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { startEditorTour } from '@/features/workspace/tour/useEditorTour';
 import { hasUnseenRelease, markReleasesSeen } from '@/lib/releaseSeen';
+import { clearSuppressions } from '@/lib/notices';
 import { useFeedbackStore } from '@/lib/feedbackStore';
 import FeedbackDialog from './FeedbackDialog';
 import WhatsNewDialog from './WhatsNewDialog';
+import ShortcutsDialog from './ShortcutsDialog';
 
 /**
  * Help, feedback and release notes, in one obvious place.
@@ -35,6 +37,17 @@ export default function HelpMenu() {
   const [initiallyUnseen] = useState(hasUnseenRelease);
   const [unseen, setUnseen] = useState(initiallyUnseen);
   const [whatsNewOpen, setWhatsNewOpen] = useState(initiallyUnseen);
+
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  /* Replaying the tour also brings back every hint the user dismissed with
+     DON'T SHOW AGAIN. Both are the same request — "explain this to me again" —
+     and a replayed tour that still can't show the beat hint would be a tour
+     that lies about what the app tells you. */
+  function replayTour() {
+    clearSuppressions();
+    startEditorTour(true);
+  }
 
   function closeWhatsNew() {
     setWhatsNewOpen(false);
@@ -72,11 +85,22 @@ export default function HelpMenu() {
           {inEditor && (
             <button
               type="button"
-              onClick={() => { setOpen(false); startEditorTour(true); }}
+              onClick={() => { setOpen(false); replayTour(); }}
               className={item}
             >
               <Compass className="w-3.5 h-3.5" />
               Replay tour
+            </button>
+          )}
+
+          {inEditor && (
+            <button
+              type="button"
+              onClick={() => { setOpen(false); setShortcutsOpen(true); }}
+              className={item}
+            >
+              <Keyboard className="w-3.5 h-3.5" />
+              Keyboard shortcuts
             </button>
           )}
 
@@ -104,6 +128,7 @@ export default function HelpMenu() {
       {/* Mounted once here; anything can open it through the store. */}
       <FeedbackDialog />
       <WhatsNewDialog open={whatsNewOpen} onClose={closeWhatsNew} />
+      <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </>
   );
 }

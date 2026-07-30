@@ -76,6 +76,7 @@ export function ScrubInput({
     drag.current.moved = Math.max(drag.current.moved, Math.abs(dx));
     if (drag.current.moved < CLICK_SLOP_PX) return;
     // Shift is the coarse modifier in every design tool worth copying.
+    // Listed in `features/workspace/shortcuts.ts` — change one, change both.
     const perPx = step * (e.shiftKey ? 10 : 1);
     onChange(clamp(drag.current.startValue + dx * perPx));
   }

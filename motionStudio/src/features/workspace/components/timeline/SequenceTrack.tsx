@@ -67,7 +67,8 @@ export default function SequenceTrack({
 
     /* Snap the shot's END to a beat, not its length — the boundary is the thing
        that has to land on the music. Alt escapes it, because snapping you can't
-       get out of is worse than none when you want a deliberately odd length. */
+       get out of is worse than none when you want a deliberately odd length.
+       Listed in `features/workspace/shortcuts.ts` — change one, change both. */
     if (gridActive(project.beatGrid) && !e.altKey) {
       const start = offsets.get(d.sceneId) ?? 0;
       next = snapFrameToBeat(project.beatGrid, project.fps, start + next) - start;
