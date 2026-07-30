@@ -32,6 +32,28 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: '2026-07-30',
+    title: 'The app explains itself',
+    changes: [
+      {
+        kind: 'new',
+        text: 'MotionStudio now tells you when something changes on its own. Add a music track and it says what tempo it found and what that changes — instead of a grid of lines appearing on your timeline with no explanation. If a tempo is hard to read it says so, rather than quietly guessing. Every hint has a "don’t show again", and replaying the tour brings them all back.',
+      },
+      {
+        kind: 'new',
+        text: 'The tour now covers cutting to the beat and how a shot arrives — the two things it never mentioned, and the two most worth knowing.',
+      },
+      {
+        kind: 'new',
+        text: 'A keyboard shortcuts list under the ? button, including the two that are impossible to discover: hold Shift while dragging a number to move it in tens, and hold Alt while dragging a shot’s edge to ignore the beat.',
+      },
+      {
+        kind: 'improved',
+        text: 'If another tab takes over the project you’re editing, you’re told the moment it happens rather than finding out when your changes don’t stick — and you’re told again when you get it back.',
+      },
+    ],
+  },
+  {
     id: '2026-07-28',
     title: 'Effects you can actually preview',
     changes: [

@@ -17,7 +17,8 @@ MotionStudio is a full video compositor that runs in the browser. You place elem
 ## Features
 
 - **In-app feedback + release notes** — a feedback form that auto-attaches build, browser and project context, and a "What's new" dialog shown once per release
-- **Guided first-run tour** — a 14-step walkthrough of the editor, resolved against the live DOM so context-only panels are covered on replay; replayable from the help menu
+- **Guided first-run tour** — a 17-step walkthrough of the editor, resolved against the live DOM so context-only panels are covered on replay; replayable from the help menu, alongside a keyboard-shortcuts sheet
+- **Contextual hints** — the app says what just changed on its own (tempo detected, another tab taking over), each dismissable for good and restored by replaying the tour
 - **21 ready-made templates** — announcement clips, dev/product demos, hooks, offers, title cards; pick one and you have an animated composition in three clicks instead of twenty
 - **Canvas editing** — drag / resize / rotate / inline text edit, layer ordering, drag-and-drop asset placement
 - **Frame-accurate timeline** — per-element clips (move/trim), scrubbing, time-based playback clock

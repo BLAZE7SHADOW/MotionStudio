@@ -176,16 +176,30 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
 - [x] Editor tour, restart tour, skip tour.
 - [~] **Tour steps that make you act** — *"Give it a go — add a second shot."*
       *(2026-07-28 — the new shots step does this; the other 14 still narrate.)*
-- [ ] **Contextual toasts at the moment of confusion**, with **DON'T SHOW AGAIN**.
+      *(2026-07-30 — two more written this way: the beat grid and how a shot
+      arrives. The tour had stopped at shots and covered neither of the two
+      features that differentiate this product — the largest gap found in the
+      re-audit, and one this scorecard has no row for.)*
+- [x] **Contextual toasts at the moment of confusion**, with **DON'T SHOW AGAIN**.
       *(2026-07-28 — the specific one they needed, "effects apply to the
       selected shot, not all shots", does **not** apply to us and was
       deliberately skipped: we have no global-vs-per-shot split, because
       background is still a single project-level setting. Revisit if per-shot
-      backgrounds ever ship. The pattern itself is still worth having for
-      something else.)*
+      backgrounds ever ship.)*
+      *(2026-07-30 — the pattern shipped for something else: `lib/notices.ts` +
+      `noticeStore` + `NoticeHost`. Three hints — tempo found, tempo shaky,
+      taken over by another tab. Suppression is pure and covered by 17 headless
+      assertions. Positioned top-right, not bottom: running it showed the first
+      notice covering the beat grid it was pointing at.)*
 - [x] Templates; use template; save as template.
 - [ ] **Templates deep-linkable by URL** (`?template=cmqic15au00004lpenr29kwjz`).
-- [~] Keyboard shortcuts sheet.
+- [x] Keyboard shortcuts sheet.
+      *(2026-07-30 — `features/workspace/shortcuts.ts` + `ShortcutsDialog`, under
+      the ? menu. The table documents the bindings rather than driving them:
+      half the rows are modifier-on-drag or double-click gestures, so a
+      generator would drive some rows and describe others with no way to tell
+      which. Contract is "add a binding, add a row", with a pointer comment at
+      each of the four handler sites.)*
 
 ### F. Trust and resilience — our weakest area
 
@@ -301,4 +315,5 @@ Append a line whenever something above is ticked.
 | 2026-07-28 | *(off-benchmark)* beat snapping | Add shot lands on a beat; edge-drag snaps to one (Alt to override); shots labelled in beats. |
 | 2026-07-28 | A — video-wide elements | `ALL_SHOTS` sentinel + `respanGlobals`. Fixed the "second shot is a black screen with no music" cliff the shot model created, and let one soundtrack span the sequence. |
 | 2026-07-28 | *(off-benchmark)* transitions | `engines/animation/transitions.ts` — fade, zoom punch, whip, spin, half a beat long. Materialised as animations, so `MotionComposition`, all three exporters and `api/render.ts` were untouched (confirmed by `git diff --stat`). |
+| 2026-07-30 | E — contextual hints, tour steps, shortcuts sheet | Phase 1 of the close-the-gaps plan. Notice primitive with DON'T SHOW AGAIN (17 new assertions); hints for tempo found / tempo shaky / taken over; tour steps for the beat grid and transitions; shortcuts sheet. Live run moved the notice stack top-right — it was covering the grid it described. |
 | 2026-07-30 | — | Scorecard re-audited against the code. 14 of ~40 ticked; **all five items in §6 "order of attack" are now done**. Sections **D** (perceived performance) and **I** (hygiene) remain untouched; **G** deferred by the owner. Next candidates, ranked: schema versioning (§I — the doc predicted it was "needed the day we ship shots", and that day has passed), offline save states (§F), the prerendered skeleton (§D). |

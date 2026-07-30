@@ -5,6 +5,81 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-07-30] — Teaching what we shipped
+
+`docs/benchmark-ultramock.md` was re-audited against the code: 14 of ~40 items
+ticked, and **all five items in its own "order of attack" done**. The audit
+turned up a gap the scorecard doesn't have a row for, and it was the largest one
+on the board: **the tour stopped at shots.** Beat detection and transitions — the
+two features that differentiate this from every other browser editor — had no
+onboarding at all. A user who uploaded a track got a grid of lines on the ruler
+and no explanation. Capability a user can't find is capability we didn't ship.
+
+### Added
+- **`lib/notices.ts` + `lib/noticeStore.ts` + `components/NoticeHost.tsx`** — the
+  contextual-hint primitive from §E of the benchmark, with **DON'T SHOW AGAIN**.
+  There was no toast library in the project at all, so this is new, but small.
+  - Split three ways on purpose: suppression is pure and free of React and
+    zustand, which is what makes `tests/notices.test.mjs` cheap (17 assertions,
+    covering corrupt storage, non-array values, duplicate suppression and
+    private-mode throw). The store owns "what's on screen"; the component owns
+    the pixels.
+  - **Styling copies `UpdateBanner` rather than inventing a second banner
+    language** — both are the app talking to you, and two different-looking
+    versions of that read as two systems. They now share one stack in `App.tsx`,
+    which also means they can never overlap.
+  - `seq` on the store, not the id, keys the auto-dismiss timer: two notices can
+    share an id (the read-only pair does), and keying on the id would hand the
+    second one the remains of the first one's timer.
+  - Ids are stable strings decoupled from the copy, so rewording a hint doesn't
+    resurrect it for everyone who dismissed it.
+- **Three notices, at the moment of confusion** — tempo found (naming the BPM and
+  what now snaps to it), tempo found but shaky (pointing at tap tempo rather
+  than quietly drawing a wrong grid), and being taken over by another tab
+  mid-edit. `engines/asset/store.ts` fires the first two only when a grid is
+  actually *seeded*, so a second track added to a project that already has a
+  tempo stays quiet.
+- **`LOW_CONFIDENCE` exported from `beatDetect.ts`** — the beat popover and the
+  notice now read the same threshold. One calling a reading shaky while the
+  other announces it as fact is worse than either message alone.
+- **Two tour steps** in `editorTour.ts`, both written in the "give it a go"
+  style: the beat grid, and how a shot arrives. The transitions anchor only
+  exists inside a shot that has something before it, so that step appears on a
+  replay rather than the first run — which is the right way round, since there
+  is nothing to transition into until you have two shots.
+- **Keyboard shortcuts sheet** — `features/workspace/shortcuts.ts` +
+  `components/ShortcutsDialog.tsx`, under the `?` menu.
+  - **The table documents the bindings; it deliberately does not drive them.**
+    Half the rows aren't key handlers at all — Shift and Alt change what a
+    *drag* means, and two are double-clicks — so a generator would drive some
+    rows and merely describe others, and a reader couldn't tell which. The
+    contract is instead "add a binding, add a row", with a comment at each of
+    the four handler sites pointing at the table.
+
+### Changed
+- **Replaying the tour now also clears every dismissed hint.** Both are the same
+  request — *explain this to me again* — and a replayed tour that still couldn't
+  show the beat hint would be lying about what the app tells you.
+- The bottom-centre banner slot became a **top-right stack**. Found by running
+  it: the bottom of the editor is the timeline, and the first notice we wrote —
+  *"the beats are marked along the timeline"* — covered the grid it was pointing
+  at. A hint that hides its own subject is worse than no hint.
+
+### Verified live
+Guest login on `localhost:5173`, with a generated 128 BPM WAV:
+- Detected **127.97 BPM at 0.91 confidence**; grid drew; notice fired with the
+  right copy.
+- **DON'T SHOW AGAIN end to end** — notice on screen → click → `["beat-found"]`
+  in localStorage → notice gone.
+- The quiet path: uploading a second track into a project that already had a
+  120 BPM grid produced **no notice**, as intended.
+- Tour builds **16 steps** (14 resolvable anchors + the 2 new); both new anchors
+  resolve, `[data-tour="transition"]` only once a second shot exists. Stepping
+  through every popover was not possible — driver.js ignores synthetic clicks —
+  so placement of the two new popovers is unverified visually.
+
+---
+
 ## [2026-07-28] — Transitions between shots
 
 The last piece of the beat-reel story. Cuts landed on the beat but every one of

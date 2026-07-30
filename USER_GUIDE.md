@@ -43,10 +43,16 @@ project), **Add media** and **Stock**, and the **Effects** section where the 34
 text effects live.
 
 The tour only shows steps whose panel is actually on screen. The Effects section
-exists only while a text element is selected, so **replaying the tour with some
-text selected shows more than the first run did** — worth doing once you have
-something on the canvas. Replay it any time from the **?** menu in the toolbar
-→ **Replay tour**.
+exists only while a text element is selected, and the transition picker only
+exists inside a shot that has something before it — so **replaying the tour with
+some text selected and a second shot added shows more than the first run did**.
+Worth doing once you have something on the canvas. Replay it any time from the
+**?** menu in the toolbar → **Replay tour**; that also brings back any hint you
+dismissed with "don't show again".
+
+**Hints.** When something changes on its own — a tempo detected, another tab
+taking over the project — MotionStudio says so in the top-right corner rather
+than leaving you to work it out. Each one can be dismissed for good.
 
 ---
 
@@ -476,6 +482,13 @@ clip in a different part of the timeline — e.g. an intro clip at 0–2s, the n
 | **Double-click** (text) | Edit text |
 | **Delete / Backspace** | Delete selected element |
 | **Esc** | Deselect / stop editing text |
+| **Shift** + drag a number | Move it in steps of ten |
+| **Alt** + drag a shot's edge | Resize without snapping to the beat |
+| **Double-click** (shot) | Rename it in the sequence |
+
+The same list is in the app under **? → Keyboard shortcuts**. The last three are
+worth knowing because you cannot discover them by looking — they change what an
+existing drag means rather than adding a control.
 
 Undo/redo covers **every** edit — move, resize, trim, animate, reorder, add,
 delete. A single drag counts as one undo step. The toolbar's **↶ / ↷** buttons do
