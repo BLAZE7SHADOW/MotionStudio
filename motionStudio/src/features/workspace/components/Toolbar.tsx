@@ -14,6 +14,7 @@ import ProjectSettingsPopover from './ProjectSettingsPopover';
 import ExportDialog from './ExportDialog';
 import UserMenu from '@/components/UserMenu';
 import HelpMenu from '@/components/HelpMenu';
+import SaveIndicator from './SaveIndicator';
 import { track } from '@/lib/analytics';
 
 interface ToolbarProps {
@@ -168,6 +169,7 @@ export default function Toolbar({ project }: ToolbarProps) {
 
       {/* Preview toggle */}
       <div className="ml-auto flex items-center gap-2">
+        <SaveIndicator />
         <HelpMenu />
 
         <Button

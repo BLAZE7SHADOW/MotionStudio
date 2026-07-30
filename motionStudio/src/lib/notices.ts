@@ -23,7 +23,9 @@ export type NoticeId =
   /** A tempo was found but we do not trust it. */
   | 'beat-low-confidence'
   /** This tab is watching a project another tab is editing. */
-  | 'read-only';
+  | 'read-only'
+  /** A project was written by a build newer than this one. */
+  | 'project-from-future';
 
 const KEY = 'ms_suppressed_notices';
 
