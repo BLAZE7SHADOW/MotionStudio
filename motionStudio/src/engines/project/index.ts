@@ -24,4 +24,6 @@ export type { UpdateProjectInput } from './store';
 export { detectBeat, beatTimeSec, beatIndexAt, nearestBeatSec, beatPeriodSec, BEATS_PER_BAR } from '../audio/beatDetect';
 export type { BeatAnalysis } from '../audio/beatDetect';
 export { saveProject, loadProjects, deleteCloudProject } from './cloudSync';
+export type { SaveResult } from './cloudSync';
+export { migrateProject, isFromFuture, CURRENT_SCHEMA_VERSION } from './migrations';
 export { deleteProjectCompletely } from './deleteProject';

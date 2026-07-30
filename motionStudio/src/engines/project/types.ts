@@ -280,6 +280,15 @@ export interface Scene {
 
 export interface Project {
   id: string;
+  /**
+   * Which shape this project is in. Absent means "written before versioning",
+   * which `migrateProject` treats as 0.
+   *
+   * On the project rather than the store envelope, because it has to survive
+   * the round trip through Supabase — `engines/project/migrations.ts` explains
+   * why that matters.
+   */
+  schemaVersion?: number;
   name: string;
   aspectRatio: AspectRatio;
   fps: number;

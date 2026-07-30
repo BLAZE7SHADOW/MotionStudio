@@ -5,7 +5,6 @@ import { DEFAULT_DURATION_SECONDS } from './dimensions';
 import { hasReadOnly, isReadOnly } from '@/lib/projectLock';
 import {
   addScene,
-  ensureScenes,
   removeScene,
   reorderScene,
   setSceneDuration,
@@ -13,6 +12,7 @@ import {
   rescaleForFps,
   setSceneTransition,
 } from './scenes';
+import { migrateProject } from './migrations';
 import type { TransitionId } from '../animation/transitions';
 import { getCompositionDimensions } from './dimensions';
 
@@ -74,7 +74,7 @@ export const useProjectStore = create<ProjectStore>()(
         const { elements, durationInFrames, ...rest } = input;
         // `ensureScenes` mints the first shot and stamps every template element
         // with its id, so templates stay authored flat and shot-unaware.
-        const project: Project = ensureScenes({
+        const project: Project = migrateProject({
           id: crypto.randomUUID(),
           ...rest,
           durationInFrames: durationInFrames ?? Math.round(input.fps * DEFAULT_DURATION_SECONDS),
@@ -115,10 +115,13 @@ export const useProjectStore = create<ProjectStore>()(
           };
         }),
 
-      // The cloud load path bypasses `persist`, so it needs the migration too.
-      // `ensureScenes` is idempotent, so overlapping with the persist `migrate`
-      // costs nothing.
-      setProjects: (projects) => set({ projects: projects.map(ensureScenes), past: [], future: [] }),
+      /* The cloud load path bypasses `persist`, so it needs the migration too —
+         and this is the path that actually needs a *versioned* one, because a
+         project pulled from Supabase carries no store envelope. Projects from a
+         newer build come back untouched; `App.tsx` refuses to autosave those,
+         so an older tab can't write its misreading over the newer copy. */
+      setProjects: (projects) =>
+        set({ projects: projects.map(migrateProject), past: [], future: [] }),
 
       deleteProject: (id) =>
         set((state) => ({
@@ -266,15 +269,15 @@ export const useProjectStore = create<ProjectStore>()(
       name: 'motionstudio-projects',
       // persist only project data — not history or session UI state
       partialize: (s) => ({ projects: s.projects }),
-      /* v1 introduced shots. `ensureScenes` turns a pre-shot project into a
-         one-shot project spanning its whole length — which is exactly how it
-         already behaved — without touching a single element's timing, so
-         nothing renders differently after the upgrade. */
+      /* The envelope version, which is not the same thing as the project's own
+         `schemaVersion`. This one only says "the persisted blob changed shape";
+         the per-project one travels to the cloud and back. Both are needed, and
+         the real work lives in `migrations.ts`. */
       version: 1,
       migrate: (persisted) => {
         const state = persisted as { projects?: Project[] } | undefined;
         if (!state?.projects) return state as never;
-        return { ...state, projects: state.projects.map(ensureScenes) } as never;
+        return { ...state, projects: state.projects.map(migrateProject) } as never;
       },
     },
   ),
