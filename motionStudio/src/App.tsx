@@ -9,6 +9,7 @@ import EditorPage from './features/workspace/EditorPage';
 import ContactPage from './features/contact/ContactPage';
 import ErrorPage from './pages/ErrorPage';
 import UpdateBanner from './components/UpdateBanner';
+import NoticeHost from './components/NoticeHost';
 import { useAuth } from './hooks/useAuth';
 import { useProjectStore, saveProject, loadProjects } from './engines/project';
 import { isReadOnly } from './lib/projectLock';
@@ -118,7 +119,18 @@ export default function App() {
       <AuthBridge />
       <CloudSync />
       <RouterProvider router={router} />
-      <UpdateBanner />
+      {/* One stack for everything the app says to you, so a contextual hint and
+          an update prompt can never land on top of each other.
+
+          Top-right, not bottom-centre: the bottom of the editor is the timeline,
+          and the first notice we wrote — "the beats are marked along the
+          timeline" — covered the grid it was pointing at. A hint that hides its
+          own subject is worse than no hint. `pointer-events-none` on the column
+          keeps the gap between cards clickable. */}
+      <div className="pointer-events-none fixed top-14 right-4 z-100 flex flex-col items-end gap-2">
+        <NoticeHost />
+        <UpdateBanner />
+      </div>
       <Analytics />
       <SpeedInsights />
     </>

@@ -2,6 +2,8 @@ import { useProjectStore } from '../project/store';
 import type { Asset } from '../project/types';
 import { assetTypeFromFile, probeAsset } from './probe';
 import { analyzeAudioUrl } from '../audio/analyzeAudio';
+import { LOW_CONFIDENCE } from '../audio/beatDetect';
+import { showNotice } from '@/lib/noticeStore';
 import { putBlob, deleteBlob } from './blobStore';
 import { createObjectUrl } from './objectUrls';
 import { uploadAssetToStorage, deleteAssetFromStorage } from '@/lib/storage';
@@ -82,6 +84,30 @@ export function useAssetEngine() {
             },
             { history: false },
           );
+
+          /* Say what just changed. A grid appearing on the ruler with no
+             explanation is the single biggest unexplained state change in the
+             app — the user uploaded a track and the timeline grew lines. Fire
+             it only when a grid was actually seeded, so a second track added
+             to a project that already has a tempo stays quiet. */
+          if (beat.bpm > 0 && !latest.beatGrid) {
+            const bpm = Math.round(beat.bpm);
+            showNotice(
+              beat.confidence < LOW_CONFIDENCE
+                ? {
+                    id: 'beat-low-confidence',
+                    message: `This track's tempo is hard to read — ${bpm} BPM is our best guess. Open Beat to type it or tap along.`,
+                    suppressible: true,
+                    timeoutMs: 12_000,
+                  }
+                : {
+                    id: 'beat-found',
+                    message: `Found ${bpm} BPM. Add shot now lands on a beat, and dragging a shot's edge snaps to one.`,
+                    suppressible: true,
+                    timeoutMs: 10_000,
+                  },
+            );
+          }
         }),
     );
 

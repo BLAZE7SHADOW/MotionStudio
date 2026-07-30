@@ -46,6 +46,15 @@ const MIN_PEAKS = 8;
     product's use case (short social edits) is built on. */
 export const BEATS_PER_BAR = 4;
 
+/**
+ * Below this we draw the grid but say we are unsure.
+ *
+ * Exported so the beat popover and the "tempo found" notice agree: one saying
+ * a reading is shaky while the other announces it as fact is worse than either
+ * message alone.
+ */
+export const LOW_CONFIDENCE = 0.5;
+
 export const beatPeriodSec = (bpm: number): number => 60 / bpm;
 
 /** Time of beat `n`, in seconds. The grid's definition, in one line. */

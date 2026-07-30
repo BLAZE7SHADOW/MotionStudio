@@ -27,6 +27,7 @@ const TARGETS = [
   { test: 'beatDetect.test.mjs', src: 'src/engines/audio/beatDetect.ts', bundle: 'beatDetect.bundle.js' },
   { test: 'transitions.test.mjs', src: 'src/engines/animation/transitions.ts', bundle: 'transitions.bundle.js' },
   { test: 'projectLock.test.mjs', src: 'src/lib/projectLock.ts', bundle: 'lock.cjs.js' },
+  { test: 'notices.test.mjs', src: 'src/lib/notices.ts', bundle: 'notices.bundle.js' },
 ];
 
 const work = mkdtempSync(join(tmpdir(), 'ms-tests-'));

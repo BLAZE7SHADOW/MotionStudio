@@ -9,7 +9,7 @@ export default function UpdateBanner() {
   if (!updateAvailable || dismissed) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-100 flex items-center gap-3 rounded-studio-lg border border-studio-border-strong bg-studio-panel px-4 py-3 shadow-lg">
+    <div className="pointer-events-auto flex items-center gap-3 rounded-studio-lg border border-studio-border-strong bg-studio-panel px-4 py-3 shadow-lg">
       <p className="text-[13px] text-studio-text">
         A new version of MotionStudio is available.
       </p>

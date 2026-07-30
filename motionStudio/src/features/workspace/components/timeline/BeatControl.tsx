@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrubInput } from '@/components/ui/scrub-input';
 import { useProjectStore } from '@/engines/project';
 import type { Project } from '@/engines/project';
+import { LOW_CONFIDENCE } from '@/engines/audio/beatDetect';
 
 /** Taps further apart than this start a new count rather than extending one. */
 const TAP_TIMEOUT_MS = 2500;
@@ -58,7 +59,7 @@ export default function BeatControl({ project }: { project: Project }) {
   }
 
   const confidence = analysed?.beatConfidence ?? 0;
-  const shaky = analysed !== undefined && confidence < 0.5;
+  const shaky = analysed !== undefined && confidence < LOW_CONFIDENCE;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

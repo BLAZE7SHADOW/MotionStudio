@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { showNotice } from '@/lib/noticeStore';
 import {
   claim,
   holder,
@@ -77,6 +78,30 @@ export function useProjectLock(projectId: string) {
       });
     });
   }, [projectId]);
+
+  /* Say it out loud when editing is taken away or handed back.
+     The gate dialog only covers arriving at a project that is already open;
+     these two transitions happen *while* you are working, and silently going
+     read-only mid-edit is exactly the confusion the lock was built to prevent.
+     Not suppressible — this describes a live state, not a tip. */
+  const prevStatus = useRef<LockStatus | null>(null);
+  useEffect(() => {
+    const prev = prevStatus.current;
+    prevStatus.current = status;
+    if (prev === null) return; // first render is arrival, which the gate owns
+    if (prev === 'owner' && status === 'readonly') {
+      showNotice({
+        id: 'read-only',
+        message: 'Another tab took over this project. You can keep looking, but changes here won’t be saved.',
+      });
+    } else if (prev === 'readonly' && status === 'owner') {
+      showNotice({
+        id: 'read-only',
+        message: 'The other tab let go — you can edit this project again.',
+        timeoutMs: 6_000,
+      });
+    }
+  }, [status]);
 
   const takeOver = useCallback(() => {
     claim(projectId);
