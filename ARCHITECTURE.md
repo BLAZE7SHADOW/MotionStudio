@@ -382,12 +382,36 @@ total, because covering the video is the whole point and so that timing is
 derived rather than authored. A sentinel rather than `null`, because absent
 already means "not migrated" and would have been silently adopted into a shot.
 
-`ensureScenes()` is the migration, and is idempotent so it can run at all three
-entry points — the `persist` `migrate` (IndexedDB), `setProjects` (the cloud
-load, which bypasses `persist`), and `createProject` (templates, which stay
-authored flat and shot-unaware). It gives a pre-shot project one shot spanning
-its length and touches no element's timing, so nothing renders differently
-after the upgrade — asserted directly in `tests/scenes.test.mjs`.
+**The version belongs on the project, not on the store.** There was already a
+version — zustand `persist`'s `version` on the store envelope — and it covers
+IndexedDB and nothing else. A project pushed to Supabase and pulled back down
+arrives as a bare `Project` with no version anywhere on it, so the cloud path
+could only run the migration and hope. That works while there is exactly one
+migration and it is idempotent; the second one would have no way to tell whether
+a given cloud project had already had it. `Project.schemaVersion` travels with
+the data, so every path can answer the question.
+
+`migrateProject()` (`engines/project/migrations.ts`) walks a ladder of steps
+whose `to` exceeds the project's version, then stamps the result — *even when no
+step ran*, because an unversioned project that already has the right shape is
+version 1 and saying so is what lets the next migration skip it. `ensureScenes()`
+is step 1: it gives a pre-shot project one shot spanning its length and touches
+no element's timing, so nothing renders differently after the upgrade. Steps must
+be pure and idempotent, because `migrateProject` runs at all three entry points —
+the `persist` `migrate` (IndexedDB), `setProjects` (the cloud load, which
+bypasses `persist`), and `createProject` (templates, which stay authored flat and
+shot-unaware). Asserted in `tests/migrations.test.mjs` and `tests/scenes.test.mjs`.
+
+A version is for changes older code would *misread*, not for every addition —
+`beatGrid`, `Scene.transition` and `Animation.source` are all optional and read
+as absent, so none of them needed a bump.
+
+**A project from a newer build is left alone.** Two devices, one updated, is not
+hypothetical. Running such a project through the ladder would match no step and
+then stamp it with *our lower* version, quietly telling the next load it is older
+than it is. `isFromFuture()` catches it: `migrateProject` returns it untouched
+and unstamped, autosave skips it (`App.tsx`), and a notice says so — so the
+newer device's copy is never overwritten by the older one.
 
 ### Beat detection: infer a grid, don't report the onsets
 

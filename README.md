@@ -12,7 +12,7 @@ Built by [Shivam Govind Rao](https://shivamgovindrao.com/) · [get in touch](htt
 
 MotionStudio is a full video compositor that runs in the browser. You place elements on a canvas, arrange them on a timeline, animate them per-property, and export real video. The editor preview and the AWS Lambda cloud render run the **same React composition** — what you see while editing is exactly what renders. (The free in-browser export draws to a 2D canvas instead, so it omits text effects, shader backgrounds and blocks; the export dialog says so when it applies.)
 
-~5K+ lines of strict TypeScript · 7 engines · 95+ logically-grouped commits · 6 element types · 21 templates.
+~21K lines of strict TypeScript · 9 engines · 220+ logically-grouped commits · 6 element types · 21 templates.
 
 ## Features
 
@@ -39,7 +39,7 @@ MotionStudio is a full video compositor that runs in the browser. You place elem
 Two layers, one rule:
 
 ```
-engines/    own DATA + LOGIC   (no UI)      project · editor · canvas · rendering
+engines/    own DATA + LOGIC   (no UI)      project · editor · canvas · rendering · audio
 features/   own UI             (compose)    · timeline · animation · asset · export
 ```
 
@@ -114,7 +114,7 @@ api/                    Vercel serverless functions (render, quota, upload-url, 
 motionStudio/
   src/
     engines/            data + logic: project, editor, canvas, rendering, timeline,
-                        animation, asset, export
+                        animation, asset, audio, export
     features/           UI: landing, dashboard, workspace (canvas/timeline/panels)
     content/            templates + block registry
     components/remocn/  57 Remocn components (text effects, shaders, UI blocks)

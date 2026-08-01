@@ -241,23 +241,46 @@ background.
 
 Animations make a property change **over time** — fade, slide, scale, spin.
 
-### Add a preset
-Properties → **Animation**:
+The section is **Animation** in Properties (**Motion** on text elements), and it
+has two tabs: **Presets** and **Manual**.
+
+### Presets
 - **Enter**: Fade In, Slide Up, Slide In, Pop In
 - **Exit**: Fade Out, Slide Out, Pop Out
 
 Presets **stack** — click several and they combine (e.g. Fade In + Slide Up).
 
-### Add a single property
-Use **＋ Add property…** to add one bare animation (Opacity, Position X/Y, Scale,
-Rotate) and dial it in yourself.
+Clicking one **switches you to Manual**, showing the exact animations it just
+created. That is the quickest way to learn what these dials do: apply Slide Up,
+then look at the Position Y and Opacity it wrote.
 
-### Edit an animation (each card)
+### Manual
+The tab label carries a count — **Manual (2)** means two animations on this
+element. Use **＋ Add property…** to add one bare animation (Opacity,
+Position X/Y, Scale, Rotate) and dial it in yourself.
+
+Each animation card has:
 - **From / To** — start and end value (opacity 0→1, y 60→0)
 - **Start** — how many frames after the clip begins it fires
 - **Dur** — how many frames it lasts
 - **easing** — `linear` (constant), `ease` (smooth), `spring` (bouncy)
 - **×** — remove just that animation · **Clear all** — remove them all
+
+The **↺** on the section header clears every animation in one click; it only
+appears when there is something to clear.
+
+### Which values are animated
+A small **diamond ◆** next to a property means that value changes during
+playback. Without it the panel is misleading: a rotation reading `0°` that spins
+for the whole video looks identical to one that never moves.
+
+The diamond also appears on the **section header** — including when the section
+is collapsed, which matters because Transform, Layer and Motion start closed. It
+is also the only place a **Scale** animation shows up, since Transform has width
+and height rows rather than a scale factor.
+
+Transitions don't get a diamond. They belong to the shot, not the element, so
+marking every element in a zoom-punch shot would make the diamond mean nothing.
 
 ### Sequence effects
 Give animations different **Start** values to play them in order — e.g. Fade In at

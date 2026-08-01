@@ -5,7 +5,34 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
-## [2026-07-30] — First impressions
+## [2026-08-01] — Docs audit: three stale claims
+
+A sweep of all five living docs against the code. `CHANGELOG.md` and
+`releases.ts` were current; the other three were not. No code changed.
+
+### Fixed
+- **`ARCHITECTURE.md` still described `ensureScenes()` as "the migration",**
+  running directly at the three entry points. That stopped being true when
+  per-project `schemaVersion` shipped — `migrateProject()` is what runs there
+  now, and `ensureScenes` is step 1 of its ladder. Rewritten, and the decision
+  that was never written down at all now is: **the version belongs on the
+  project, not the store envelope.** zustand `persist`'s `version` covers
+  IndexedDB only, so a project round-tripping through Supabase arrives with no
+  version anywhere on it — survivable with one idempotent migration, fatal with
+  two. Also documents `isFromFuture()`: a project from a newer build is returned
+  untouched *and unstamped*, autosave skips it, and a notice says so.
+- **`USER_GUIDE.md` §7 predated the Presets/Manual split.** The feature shipped
+  in `08a0def` with a `CHANGELOG.md` and `releases.ts` entry but no guide
+  update — the exact gap the living-docs rule exists to catch. §7 now covers
+  the two tabs, that applying a preset switches you to Manual (and why that is
+  the fastest way to learn the dials), the `Manual (2)` count, the header reset,
+  and the **◆ animated-value marker** — including the two things about it that
+  are not obvious: it appears on collapsed section headers, and it is the only
+  place a Scale animation is visible, because Transform has width/height rows
+  rather than a scale factor. Also notes transitions are deliberately unmarked.
+- **`README.md` stats were four builds out of date** — "~5K+ lines · 7 engines ·
+  95+ commits" against an actual 21,725 lines of `src`, 9 engines and 224
+  commits. The `audio` engine was missing from both directory listings.
 
 Phase 4, the last of the close-the-gaps plan: §D, and the honest parts of §F/§H.
 
