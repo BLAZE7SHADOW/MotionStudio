@@ -5,6 +5,48 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-06] — Add shot stranded the playhead in the previous shot
+
+Found by sweeping the deployed site end to end after the CanvasPanel work.
+Everything else checked out — dashboard, project creation, text/shader/block
+insertion, 34 effects in 7 groups, the tour resolving to the right step count,
+transitions, beat, settings, export, autosave to Supabase, zero console errors
+and zero failed requests. This did not.
+
+### Fixed
+- **`Add shot` opened the new shot but left the playhead at frame 0.** Every
+  other signal said you were in the new shot — the chip went active, the ruler
+  moved to its span, the transition picker appeared — while the canvas kept
+  showing the *previous* shot. So the first thing you did in a new shot either
+  didn't appear (it was in the new shot, the playhead was in the old one) or
+  looked like content the new shot already had.
+
+  `ShotStrip.tsx` built `offsets = sceneOffsets(scenes)` during render, from the
+  project as it was **before** the click. `handleAdd()` is careful to re-read
+  the store so it gets the new shot's real id — but `open()` closed over that
+  render-time map, which cannot contain an id created moments ago. `.get()`
+  returned `undefined` and the `?? 0` turned the miss into "jump to the start of
+  the video", silently.
+
+  `open()` now takes the scene list the id came from (`open(id, next)`), so the
+  two cannot disagree, and the fallback only covers a genuinely unknown shot.
+  Isolated by a differential test before touching anything: opening an
+  *existing* shot moved the playhead correctly (`300/360`), opening a
+  *newly-created* one did not (`0/360`) — same function, the only variable being
+  whether the id existed when the map was built. Verified after: adding a third
+  shot lands the playhead on `360/420`, its true first frame.
+
+### Changed
+- **The tour's export step no longer implies the two exports are equivalent.**
+  It said "either way you get an MP4", which is true and misleading — the export
+  dialog itself warns, prominently, that a plain browser render flattens each
+  frame and drops animated backgrounds, blocks and text effects unless
+  `Include effects` is ticked. A tour that exists to say the non-obvious thing
+  should not be the one place that glosses it. Now names the trade-off and
+  points at the dialog's own note.
+
+---
+
 ## [2026-08-06] — CanvasPanel: six hooks below an early return
 
 `CanvasPanel` took a `projectId` and looked the project back up from the store,

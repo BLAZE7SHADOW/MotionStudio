@@ -447,7 +447,9 @@ A video is a sequence of moments, and the strip above the timeline is where you
 arrange them.
 
 - **Add shot** appends a new one and makes the video that much longer (up to the
-  90s maximum — past that it tells you to shorten a shot first).
+  90s maximum — past that it tells you to shorten a shot first). It opens the
+  new shot and moves the playhead to its first frame, so the canvas shows the
+  shot you are about to fill rather than the one before it.
 - **Click a shot** to work on it. The timeline below then shows *only* that
   shot's clips, and the ruler covers only its span — so a video made of twenty
   quick cuts doesn't become twenty rows to scroll through.

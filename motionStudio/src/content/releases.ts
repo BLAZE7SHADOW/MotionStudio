@@ -36,6 +36,14 @@ export const RELEASES: Release[] = [
     title: 'The tour actually teaches you the app',
     changes: [
       {
+        kind: 'fixed',
+        text: 'Adding a shot now takes you to it properly. It opened the new shot but left the playhead back in the previous one, so the canvas showed the shot before the one you were editing — and the first thing you added seemed to vanish.',
+      },
+      {
+        kind: 'improved',
+        text: 'The walkthrough is now straight with you about exporting: a quick browser export flattens the video and drops your animated background, blocks and text effects unless you tick “Include effects”. Cloud Render always matches what you see in the editor.',
+      },
+      {
         kind: 'improved',
         text: 'The first-run walkthrough now covers the whole app in plain language, not just the toolbar. It explains what a shot is and how to build a video out of them, what a clip’s position and width on the timeline actually mean, the difference between dragging a clip’s middle and dragging its end, how music works, how to turn a photo into your background, and what the 34 text effects do.',
       },

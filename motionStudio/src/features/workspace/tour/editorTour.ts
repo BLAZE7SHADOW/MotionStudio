@@ -245,7 +245,7 @@ const ALL_STEPS: TourStep[] = [
     popover: {
       title: 'Turn it into a file',
       description:
-        'Two ways out. <strong>Browser</strong> renders it right here on your machine — quick, nothing to set up. <strong>Cloud Render</strong> does it on a proper machine: slower to start, full quality, and it leaves your laptop alone. You choose the size and the quality, and either way you get an MP4 you can post anywhere.',
+        'Two ways out, and they are <em>not</em> the same file. <strong>Browser</strong> renders here on your machine — quick, nothing to set up, but a plain browser export flattens each frame, so your <strong>animated background, blocks and text effects drop out</strong> unless you tick <strong>Include effects</strong>. <strong>Cloud Render</strong> always matches the editor exactly. The dialog says which applies to your project, so read the note before you post it anywhere.',
       side: 'bottom',
       align: 'end',
     },

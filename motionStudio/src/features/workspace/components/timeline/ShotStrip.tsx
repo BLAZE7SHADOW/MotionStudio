@@ -5,7 +5,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import type { Project } from '@/engines/project';
+import type { Project, Scene } from '@/engines/project';
 import {
   useProjectStore, sceneLabel, scenesOf, sceneOffsets, spansAllShots,
   gridActive, barFrames, snapFrameToBeat, MIN_SCENE_FRAMES, MAX_PROJECT_SECONDS,
@@ -69,14 +69,23 @@ export default function ShotStrip({ project }: { project: Project }) {
     return () => clearTimeout(t);
   }, [refused]);
 
-  const offsets = sceneOffsets(scenes);
   const activeShot = scenes.find((s) => s.id === activeSceneId);
 
-  function open(sceneId: string) {
+  /**
+   * Open a shot and land the playhead on its first frame, so the canvas shows
+   * what the timeline is now talking about.
+   *
+   * `from` is a parameter rather than the render-time `scenes` because
+   * `handleAdd` opens a shot that **did not exist when this component
+   * rendered**. The offsets map built up here has no entry for that id, and the
+   * `?? 0` below quietly turned the miss into "jump to the start of the video"
+   * — so adding a shot opened it while leaving the canvas showing the previous
+   * one. Taking the list the id came from makes the two impossible to
+   * disagree; the fallback now only covers a genuinely unknown shot.
+   */
+  function open(sceneId: string, from: Scene[] = scenes) {
     setActiveScene(sceneId);
-    // Land the playhead on the shot you just opened, so the canvas shows what
-    // the timeline is now talking about.
-    setCurrentFrame(offsets.get(sceneId) ?? 0);
+    setCurrentFrame(sceneOffsets(from).get(sceneId) ?? 0);
   }
 
   /**
@@ -106,7 +115,8 @@ export default function ShotStrip({ project }: { project: Project }) {
       setRefused(true);
       return;
     }
-    open(next[next.length - 1].id);
+    // `next` — not the render-time list — is what contains the shot just made.
+    open(next[next.length - 1].id, next);
   }
 
   return (
