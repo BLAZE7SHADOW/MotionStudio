@@ -35,20 +35,36 @@ editor later on a bigger screen.
 
 That's the whole loop: **add → arrange → animate → preview → export.**
 
-**A short walkthrough runs the first time you open the editor**, pointing out
-the parts that aren't obvious — the **animated background** button, the
-**blocks** menu (terminal, code panel, progress steps, confetti), the
-**project settings** readout in the toolbar (which is a button that reshapes the
-project), **Add media** and **Stock**, and the **Effects** section where the 34
-text effects live.
+**A 21-step walkthrough runs the first time you open the editor**, in plain
+language, covering the whole loop rather than just the toolbar:
 
-The tour only shows steps whose panel is actually on screen. The Effects section
-exists only while a text element is selected, and the transition picker only
-exists inside a shot that has something before it — so **replaying the tour with
-some text selected and a second shot added shows more than the first run did**.
-Worth doing once you have something on the canvas. Replay it any time from the
-**?** menu in the toolbar → **Replay tour**; that also brings back any hint you
-dismissed with "don't show again".
+- **Putting things in** — the **T / animated background / blocks** buttons, and
+  the **project settings** readout (which is a button that reshapes the project)
+- **Your media** — **Add media**, drag-and-drop, ⌘V paste, free **Stock** search,
+  turning a photo into a backdrop with **Make Background**, and how **music**
+  works (no picture, a bar on the timeline, volume on the right)
+- **The canvas** — drag, resize, rotate, double-click-to-edit, why motion freezes
+  while something is selected, and ⌘Z
+- **Properties** — the ◆ animated marker, sections that open and close, that
+  **every number box drags like a slider**, the 34 **text effects**, and
+  **Motion** (presets vs. the dials)
+- **Shots** — adding, renaming, drilling in, transitions, and cutting to the beat
+- **Timing** — what a clip's position and width mean, moving vs. trimming,
+  scrubbing, dragging animation bars, and the pin that makes something play
+  across the **whole video** instead of one shot
+- **Finishing** — Preview, browser vs. cloud export, and the help menu
+
+Every step is anchored to something on screen. Where a panel only exists in
+context — the **Sound** section needs a music clip selected, **Effects** needs a
+text element — the step falls back to the panel that feature lives in, so a
+brand-new user on an empty canvas still gets the explanation. Two steps have no
+fallback because there is genuinely nothing to point at yet: the **transition
+picker** appears only inside a shot that has something before it. So **replaying
+the tour with some text selected and a second shot added shows a little more, and
+lands each step on the exact control** rather than the panel. Worth doing once
+you have something on the canvas. Replay it any time from the **?** menu in the
+toolbar → **Replay tour**; that also brings back any hint you dismissed with
+"don't show again".
 
 **Hints.** When something changes on its own — a tempo detected, another tab
 taking over the project — MotionStudio says so in the top-right corner rather

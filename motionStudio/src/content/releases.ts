@@ -32,6 +32,24 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: '2026-08-06',
+    title: 'The tour actually teaches you the app',
+    changes: [
+      {
+        kind: 'improved',
+        text: 'The first-run walkthrough now covers the whole app in plain language, not just the toolbar. It explains what a shot is and how to build a video out of them, what a clip’s position and width on the timeline actually mean, the difference between dragging a clip’s middle and dragging its end, how music works, how to turn a photo into your background, and what the 34 text effects do.',
+      },
+      {
+        kind: 'new',
+        text: 'Steps for things that only appear once you’ve selected something — sound, text effects, motion — no longer go missing on a brand-new empty project. You get the explanation either way, pointed at the panel the feature lives in.',
+      },
+      {
+        kind: 'new',
+        text: 'The walkthrough now points out the parts nobody was finding: that every number box in the Properties panel can be dragged sideways like a slider, that ⌘Z undoes anything, and that the small square next to a timeline row makes that item play through the whole video instead of just the shot you’re in — which is what you want for a background or a music track.',
+      },
+    ],
+  },
+  {
     id: '2026-07-30',
     title: 'The app explains itself',
     changes: [

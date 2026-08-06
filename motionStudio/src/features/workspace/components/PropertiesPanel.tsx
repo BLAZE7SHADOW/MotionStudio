@@ -298,8 +298,15 @@ function Section({
   return (
     <>
       {/* A row rather than one big button: the reset is a second action, and
-          nesting a button inside a button is invalid. */}
-      <div className="group w-full border-b border-studio-border shrink-0 flex items-center hover:bg-studio-surface/50 transition-colors duration-120">
+          nesting a button inside a button is invalid.
+
+          The tour anchor sits on the header rather than wrapping the whole
+          section, so a collapsible section can still be spotlighted while it is
+          closed — which is when Motion and Transform normally are. */}
+      <div
+        data-tour={tourId}
+        className="group w-full border-b border-studio-border shrink-0 flex items-center hover:bg-studio-surface/50 transition-colors duration-120"
+      >
         <button
           type="button"
           onClick={toggle}
@@ -497,6 +504,7 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
           each one. Undefined when there is nothing to clear. */}
       <Section
         title={hideHeader ? 'Motion' : 'Animation'}
+        tourId="motion-section"
         onReset={anims.length > 0 ? () => writeAnims([]) : undefined}
         marker={anims.length > 0 ? `${anims.length} animation${anims.length === 1 ? '' : 's'}` : undefined}
       >
@@ -883,7 +891,7 @@ function MediaProperties({
 }) {
   return (
     <>
-      <Section title="Layout" />
+      <Section title="Layout" tourId="media-layout" />
       <div className="px-4 py-3">
         <button
           type="button"
@@ -955,7 +963,7 @@ function ShaderProperties({ el, update, reorder }: { el: ShaderElement; update: 
 function AudioProperties({ el, update }: { el: AudioElement; update: Update }) {
   return (
     <>
-      <Section title="Sound" />
+      <Section title="Sound" tourId="sound-section" />
       <div className="flex flex-col gap-3 px-4 py-3">
         <PropRow label="Volume">
           <NumInput

@@ -167,6 +167,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Track headers (left) */}
         <div
+          data-tour="tracks"
           className="border-r border-studio-border flex flex-col shrink-0 bg-studio-panel"
           style={{ width: TRACK_HEADER_W }}
         >

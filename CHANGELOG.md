@@ -5,6 +5,68 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-06] — The tour teaches the app, not the toolbar
+
+The first-run walkthrough was 17 steps and — read honestly — a toolbar tour. It
+named the buttons well and explained almost nothing about *using* the thing: one
+sentence for the entire timeline, no mention of sound at all, no mention of
+`Make Background`, and the three biggest hidden affordances (scrub-drag on every
+number field, the whole-video pin, the animation bars inside a clip) went
+unsaid. Rewritten to 21 steps, in the voice of someone explaining it to a
+first-time user.
+
+### Added
+- **A fallback-anchor mechanism in `editorTour.ts`.** Steps are now
+  `{ anchors: string[]; popover }` and `buildEditorTourSteps()` resolves each to
+  the *first* anchor present in the DOM. The old filter dropped any step whose
+  single anchor was missing, which meant the first run — always an empty canvas,
+  always nothing selected — silently skipped Effects, Motion, Sound and
+  Make Background. Those are the four things a new user most wants. Each now
+  falls back to the panel the feature lives in (`properties`, `assets`), so the
+  explanation always ships; on a replay with something selected the precise
+  anchor wins and the spotlight lands on the real control. `transition` keeps a
+  single anchor deliberately — with one shot there is genuinely nothing to point
+  at. Verified against driver.js's placement code: a requested `side` is only
+  honoured when the popover fits (`c === 'right' && x`), so a step whose two
+  anchors sit in opposite panels re-picks its side rather than rendering
+  off-screen.
+- **New tour anchors.** `media-layout` and `sound-section` on the matching
+  `Section`s in `PropertiesPanel.tsx`, `motion-section` on the one
+  `AnimationSection` renders, and `tracks` on the timeline's track-header column
+  in `TimelinePanel.tsx`.
+- **Five new steps** — turning a photo into a backdrop (`Make Background`),
+  music and volume, the Properties panel as a whole (◆ marker, collapsing,
+  drag-to-scrub), Motion's Presets-vs-Manual split, and the track headers (layer
+  order, the whole-video pin, per-row delete).
+
+### Changed
+- **`Section` in `PropertiesPanel.tsx` now applies `data-tour` on the
+  collapsible branch too**, not only the header-only one. It had accepted a
+  `tourId` since the tour shipped, but silently dropped it for any section with
+  children — which is every section worth anchoring. The attribute sits on the
+  header row rather than wrapping the section, so a *closed* section can still
+  be spotlighted; `Motion` and `Transform` default closed, so that is the normal
+  case rather than the edge one.
+- **Every step rewritten to a what / how / gotcha shape.** The timeline step now
+  says that left-to-right is time, that a clip's start is when the thing appears
+  and its width is how long it stays, that the middle moves and the ends trim,
+  and that animation bars inside a clip drag independently of it. The canvas step
+  adds ⌘Z. The beat step adds Alt-drag to defeat snapping. The shots step adds
+  double-click-to-rename. The transition step names what each of the four
+  actually looks like, taken from `TRANSITIONS[].hint` so the two agree.
+- Claims checked against source rather than memory: 18 shaders and 34 text
+  effects counted from `SHADER_GROUPS` / `TEXT_EFFECT_GROUPS`, export wording
+  from `ExportDialog.tsx`, modifier keys from `shortcuts.ts`. A space-bar play
+  binding was drafted and cut — `shortcuts.ts` has no such row and neither does
+  the editor.
+
+### Fixed
+- **The tour never mentioned sound.** A user could finish the whole walkthrough
+  without learning that music is added like any other file, has no canvas
+  presence, and is trimmed on the timeline.
+
+---
+
 ## [2026-08-01] — Docs audit: three stale claims
 
 A sweep of all five living docs against the code. `CHANGELOG.md` and

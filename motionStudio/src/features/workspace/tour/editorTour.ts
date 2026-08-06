@@ -3,133 +3,182 @@ import type { DriveStep } from 'driver.js';
 /**
  * The first-run walkthrough of the editor.
  *
- * Its main job is the handful of things you cannot discover by looking: that
- * text is edited by double-clicking it, that a clip is trimmed by dragging its
- * *edge* rather than its body, and that motion deliberately doesn't play while
- * an element is selected. Every one of those has burnt a first-time user.
+ * It is written for someone who has never opened a video editor, so each step
+ * answers the same three questions in the same order: **what this is, what you
+ * do with it, and the thing that would otherwise catch you out.** That last part
+ * is the reason the tour exists — text is edited by double-clicking it, a clip
+ * is trimmed by dragging its *edge* rather than its body, number fields are
+ * sliders, and motion deliberately freezes while an element is selected. Every
+ * one of those has burnt a first-time user.
  *
  * Anchors are `data-tour` attributes rather than class names so restyling a
  * panel can't silently break the tour.
  */
 export const TOUR_SEEN_KEY = 'ms_editor_tour_seen';
 
-const ALL_STEPS: DriveStep[] = [
+interface TourStep {
+  /**
+   * Selectors tried in order; the first one actually on screen anchors the step.
+   *
+   * Several panels only exist in context — the Sound section needs an audio
+   * element selected, Effects needs a text element — and the first run happens
+   * on an empty canvas. Without a fallback those steps simply vanish, which
+   * means a brand-new user never hears about sound or text effects at all: the
+   * two things they are most likely to want. The fallback keeps the explanation
+   * and points at the panel the feature lives in; on a replay with something
+   * selected, the precise anchor wins and the spotlight lands on the real
+   * control.
+   */
+  anchors: string[];
+  popover: DriveStep['popover'];
+}
+
+const ALL_STEPS: TourStep[] = [
+  /* ─────────────── Putting things on screen ─────────────── */
   {
-    element: '[data-tour="insert"]',
+    anchors: ['[data-tour="insert"]'],
     popover: {
       title: 'Start here',
       description:
-        'Everything you place on the canvas starts from these three buttons. <strong>T</strong> adds text — the next two are worth a closer look.',
+        'These three buttons are how things get onto your video. <strong>T</strong> adds text. The sparkle adds a moving background. The last one adds a ready-made block. Whatever you click lands on the canvas already selected, so you can start editing it straight away in the panel on the right.',
       side: 'bottom',
       align: 'start',
     },
   },
   {
-    element: '[data-tour="shader"]',
+    anchors: ['[data-tour="shader"]'],
     popover: {
-      title: 'Animated backgrounds',
+      title: 'A background that moves',
       description:
-        'Drops in a living background — 18 shader presets, from soft mesh gradients to noise and warp. Swap the preset and tune its speed and opacity in Properties. This is the fastest way to stop a video looking like plain text on black.',
+        'Plain text on black looks unfinished. This drops in a living background — <strong>18 to choose from</strong>, from soft colour clouds to noise, swirls and liquid metal. Change which one, and how fast it moves, on the right. It fills the frame and sits behind everything else, so you can add it once and forget about it.',
       side: 'bottom',
       align: 'start',
     },
   },
   {
-    element: '[data-tour="blocks"]',
+    anchors: ['[data-tour="blocks"]'],
     popover: {
-      title: 'Blocks — things text can’t do',
+      title: 'Things text can’t do',
       description:
-        'A <strong>terminal</strong> that types commands, a <strong>code panel</strong> that reveals your code line by line, <strong>progress steps</strong>, and <strong>confetti</strong>. Pick one, then edit its content in Properties — a code block takes your real code, a terminal takes one line per command.',
+        'Four ready-made animations: a <strong>terminal</strong> typing out commands, a <strong>code panel</strong> revealing your code line by line, <strong>progress steps</strong> that light up one after another, and <strong>confetti</strong>. Add one, then paste your real content into it on the right. Each needs a bit of time to finish — make it too short on the timeline and it tells you exactly how much it needs.',
       side: 'bottom',
       align: 'start',
     },
   },
   {
-    element: '[data-tour="project-settings"]',
+    anchors: ['[data-tour="project-settings"]'],
     popover: {
-      title: 'Project settings',
+      title: 'The shape and length of the video',
       description:
-        'That aspect ratio · fps · length readout is a button. Open it to reshape the project at any time — switch to 9:16 for Reels, change the frame rate, or make the video longer. <strong>Nothing is locked in at creation.</strong>',
+        'That little <em>16:9 · 30fps · 10s</em> readout is a button. Open it to go tall for Reels and Shorts, change how smooth the motion is, or make the whole video longer or shorter. <strong>Nothing you picked when you created this project is locked in.</strong>',
       side: 'bottom',
       align: 'start',
     },
   },
+
+  /* ─────────────── Your media ─────────────── */
   {
-    element: '[data-tour="assets"]',
+    anchors: ['[data-tour="assets"]'],
     popover: {
-      title: 'Your media',
+      title: 'Your media lives here',
       description:
-        'Everything available to this project lives here. Click a tile to place it on the canvas, or drag it where you want it. Two ways to fill it up — next two steps.',
+        'Every photo, video clip and music file in this project sits in this panel. Click a tile to drop it on the canvas, or <strong>drag the tile and let go exactly where you want it</strong>. Two ways to fill it up — next.',
       side: 'right',
       align: 'start',
     },
   },
   {
-    element: '[data-tour="add-media"]',
+    anchors: ['[data-tour="add-media"]'],
     popover: {
       title: 'Bring in your own files',
       description:
-        'Images, video and audio. You can also <strong>drop files anywhere in this panel</strong>. Anything unsupported is named rather than silently ignored. Uploads go to cloud storage in the background, which is what lets Cloud Render see them.',
+        'Photos, video and music. You can also <strong>drop files anywhere in this panel</strong>, or <strong>paste a screenshot straight in with ⌘V</strong> without saving it to disk first. If a file type isn’t supported you’re told which one, rather than nothing happening. Files upload quietly in the background — that’s what lets Cloud Render see them later.',
       side: 'right',
       align: 'start',
     },
   },
   {
-    element: '[data-tour="stock-tab"]',
+    anchors: ['[data-tour="stock-tab"]'],
     popover: {
-      title: 'Free stock footage',
+      title: 'Free photos and video',
       description:
-        'Search millions of free photos and videos from Pexels, and place one straight onto the canvas — no account with them, no downloads, no attribution to manage.',
+        'Nothing of your own to use? Search millions of free photos and videos from Pexels and add one straight into your project — no account with them, no downloads to manage, nothing to credit.',
       side: 'right',
       align: 'start',
     },
   },
   {
-    element: '[data-tour="canvas"]',
+    anchors: ['[data-tour="media-layout"]', '[data-tour="assets"]'],
     popover: {
-      title: 'The canvas',
+      title: 'Turn a photo into your background',
       description:
-        'Drag to move, pull the handles to resize or rotate. <strong>Double-click text to edit it in place.</strong>',
+        'Any photo or video can be the backdrop. Place it, click it, then press <strong>Make Background</strong> on the right — it snaps to fill the whole frame and drops behind everything else in one go. Quicker and more exact than dragging its corners out. Then put your text on top.',
+      side: 'right',
+      align: 'start',
+    },
+  },
+  {
+    anchors: ['[data-tour="sound-section"]', '[data-tour="assets"]'],
+    popover: {
+      title: 'Music and sound',
+      description:
+        'Music comes in the same way: add the file, then click it to place it. It has no picture, so you’ll only see it as a bar on the timeline along the bottom. Select that bar and the right-hand panel gives you <strong>Volume</strong>. <strong>Drag the ends of the bar to trim the track</strong>, and drag its middle to choose when the music comes in.',
+      side: 'right',
+      align: 'start',
+    },
+  },
+
+  /* ─────────────── The canvas ─────────────── */
+  {
+    anchors: ['[data-tour="canvas"]'],
+    popover: {
+      title: 'Moving things around',
+      description:
+        'This is your actual video frame. <strong>Drag</strong> anything to move it, grab a <strong>corner</strong> to resize, or the handle above it to <strong>rotate</strong>. <strong>Double-click text to type straight into it.</strong> One thing that catches everyone out: while something is selected the motion freezes so you can position it — the canvas says so, and Preview brings it back. And <strong>⌘Z undoes anything</strong>, so nothing here is a mistake you can’t take back.',
       side: 'left',
       align: 'center',
     },
   },
+
+  /* ─────────────── Properties ─────────────── */
   {
-    element: '[data-tour="properties"]',
+    anchors: ['[data-tour="properties"]'],
     popover: {
-      title: 'Everything about the selection',
+      title: 'Everything about what you picked',
       description:
-        'Whatever is selected, this panel controls it — content, colour, size, position, timing. Headings with an arrow open and close, and <strong>Motion starts closed</strong>: that’s where the animation presets live. Motion also pauses while something is selected so you can position it, and the canvas tells you when that’s happening.',
+        'Whatever is selected, this panel edits it — the words, the colour, the size, the volume, the timing. Headings with a small arrow open and close, and a <strong>diamond ◆ beside one means something inside it is animated</strong>, so a closed section can still tell you. And <strong>every number box here can be dragged sideways like a slider</strong> — far quicker than typing when you’re feeling out a value. Click into it when you want an exact number.',
       side: 'left',
       align: 'start',
     },
   },
   {
-    element: '[data-tour="effects-section"]',
+    anchors: ['[data-tour="effects-section"]', '[data-tour="properties"]'],
     popover: {
-      title: '34 text effects',
+      title: '34 ways to make text move',
       description:
-        'Typewriter, per-character rise, shimmer sweep, marker highlight and thirty more — each one a real animation, previewed live right here before you commit to it. This is where a plain title becomes something worth watching.',
+        'This is where a plain title turns into something worth watching. Typing out one letter at a time. Letters rising into place. A shimmer sweeping across. A marker-pen line drawn under one word. Numbers counting up to a total. <strong>Each one plays right here as you browse it</strong>, so you see it before you commit. <strong>Speed</strong> makes it quicker or slower, and some ask for a little more — a highlight wants to know which word, a counter wants the number to count to.',
       side: 'left',
       align: 'start',
     },
   },
   {
-    element: '[data-tour="shots"]',
+    anchors: ['[data-tour="motion-section"]', '[data-tour="properties"]'],
+    popover: {
+      title: 'Motion — how it arrives and leaves',
+      description:
+        'Different from the text effects: this moves the whole box, and it works on anything, not just text. <strong>Presets</strong> is the one-click version — fade in, slide up, pop, and the matching ways out. <strong>Manual</strong> is the same thing with the dials showing: where it starts, where it ends, when it begins and how long it takes. Click a preset and you land on Manual looking at exactly what it just set — the fastest way to learn what those dials really do.',
+      side: 'left',
+      align: 'start',
+    },
+  },
+
+  /* ─────────────── Shots ─────────────── */
+  {
+    anchors: ['[data-tour="shots"]'],
     popover: {
       title: 'Build it shot by shot',
       description:
-        'A video is a sequence of moments, and this is where you arrange them. <strong>Add shot</strong> puts a new one on the end — go on, try it. Click between them to work on one at a time, and the timeline below shows only that shot, so twenty quick cuts never become twenty rows to scroll. <strong>Sequence</strong> steps back to see the whole thing.',
-      side: 'top',
-      align: 'start',
-    },
-  },
-  {
-    element: '[data-tour="beat"]',
-    popover: {
-      title: 'Cut in time with the music',
-      description:
-        'Drop a music track into your project and MotionStudio works out its tempo on its own, then marks the beats along the ruler — brighter lines every fourth beat, so you can count bars at a glance. From then on <strong>Add shot</strong> lands on a beat and dragging a shot’s edge snaps to one, which is what makes a reel feel locked to the track instead of near it. Got the tempo wrong? Open this and tap along.',
+        'A video is a run of moments, one after another, and this strip is that run. <strong>Add shot</strong> puts a new one on the end — go on, try it. Click between them to work on one at a time: the timeline below then shows only that shot, so twenty quick cuts never become twenty rows to scroll through. <strong>Double-click a shot to rename it</strong>, and <strong>Sequence</strong> on the left steps back to see the whole video at once.',
       side: 'top',
       align: 'start',
     },
@@ -138,51 +187,75 @@ const ALL_STEPS: DriveStep[] = [
     /* Only rendered inside a shot that has something before it, so this step
        appears on a replay rather than the first run — which is the right way
        round: there is nothing to transition into until you have two shots. */
-    element: '[data-tour="transition"]',
+    anchors: ['[data-tour="transition"]'],
     popover: {
       title: 'How a shot arrives',
       description:
-        'Every cut is a hard cut until you say otherwise. Pick a <strong>fade, zoom punch, whip or spin</strong> and the shot you’re in arrives that way. Each one lasts half a beat when a track is loaded, so it lands <em>with</em> the music — try a zoom punch on a beat drop and play it back.',
+        'Every join is a hard cut until you say otherwise. Pick a <strong>fade</strong> (up out of black), a <strong>zoom punch</strong> (snaps in from slightly too big), a <strong>whip</strong> (flies in from the side) or a <strong>spin</strong>, and the shot you’re in arrives that way. With music loaded each one lasts half a beat, so it lands <em>with</em> the track — try a zoom punch on a drop and play it back.',
       side: 'top',
       align: 'start',
     },
   },
   {
-    element: '[data-tour="timeline"]',
+    anchors: ['[data-tour="beat"]'],
     popover: {
-      title: 'When things happen',
+      title: 'Cut in time with the music',
       description:
-        'Each element gets a clip. Drag the clip to move it, and <strong>drag its edge to trim</strong>. Click anywhere in the track to scrub.',
+        'Add a music track and MotionStudio works out its tempo on its own, then marks the beats along the ruler — every fourth line brighter, so you can count bars at a glance. From then on <strong>Add shot</strong> lands on a beat and dragging a shot’s edge snaps to one, which is the difference between a reel that feels locked to the track and one that is merely close. If the tempo looks wrong, open this and <strong>tap along</strong> — it works it out from your taps. Hold <strong>Alt</strong> while dragging to ignore the snapping just this once.',
+      side: 'top',
+      align: 'start',
+    },
+  },
+
+  /* ─────────────── Timing ─────────────── */
+  {
+    anchors: ['[data-tour="timeline"]'],
+    popover: {
+      title: 'When things happen, and for how long',
+      description:
+        'Everything you add gets a bar down here, and <strong>left to right is time</strong>. Where a bar starts is when that thing appears; how wide it is, is how long it stays on screen. <strong>Drag the middle of a bar to move it. Drag either end to make it shorter or longer.</strong> Click anywhere in the track to jump the video to that moment — the thin line is where you are, and the counter at the top right reads it out in seconds. If something has motion on it you’ll see slim bars inside its clip; drag those to change <em>when</em> the animation happens without moving the clip itself.',
       side: 'top',
       align: 'start',
     },
   },
   {
-    element: '[data-tour="preview"]',
+    anchors: ['[data-tour="tracks"]'],
     popover: {
-      title: 'Play it back',
+      title: 'Layers, and what plays everywhere',
       description:
-        'Effects and animations only run during playback — this is where you see the real thing.',
+        'Each row is one thing, and the top row is the one in front on the canvas. Click a name to select it. The small square beside it is the one worth knowing: press it and that item plays through the <strong>whole video</strong> instead of only this shot — exactly what you want for a background or a music track. It turns into a stack icon once it’s on, and the bin next to it removes the item.',
+      side: 'top',
+      align: 'start',
+    },
+  },
+
+  /* ─────────────── Finishing ─────────────── */
+  {
+    anchors: ['[data-tour="preview"]'],
+    popover: {
+      title: 'Watch it properly',
+      description:
+        'Effects and animations only run while it’s playing, so this is where you see the real thing — exactly as it will come out. The play button at the top left of the timeline does the same job.',
       side: 'bottom',
       align: 'end',
     },
   },
   {
-    element: '[data-tour="export"]',
+    anchors: ['[data-tour="export"]'],
     popover: {
-      title: 'Export',
+      title: 'Turn it into a file',
       description:
-        'Render an MP4 in your browser, or on the cloud for full fidelity.',
+        'Two ways out. <strong>Browser</strong> renders it right here on your machine — quick, nothing to set up. <strong>Cloud Render</strong> does it on a proper machine: slower to start, full quality, and it leaves your laptop alone. You choose the size and the quality, and either way you get an MP4 you can post anywhere.',
       side: 'bottom',
       align: 'end',
     },
   },
   {
-    element: '[data-tour="help"]',
+    anchors: ['[data-tour="help"]'],
     popover: {
-      title: 'When something goes wrong',
+      title: 'When you’re stuck',
       description:
-        'Everything you need when you’re stuck lives here: <strong>replay this tour</strong>, <strong>send feedback</strong> — it reaches a real person, and carries the details that make a bug fixable — and <strong>what’s new</strong>, so you can tell a change from a fault. A dot means there’s something you haven’t read.',
+        'Everything for when something isn’t right lives here: <strong>replay this tour</strong> — worth doing once you have things on the canvas, because it then shows the parts about sound, text effects and motion that an empty canvas can’t — plus the <strong>keyboard shortcuts</strong>, <strong>send feedback</strong> that reaches a real person and carries the details that make a bug fixable, and <strong>what’s new</strong>. A dot means there’s something you haven’t read.',
       side: 'bottom',
       align: 'end',
     },
@@ -190,17 +263,17 @@ const ALL_STEPS: DriveStep[] = [
 ];
 
 /**
- * The steps whose anchors are actually on screen right now.
+ * The steps that have an anchor on screen right now, each resolved to it.
  *
- * Some panels only exist in context — the Effects section renders only while a
- * text element is selected, and the tour's first run happens on an empty
- * canvas. Pointing driver.js at a missing element gives a popover floating over
- * nothing, so the list is resolved against the live DOM instead. Replaying the
- * tour with a text element selected therefore shows more than the first run
- * did, which is the right way round.
+ * Pointing driver.js at a missing element gives a popover floating over
+ * nothing, so the list is resolved against the live DOM. A step with no anchor
+ * present at all — the transition picker, which needs a second shot — is
+ * dropped rather than faked. Replaying the tour with a text element selected
+ * therefore shows more than the first run did, which is the right way round.
  */
 export function buildEditorTourSteps(): DriveStep[] {
-  return ALL_STEPS.filter(
-    (step) => typeof step.element === 'string' && document.querySelector(step.element),
-  );
+  return ALL_STEPS.flatMap((step) => {
+    const anchor = step.anchors.find((selector) => document.querySelector(selector));
+    return anchor ? [{ element: anchor, popover: step.popover }] : [];
+  });
 }
