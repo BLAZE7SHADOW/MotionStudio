@@ -3,7 +3,8 @@ import { Type, Sparkles, EyeOff, Maximize, Volume2, VolumeX } from 'lucide-react
 import Moveable from 'react-moveable';
 import { Player } from '@remotion/player';
 import type { PlayerRef } from '@remotion/player';
-import { useProjectStore, getCompositionDimensions } from '@/engines/project';
+import { getCompositionDimensions } from '@/engines/project';
+import type { Project } from '@/engines/project';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
 import { textElementStyle, elementBoxStyle, MotionComposition } from '@/engines/rendering';
@@ -19,7 +20,17 @@ const PAD = 20;
 const ACCENT = 'oklch(0.627 0.265 298.232)';
 
 interface CanvasPanelProps {
-  projectId: string;
+  /** The project itself, not its id.
+   *
+   *  This used to take a `projectId` and look the project back up from the
+   *  store — even though its only caller already holds the project and passes
+   *  it whole to both sibling panels. The lookup returns `Project | undefined`,
+   *  which forced a `if (!project) return null` guard, and six hooks sat below
+   *  that guard: on the render where the project went missing React would have
+   *  been handed fewer hooks than the render before, which throws. Taking the
+   *  project as a prop deletes the nullable, the guard and the bug together,
+   *  and makes this panel consistent with `Toolbar` and `TimelinePanel`. */
+  project: Project;
 }
 
 /* ── editable text node (contenteditable) — shown as overlay during inline edit ── */
@@ -69,8 +80,7 @@ function TextNodeEditing({
   );
 }
 
-export default function CanvasPanel({ projectId }: CanvasPanelProps) {
-  const project            = useProjectStore((s) => s.getProject(projectId));
+export default function CanvasPanel({ project }: CanvasPanelProps) {
   const { elements, updateElement, removeElement, addImage, addVideo, addAudio, addText, addShader } = useCanvasEngine();
   const selectedElementId  = useEditorStore((s) => s.selectedElementId);
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
@@ -80,12 +90,38 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
   const setCurrentFrame    = useEditorStore((s) => s.setCurrentFrame);
 
   const areaRef        = useRef<HTMLDivElement>(null);
-  const stageRef       = useRef<HTMLDivElement>(null);
   const playerRef      = useRef<PlayerRef>(null);
+  /* The stage is state rather than a ref because Moveable takes it as a
+     `container` *prop* — reading `stageRef.current` during render is reading a
+     value React has not promised is current yet, and on the first render it is
+     still null, so Moveable would mount against the document instead of the
+     stage. A callback ref re-renders once when the node exists, which is
+     exactly when the value becomes true. */
+  const [stage, setStage]                       = useState<HTMLDivElement | null>(null);
   const [area, setArea]                         = useState({ w: 0, h: 0 });
+  /* The overlay div Moveable attaches its handles to.
+     Set by a callback ref on the node itself rather than by an effect that
+     queried the DOM for `[data-element-id="…"]`. The node is rendered by this
+     very component, so searching for it was asking the browser a question we
+     already knew the answer to — and the effect had to re-run on `elements` and
+     `currentFrame` to catch the element scrolling out of its own clip, each run
+     costing a second render. A ref is called exactly when the node appears and
+     with `null` exactly when it goes, which covers every one of those cases
+     without listing them. */
   const [moveableTarget,   setMoveableTarget]   = useState<HTMLElement | null>(null);
-  const [editingElementId, setEditingElementId] = useState<string | null>(null);
+  const [editingId, setEditingId]               = useState<string | null>(null);
   const [dragOver, setDragOver]                 = useState(false);
+
+  /* Text editing only ever applies to the *selected* element — double-clicking
+     sets both — so "is something being edited?" is a question about the current
+     selection, not a second piece of state to keep in step with it.
+
+     Deriving it replaces two effects that used to call setState: one clearing
+     the id whenever the selection changed, one clearing it on playback. Both
+     cost a second render, and both left a window in which the id pointed at an
+     element that was no longer selected. Playback is covered for free, because
+     entering it clears the selection in the editor store. */
+  const editingElementId = editingId === selectedElementId ? editingId : null;
 
   /* ── measure available area → scale factor ── */
   useEffect(() => {
@@ -104,7 +140,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
              One clock — a separate rAF clock advancing currentFrame in parallel
              would race the Player and desync the playhead from the pixels.
      pause → freeze; scrubbing seeks the paused Player frame-exactly. */
-  const totalFrames = project?.durationInFrames ?? 1;
+  const totalFrames = project.durationInFrames;
   useEffect(() => {
     const p = playerRef.current;
     if (!p) return;
@@ -131,31 +167,6 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     if (!isPlaying) playerRef.current?.seekTo(currentFrame);
   }, [currentFrame, isPlaying]);
 
-  /* ── find selected DOM element for moveable ── */
-  useEffect(() => {
-    if (!selectedElementId || editingElementId || isPlaying || !stageRef.current) {
-      setMoveableTarget(null);
-      return;
-    }
-    const el = stageRef.current.querySelector(
-      `[data-element-id="${selectedElementId}"]`
-    ) as HTMLElement | null;
-    setMoveableTarget(el);
-  }, [selectedElementId, editingElementId, isPlaying, elements, currentFrame]);
-
-  /* ── clear editing when selection changes ── */
-  useEffect(() => {
-    setEditingElementId(null);
-  }, [selectedElementId]);
-
-  /* ── clear selection/editing when entering preview ── */
-  useEffect(() => {
-    if (isPlaying) {
-      setEditingElementId(null);
-      setSelectedElement(null);
-    }
-  }, [isPlaying, setSelectedElement]);
-
   /* ── keyboard: Delete / Escape ──
      Listed in `features/workspace/shortcuts.ts`, which the help menu renders.
      Change a binding here, change the row there. */
@@ -175,8 +186,6 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [selectedElementId, editingElementId, isPlaying, removeElement, setSelectedElement]);
-
-  if (!project) return null;
 
   const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
 
@@ -215,8 +224,8 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     [elements, editingElementId, selectedElementId, isPlaying]
   );
   const inputProps = useMemo(
-    () => ({ elements: playerElements, assets: project?.assets ?? [] }),
-    [playerElements, project?.assets]
+    () => ({ elements: playerElements, assets: project.assets }),
+    [playerElements, project.assets]
   );
 
   /* Audio only exists if something can produce it — an audio clip, or a video
@@ -252,11 +261,11 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
     e.preventDefault();
     setDragOver(false);
     const assetId = e.dataTransfer.getData('application/x-motionstudio-asset');
-    if (!assetId || !stageRef.current || !project) return;
+    if (!assetId || !stage) return;
     const asset = project.assets.find((a) => a.id === assetId);
     if (!asset) return;
 
-    const rect = stageRef.current.getBoundingClientRect();
+    const rect = stage.getBoundingClientRect();
     const at = { x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale };
 
     const el =
@@ -277,10 +286,10 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
         <>
           {/* Stage */}
           <div
-            ref={stageRef}
+            ref={setStage}
             onClick={() => {
               if (isPlaying) return;
-              setEditingElementId(null);
+              setEditingId(null);
               setSelectedElement(null);
             }}
             onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; setDragOver(true); }}
@@ -412,7 +421,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
                     el={el}
                     scale={scale}
                     onInput={(content) => updateElement(el.id, { content })}
-                    onDone={() => setEditingElementId(null)}
+                    onDone={() => setEditingId(null)}
                   />
                 );
               }
@@ -420,6 +429,9 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
                 <div
                   key={el.id}
                   data-element-id={el.id}
+                  // Only the selected element's box needs to be findable, and
+                  // this is the moment it is known to exist.
+                  ref={el.id === selectedElementId ? setMoveableTarget : undefined}
                   style={{
                     ...elementBoxStyle(el, scale),
                     backgroundColor: 'transparent',
@@ -430,7 +442,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
                     e.stopPropagation();
                     if (el.type === 'text') {
                       setSelectedElement(el.id);
-                      setEditingElementId(el.id);
+                      setEditingId(el.id);
                     }
                   }}
                 />
@@ -441,7 +453,7 @@ export default function CanvasPanel({ projectId }: CanvasPanelProps) {
             {moveableTarget && selectedElementId && !editingElementId && !isPlaying && (
               <Moveable
                 target={moveableTarget}
-                container={stageRef.current}
+                container={stage}
                 draggable
                 resizable
                 rotatable

@@ -5,6 +5,64 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-06] — CanvasPanel: six hooks below an early return
+
+`CanvasPanel` took a `projectId` and looked the project back up from the store,
+even though its only caller — `EditorLayout` — already holds the project and
+hands it whole to both sibling panels. That lookup returns
+`Project | undefined`, which forced `if (!project) return null` at line 179, and
+six hooks sat below it: three `useMemo`, a `useState`, a `useCallback` and one
+more `useMemo`. On any render where the project went missing React would be
+handed fewer hooks than the render before, which throws. ESLint had been
+reporting it as six `rules-of-hooks` errors; nothing gated on them.
+
+The file went from **10 lint errors to 0**, and is the first component in the
+repo React Compiler can actually optimise.
+
+### Fixed
+- **The conditional hooks, by deleting the nullable rather than reordering it.**
+  `CanvasPanel` now takes `project: Project`, matching `Toolbar` and
+  `TimelinePanel`. The guard, the `project?.` chains and the redundant store
+  subscription go with it, and `handleDrop` loses its second `!project` check.
+- **React Compiler was skipping this component entirely.** `inputProps` declared
+  `[playerElements, project?.assets]` while the compiler inferred
+  `project.assets` — it had narrowed the optional chain using the very guard
+  that caused the hook bug. With the prop non-nullable the two agree.
+- **`Moveable`'s `container={stageRef.current}` read a ref during render** — null
+  on first render, so Moveable mounted against the document instead of the
+  stage. The stage is now state set by a callback ref, which re-renders exactly
+  when the node exists.
+
+### Changed
+- **`setIsPlaying` clears the selection, in the editor store.** It was an effect
+  in `CanvasPanel` watching `isPlaying`, which cost a second render on every
+  play and only held while that component was mounted. The rule is an invariant
+  of the editor state — a selected element is drawn in its base pose, which
+  during playback would show one element sitting still in a moving composition —
+  so it belongs to whatever owns that state. It now holds for the toolbar, the
+  timeline transport and the Player's own `ended` handler alike.
+- **Text editing is derived, not stored twice.** Editing only ever applies to
+  the selected element (double-clicking sets both), so `editingElementId` is now
+  `editingId === selectedElementId ? editingId : null`. That deletes two
+  setState-in-effect hooks — one clearing on selection change, one on playback —
+  each of which cost a render and left a window where the id pointed at an
+  element that was no longer selected. Playback falls out for free, since
+  entering it now clears the selection.
+- **Moveable's target comes from a callback ref on the node**, replacing an
+  effect that queried the DOM for `[data-element-id="…"]`. The node is rendered
+  by this same component, so the query was asking the browser something we
+  already knew; the effect also had to re-run on `elements` and `currentFrame`
+  to catch an element leaving its own clip. A ref covers all of those without
+  enumerating them.
+
+### Known, not fixed here
+- **The first element selected after the editor mounts gets no drag handles**
+  until you deselect and select again. Verified by stashing this commit and
+  reproducing on the previous code, so it is **pre-existing and unrelated** —
+  logged here rather than folded into an already-broad change.
+
+---
+
 ## [2026-08-06] — The tour teaches the app, not the toolbar
 
 The first-run walkthrough was 17 steps and — read honestly — a toolbar tour. It

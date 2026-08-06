@@ -33,7 +33,7 @@ export default function EditorLayout({ project }: EditorLayoutProps) {
 
         {/* Canvas — center */}
         <div data-tour="canvas" className="flex-1 flex overflow-hidden">
-          <CanvasPanel projectId={project.id} />
+          <CanvasPanel project={project} />
         </div>
 
         {/* Properties — right panel */}
