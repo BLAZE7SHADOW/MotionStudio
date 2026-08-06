@@ -55,11 +55,29 @@ repo React Compiler can actually optimise.
   to catch an element leaving its own clip. A ref covers all of those without
   enumerating them.
 
-### Known, not fixed here
-- **The first element selected after the editor mounts gets no drag handles**
-  until you deselect and select again. Verified by stashing this commit and
-  reproducing on the previous code, so it is **pre-existing and unrelated** —
-  logged here rather than folded into an already-broad change.
+### Not a bug — retracted
+- **A "first selection after mount gets no drag handles" bug was reported here
+  and does not exist.** It was an artifact of the browser-automation harness:
+  the driven tab runs backgrounded (`document.visibilityState === 'hidden'`), a
+  hidden tab is never laid out, so the `ResizeObserver` on the canvas area
+  reports 0×0, `ready = scale > 0` stays false, and the whole stage block —
+  including the transparent hit-targets Moveable attaches to — never renders.
+  Selection itself worked throughout (store, Properties panel and timeline
+  highlight were all correct), which is what made it look like a handles-only
+  failure. Taking a screenshot forces Chrome to render the tab, which is what
+  actually "fixed" it each time — not the deselect-and-reselect it was credited
+  to. Confirmed by measuring `getBoundingClientRect()` and `document.hidden`
+  during the repro, then re-testing once layout existed: the first selection
+  produces a full `moveable-control-box` and 16 controls. Recorded rather than
+  silently deleted, because the same trap will catch the next person who
+  black-box tests this app through a headless tab.
+
+  One real detail did come out of it. The old moveable-target effect depended on
+  `[selectedElementId, editingElementId, isPlaying, elements, currentFrame]` —
+  **not** on the canvas gaining layout. So had the overlays first rendered while
+  a selection was already held, no re-run would have attached the handles. The
+  callback ref has no such gap: it fires when the node appears, whatever caused
+  it to appear.
 
 ---
 
