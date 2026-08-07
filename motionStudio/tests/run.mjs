@@ -30,6 +30,7 @@ const TARGETS = [
   { test: 'notices.test.mjs', src: 'src/lib/notices.ts', bundle: 'notices.bundle.js' },
   { test: 'migrations.test.mjs', src: 'src/engines/project/migrations.ts', bundle: 'migrations.bundle.js' },
   { test: 'forStorage.test.mjs', src: 'src/engines/project/forStorage.ts', bundle: 'forStorage.bundle.js' },
+  { test: 'help.test.mjs', src: 'src/content/help.ts', bundle: 'help.bundle.js' },
 ];
 
 const work = mkdtempSync(join(tmpdir(), 'ms-tests-'));
