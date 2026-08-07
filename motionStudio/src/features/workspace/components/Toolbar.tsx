@@ -10,6 +10,7 @@ import type { Project } from '@/engines/project';
 import { useProjectStore } from '@/engines/project';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
+import { notifyAdded } from '@/lib/noticeStore';
 import ProjectSettingsPopover from './ProjectSettingsPopover';
 import ExportDialog from './ExportDialog';
 import UserMenu from '@/components/UserMenu';
@@ -93,7 +94,11 @@ export default function Toolbar({ project }: ToolbarProps) {
           data-tour="insert"
           variant="ghost"
           size="icon"
-          onClick={() => { track.editorTextAdded(); const el = addText(); if (el) setSelectedElement(el.id); }}
+          onClick={() => {
+            track.editorTextAdded();
+            const el = addText();
+            if (el) { setSelectedElement(el.id); notifyAdded('Text'); }
+          }}
           className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
         >
           <Type className="w-3.75 h-3.75" />
@@ -107,7 +112,7 @@ export default function Toolbar({ project }: ToolbarProps) {
           onClick={() => {
             track.editorShaderAdded({ shader: 'shader-mesh-gradient' });
             const el = addShader('shader-mesh-gradient');
-            if (el) setSelectedElement(el.id);
+            if (el) { setSelectedElement(el.id); notifyAdded('Background'); }
           }}
           className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
         >
@@ -152,7 +157,7 @@ export default function Toolbar({ project }: ToolbarProps) {
                 onClick={() => {
                   track.editorBlockAdded({ block: preset });
                   const el = addBlock(preset);
-                  if (el) setSelectedElement(el.id);
+                  if (el) { setSelectedElement(el.id); notifyAdded(def.label); }
                 }}
                 className="w-full text-left px-2.5 py-2 rounded-studio-md hover:bg-studio-surface transition-colors duration-[120ms]"
               >

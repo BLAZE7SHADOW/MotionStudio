@@ -25,7 +25,12 @@ export type NoticeId =
   /** This tab is watching a project another tab is editing. */
   | 'read-only'
   /** A project was written by a build newer than this one. */
-  | 'project-from-future';
+  | 'project-from-future'
+  /** A one-click toolbar button (text / background / block) just landed a
+      new element on the canvas. These land already selected, but a click
+      followed immediately by another can put two or three on the canvas
+      before the first is noticed — this is the "you did that" confirmation. */
+  | 'element-added';
 
 const KEY = 'ms_suppressed_notices';
 

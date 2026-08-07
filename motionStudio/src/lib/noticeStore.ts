@@ -64,3 +64,21 @@ export const showNotice = (notice: Notice) => useNoticeStore.getState().show(not
 export function dismissNotice(id: NoticeId): void {
   if (useNoticeStore.getState().current?.id === id) useNoticeStore.getState().dismiss();
 }
+
+/**
+ * A new element landed on the canvas, already selected, from a one-click
+ * action — the toolbar's insert/shader/block buttons, or clicking an asset
+ * tile. All of those can be clicked again before the first result is
+ * noticed, especially when the visible change is behind a closing popover or
+ * (for audio) has no canvas presence at all. One shared helper rather than
+ * this composed at each call site, so the id/timeout/suppressible shape
+ * can't drift between the two places that need it.
+ */
+export function notifyAdded(what: string): void {
+  showNotice({
+    id: 'element-added',
+    message: `${what} added — look for it on the timeline below.`,
+    suppressible: true,
+    timeoutMs: 5_000,
+  });
+}

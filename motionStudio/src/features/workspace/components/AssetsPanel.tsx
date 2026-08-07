@@ -8,6 +8,7 @@ import { useEditorStore } from '@/engines/editor';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/apiClient';
 import { useFeedbackStore } from '@/lib/feedbackStore';
+import { notifyAdded } from '@/lib/noticeStore';
 import type { StockResult, StockType } from '@/lib/apiClient';
 import type { Asset, AssetType } from '@/engines/asset';
 
@@ -370,7 +371,12 @@ export default function AssetsPanel() {
       asset.type === 'video' ? addVideo(asset.id) :
       asset.type === 'audio' ? addAudio(asset.id) :
       null;
-    if (el) setSelectedElement(el.id);
+    if (el) {
+      setSelectedElement(el.id);
+      // A song especially: it has no picture, so without this the only sign
+      // it worked is a thin bar on the timeline — easy to miss entirely.
+      notifyAdded(asset.type === 'audio' ? 'Song' : asset.type === 'video' ? 'Video' : 'Photo');
+    }
   }
 
   const q = search.trim().toLowerCase();
