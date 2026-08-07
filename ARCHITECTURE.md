@@ -37,6 +37,7 @@ Vercel Functions (render/quota/upload/contact API), Supabase (auth + project syn
 | **Remocn** | 57 copy-paste Remotion components (text effects, shaders, UI blocks) — animation polish bought, not built, and owned as source in the repo. |
 | **PostHog** | Product analytics *and* exception capture. A dedicated error vendor (Sentry) would buy a nicer stack-trace UI for a second script on every page load; `__APP_VERSION__` already carries the Vercel commit SHA, so the "release = git SHA" half was free. |
 | **Resend** | Transactional email for the contact form — a single `emails.send()` call instead of managing SMTP or a mail server. |
+| **driver.js** | Both onboarding surfaces. Its `hints` entry point does the awkward parts of a helper-dot mode properly — beacons repositioned from a **capture-phase** scroll listener, so a dot inside a scrolling panel tracks that panel and not just the window — and it ships as a second lazy chunk, so the editor pays nothing when the mode is off. |
 
 ---
 
@@ -523,6 +524,54 @@ Three decisions worth keeping:
 When localStorage is unusable (private mode, quota) `isLockable()` returns
 false and the editor opens unguarded. Refusing to open at all would be a worse
 failure than the one being prevented.
+
+### Onboarding: two surfaces, one registry
+
+The editor used to explain itself with a 21-step first-run tour. The information
+was right; the *timing* was the bug. Everything the app knew was delivered as a
+compulsory wall before the user had touched anything, and a wall of correct prose
+is a wall nobody finishes. It split into two:
+
+- **A six-step quick start** (`tour/quickStart.ts`) that waits for the user to do
+  each thing and advances off live store state.
+- **Helper dots** (`tour/helperMode.ts`) — a beacon beside each of the 21
+  explainable controls, on demand, blocking nothing.
+
+Both read their words from **one registry**, `content/help.ts`, keyed by the
+`data-tour` attributes already on the components. Two descriptions of one feature
+is two things to keep true and one of them always rots — the same reasoning as
+the living-docs rule. `Record<HelpId, HelpEntry>` makes a forgotten entry a
+compile error rather than a blank popover.
+
+The decisions worth recording:
+
+- **The completion predicates are pure functions over plain data** — no store, no
+  DOM, no React. The expensive failure here is a step that never completes,
+  leaving the user staring at an instruction they have already followed, so all
+  six are driven headlessly by `tests/quickStart.test.mjs` against fixtures.
+  The store subscription that feeds them lives in the React layer.
+- **They compare against a snapshot taken when the step opened**, not against
+  absolute state. "A text element exists" is already true when a returning user
+  replays on a finished project, and the whole thing would flash past untouched.
+- **A test enforces the shape of the copy** (`tests/help.test.mjs`): 5-word
+  titles, single-sentence bodies, ≤2 chips of ≤4 words. It cannot tell you the
+  words are good, but it refuses the shape that made the last version unreadable
+  — and the old version got that way one reasonable sentence at a time.
+- **An interactive step must be anchored to a container holding what the user has
+  to click.** driver.js makes everything outside the highlight
+  `pointer-events: none`; `effects-section` is a header `<div>` whose *sibling*
+  holds the picker, so spotlighting it would have stranded the step forever.
+  Hence `QuickStep.anchor`, which decouples where a step points from whose words
+  it borrows.
+- **Beacon placement is derived, not stored.** Dots default to their anchor's top
+  edge, which puts the toolbar's at `y = -3`. `side: 'bottom'` on the popover
+  already means "no room above this element", so it is exactly the set needing
+  the beacon underneath — one rule with no exceptions beats a second placement
+  field on 21 entries.
+- **Anchors are re-resolved from React state, not a `MutationObserver`.** Half
+  the dots are conditional (Sound needs a music clip selected, the transition
+  picker needs a second shot), so `useHelperDots` re-runs on the handful of
+  values that *cause* those panels to mount.
 
 ---
 

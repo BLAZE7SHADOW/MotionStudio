@@ -5,6 +5,155 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-07] — Onboarding split in two: a quick start you do, and dots you ask
+
+The editor explained itself with a 21-step first-run tour. The information in it
+was correct and the writing was fine; the **timing** was the bug. Everything the
+app knew was delivered as a compulsory wall before the user had touched
+anything, and a wall of correct prose is a wall nobody finishes. It also meant
+the app had exactly one moment to teach you anything, and it spent that moment
+on a monologue.
+
+Split into two surfaces with one source of copy:
+
+- a **six-step quick start** that waits for the user to actually do each thing
+- **helper dots** — a beacon beside each of the 21 explainable controls, on
+  demand, blocking nothing
+
+**`driver.js@1.8` was already a dependency and already ships the second half.**
+`driver.js/hints` and `driver.js/dist/hints.css` are separate entry points
+providing pulsing beacons, `overlay: false`, per-hint dismiss/restore,
+auto-hide while a tour runs, and `prefers-reduced-motion` support — including
+the part that is easy to get wrong, repositioning from a **capture-phase**
+scroll listener so a dot inside a scrolling panel tracks that panel and not
+just the window. Writing that again to avoid a dependency already installed
+would have been work spent reaching parity. No new dependency, and no changes
+to the 19 components that already carry `data-tour` anchors.
+
+### Added
+
+- **`src/content/help.ts`** — one registry, keyed by the `data-tour` attributes
+  already in the DOM, holding all 21 explanations as
+  `{ emoji, title, line, chips?, more?, side, align }`. Both surfaces read it,
+  so a control cannot be described two different ways. `Record<HelpId, HelpEntry>`
+  makes a forgotten entry a compile error rather than a blank popover.
+- **`tour/quickStart.ts`** — the six steps and their completion predicates.
+  Steps: add text → move it → give it an effect → press play → add a shot →
+  where it exports. Each leaves the app in the state the next one needs.
+- **`tour/popoverCard.ts`** — pure `renderCard(entry, opts) => string`. driver.js
+  writes `title` and `description` with `innerHTML`, which is what lets a step be
+  a laid-out card (emoji headline · one sentence · chip row · live "your turn"
+  line) rather than a paragraph in a box. All copy is our own static strings; no
+  user input reaches it, noted at the top of the file since it writes `innerHTML`.
+- **`tour/helperMode.ts`** + **`lib/helperMode.ts`** — the dots and their switch,
+  split the way `noticeStore.ts` is split from `notices.ts`: one loads a library
+  and touches the DOM, the other is a boolean and a storage key, and the toolbar
+  button only needs the boolean. Default **on**; only `off` is written to
+  `ms_helper_mode`, so a cleared profile gets the helpful default.
+- **`hooks/useHelperDots.ts`** — re-resolves anchors when the state that *causes*
+  conditional panels to mount changes, rather than watching the document with a
+  `MutationObserver`.
+- **`components/HelperToggle.tsx`** — the 💡 in the toolbar, mirrored in the ?
+  menu. A mode whose state you cannot see is a mode you will wonder about.
+- **`tests/help.test.mjs`** (11 checks) — enforces the *shape of the writing*:
+  5-word titles, single-sentence 15-word bodies, ≤2 chips of ≤4 words, ≤60-word
+  long answers, valid placement, and that the deep panels carry a long answer. It
+  cannot tell you the words are good; it refuses the shape that made the last
+  version unreadable. It caught one straight away — `stock-tab` had two
+  sentences.
+- **`tests/quickStart.test.mjs`** (29 checks) — all six predicates against
+  fixtures, including the replay guards and a project that hasn't loaded yet.
+- Analytics: `quick_start_step_done`, `quick_start_finished`,
+  `quick_start_abandoned`, `helper_mode_toggled`, `helper_hint_opened`. Because
+  steps advance on what the user *does*, `step_done` is the only honest measure
+  of whether a step teaches anything.
+
+### Changed
+
+- **`tour/useEditorTour.ts` rewritten.** Each step captures a snapshot, subscribes
+  to the editor and project stores, and advances itself when its predicate fires
+  — showing a ✅ reward line for 900 ms first. driver.css already sets
+  `pointer-events: auto` on `.driver-active-element` and its children, so the
+  real control works through the overlay with nothing special from us; that one
+  detail is what makes a hands-on walkthrough possible at all.
+- **`tour/editorTour.ts` deleted** — its copy moved to `content/help.ts` (as the
+  `more` field, compressed), its anchor logic to `tour/anchors.ts`. Nothing was
+  thrown away; it stopped being compulsory.
+- `tests/run.mjs` now passes `--tsconfig`, which is what teaches esbuild the
+  `@/*` alias. Subjects used to be leaf modules with only relative imports;
+  `quickStart.ts` reaches for `@/engines/project/scenes`.
+- Toolbar: `data-tour="insert"` moved from the group `<span>` onto the **T**
+  button (see below).
+- `?` menu: "Replay tour" → "Quick start", plus a Helper dots row showing state.
+
+### Decisions worth keeping
+
+- **The predicates are pure functions over plain data** — no store, no DOM, no
+  React. The expensive failure is a step that never completes, leaving the user
+  staring at an instruction they have already followed, so all six are driven
+  headlessly against fixtures. The store subscription lives in the React layer.
+- **They compare against a snapshot taken when the step opened.** "A text element
+  exists" is already true when someone replays on a finished project, and the
+  whole thing would flash past without them touching anything.
+- **Step 2 accepts a move, a resize *or* a rotate.** Insisting on a drag of the
+  middle would strand anyone who reached for a corner first. A newly added
+  element deliberately does not count — it has no baseline to differ from.
+- **No Back button.** Stepping back into a completed step would re-arm its
+  predicate against the state it was just left in, so it could never fire again.
+  Six steps forward, or close it — and every waiting step shows **Skip**.
+
+### Fixed (found while verifying in the browser)
+
+- **The last step's button said "Next" instead of "Got it".** A per-step
+  `nextBtnText` beats the config's `doneBtnText` in driver.js, so setting one on
+  every step left the walkthrough ending on "Next". Now spread conditionally.
+- **Two helper dots landed on the same pixel.** `data-tour="insert"` wrapped the
+  whole insert group, whose right edge is the blocks button's right edge, so its
+  beacon sat exactly on top of the blocks beacon and hid it. Moved to the **T**
+  button — which is also what its copy is about ("click T, then start typing"),
+  so pointing at the group was the less honest of the two anyway.
+- **Toolbar beacons rendered at `y = -3`**, half off the top of the window.
+  Beacons default to their anchor's top edge; `side: 'bottom'` on the popover
+  already means "there is no room above this element", so it is exactly the set
+  that needs its beacon underneath. Derived rather than stored — a second
+  placement field on 21 entries is 21 chances to get one wrong, for a rule with
+  no exceptions.
+- **The Effects step could never have completed.** driver.js makes everything
+  outside the highlight `pointer-events: none`, and
+  `<Section title="Effects" tourId="effects-section" />` is a header `<div>`
+  whose *sibling* holds the picker — spotlighting it would have left the picker
+  dead with no way to finish the step. Caught by reading the JSX before writing
+  the driver, and fixed with `QuickStep.anchor`, which decouples where a step
+  points from whose words it borrows.
+
+### Verified
+
+Full pipeline green: typecheck · lint · **229 test checks** · build · api
+typecheck. `driver.js` (25.4 kB) and `hints` (15.4 kB + 3.7 kB CSS) build as
+their own chunks with zero driver code in the main bundle, and the hints chunk
+is not even fetched when the mode is off.
+
+In the browser, on a fresh project: all six steps advanced on the real action
+and none on a dead Next; the ✅ row was caught mid-flight
+(`data-state="done"`); a reload mid-walkthrough restarted cleanly with no zombie
+driver; step 1 correctly still waited on a replay where a text element already
+existed. Dots: 16 on an empty selection (21 entries minus 5 unmounted panels),
+none clipped, none colliding; clicking one opened a card **and a click on Shot 2
+went straight through it**; the dot count moved 16 → 17 → 18 on its own as the
+transition picker and then Effects/Motion mounted; the toggle survived a reload
+both ways; and beacons were hidden (0 visible) for the duration of the
+walkthrough.
+
+### Note on `releases.ts`
+
+Today's user-facing entry already existed for the media fix, so per the
+living-docs rule ("add to the newest entry if it's the same day") this went into
+`2026-08-07` rather than taking a new id — the id is the have-they-seen-it
+marker and must only move forward. Its title changed to cover the larger story.
+Anyone who already opened today's release will not be shown it again.
+
+---
+
 ## [2026-08-07] — Media came back from every reload as "Re-upload needed"
 
 Reported through the in-app feedback form: `water2-1017.mp3` showing

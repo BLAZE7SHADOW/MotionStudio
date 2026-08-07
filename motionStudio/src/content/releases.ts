@@ -33,8 +33,16 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     id: '2026-08-07',
-    title: 'Your music comes back when you reload',
+    title: 'The app shows you around now',
     changes: [
+      {
+        kind: 'new',
+        text: 'The walkthrough is something you do now, not something you read. Six short steps, and each one waits for you to actually try it — put words on screen, drag them, give them an effect, press play, add a second shot. Ninety seconds in you have a video that plays back. Skip any step you already know.',
+      },
+      {
+        kind: 'new',
+        text: 'Everything else the app can tell you is now one click away, whenever you want it. A small dot sits beside anything with something to say — 21 of them, across the toolbar, both side panels, the canvas and the timeline. Click one for a short answer and a longer one underneath.\n\nThey never block anything: nothing goes grey, and whatever is under the card still works while it is open. New dots appear as you go — pick a music clip and one shows up on Sound. Turn them off with the 💡 in the toolbar and they stay off.',
+      },
       {
         kind: 'fixed',
         text: 'Reopening a project could show your photos, video and music as “Re-upload needed”, as though they had been lost. Nothing ever was — the files were safe the whole time, and the app was throwing away the link to them a second after finding it. Reloading now brings your media straight back.',

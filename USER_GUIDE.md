@@ -35,36 +35,42 @@ editor later on a bigger screen.
 
 That's the whole loop: **add → arrange → animate → preview → export.**
 
-**A 21-step walkthrough runs the first time you open the editor**, in plain
-language, covering the whole loop rather than just the toolbar:
+### The quick start
 
-- **Putting things in** — the **T / animated background / blocks** buttons, and
-  the **project settings** readout (which is a button that reshapes the project)
-- **Your media** — **Add media**, drag-and-drop, ⌘V paste, free **Stock** search,
-  turning a photo into a backdrop with **Make Background**, and how **music**
-  works (no picture, a bar on the timeline, volume on the right)
-- **The canvas** — drag, resize, rotate, double-click-to-edit, why motion freezes
-  while something is selected, and ⌘Z
-- **Properties** — the ◆ animated marker, sections that open and close, that
-  **every number box drags like a slider**, the 34 **text effects**, and
-  **Motion** (presets vs. the dials)
-- **Shots** — adding, renaming, drilling in, transitions, and cutting to the beat
-- **Timing** — what a clip's position and width mean, moving vs. trimming,
-  scrubbing, dragging animation bars, and the pin that makes something play
-  across the **whole video** instead of one shot
-- **Finishing** — Preview, browser vs. cloud export, and the help menu
+**Six short steps run the first time you open the editor**, and each one waits
+for you to actually do the thing before moving on — there is no reading ahead:
 
-Every step is anchored to something on screen. Where a panel only exists in
-context — the **Sound** section needs a music clip selected, **Effects** needs a
-text element — the step falls back to the panel that feature lives in, so a
-brand-new user on an empty canvas still gets the explanation. Two steps have no
-fallback because there is genuinely nothing to point at yet: the **transition
-picker** appears only inside a shot that has something before it. So **replaying
-the tour with some text selected and a second shot added shows a little more, and
-lands each step on the exact control** rather than the panel. Worth doing once
-you have something on the canvas. Replay it any time from the **?** menu in the
-toolbar → **Replay tour**; that also brings back any hint you dismissed with
-"don't show again".
+1. ✨ **Put words on screen** — click **T**
+2. 🖐️ **Your actual video** — drag it somewhere else
+3. 🎬 **34 ways text moves** — pick an effect for it
+4. ▶️ **Watch the real thing** — press play
+5. 🎞️ **Build it shot by shot** — add a second shot
+6. 🎁 **Turn it into a file** — where your video leaves
+
+Ninety seconds later you have a title that animates, over two shots, and plays
+back. Any step can be passed with **Skip**, and the ✕ closes the whole thing.
+
+Replay it any time from the **?** menu in the toolbar → **Quick start**; that
+also brings back any hint you dismissed with "don't show again".
+
+### Helper dots
+
+Everything the quick start *doesn't* cover is one click away instead. A small
+purple dot sits beside every control that has something to say — 21 of them,
+across the toolbar, both side panels, the canvas and the timeline. Click one and
+you get a card: what it is, the one thing worth knowing, and a longer answer
+underneath.
+
+**They never block anything.** There is no dimming, nothing goes grey, and the
+control under the card still works while it's open — the dots complement what
+you're doing rather than interrupting it.
+
+Dots come and go with the app. Select a music clip and a dot appears on
+**Sound**; select text and dots appear on **Effects** and **Motion**; open a
+second shot and one appears on the transition picker.
+
+They are **on to begin with**. Turn them off with the 💡 in the toolbar, or under
+**?** → **Helper dots**, and they stay off until you ask for them back.
 
 **Hints.** When something changes on its own — a tempo detected, another tab
 taking over the project — MotionStudio says so in the top-right corner rather
@@ -653,6 +659,9 @@ the problem already described, so you only add what happened from your side.
 - **What's new** — a short list of what changed recently, in plain terms. It
   opens by itself once per release, and a dot sits on the **?** button until
   you've read it. Brand-new accounts never see it: a changelog needs a "before".
+- **Quick start** and **Helper dots** — the two ways the app explains itself, both
+  covered in §1. The menu row shows whether the dots are on, so it matches the 💡
+  in the toolbar whichever one you used last.
 
 ---
 
