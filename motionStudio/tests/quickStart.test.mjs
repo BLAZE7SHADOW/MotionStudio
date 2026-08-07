@@ -28,16 +28,16 @@ const world = (elements = [], scenes = [{ id: 's1', durationInFrames: 300 }], ed
 });
 
 const empty = world();
-const step = (i) => Q.QUICK_STEPS[i];
+const step = (i) => Q.FIRST_VIDEO_FLOW.steps[i];
 const done = (i, now, atStart) => step(i).isDone(now, atStart);
 
 /* ── shape ─────────────────────────────────────────────────────────────── */
 
-check('there are six steps', Q.QUICK_STEPS.length === 6);
-check('the first five wait for an action', Q.QUICK_STEPS.slice(0, 5).every((s) => typeof s.isDone === 'function'));
+check('there are six steps', Q.FIRST_VIDEO_FLOW.steps.length === 6);
+check('the first five wait for an action', Q.FIRST_VIDEO_FLOW.steps.slice(0, 5).every((s) => typeof s.isDone === 'function'));
 check('the last step has nothing to wait for', step(5).isDone === undefined);
-check('every step has a prompt', Q.QUICK_STEPS.every((s) => s.prompt.length > 0));
-check('every waiting step has a reward line', Q.QUICK_STEPS.slice(0, 5).every((s) => s.done.length > 0));
+check('every step has a prompt', Q.FIRST_VIDEO_FLOW.steps.every((s) => s.prompt.length > 0));
+check('every waiting step has a reward line', Q.FIRST_VIDEO_FLOW.steps.slice(0, 5).every((s) => s.done.length > 0));
 
 /* Step 3 must not be anchored on its own copy's id: `effects-section` is a
    header div whose sibling holds the picker, and driver.js makes everything
@@ -97,11 +97,11 @@ check('5 — a refused add does not fire', !done(4, twoShots, twoShots));
 // The editor renders before the project arrives from IndexedDB, and the
 // walkthrough can start in that window. None of these may throw.
 const none = { project: undefined, editor: { selectedElementId: null, isPlaying: false } };
-const survives = Q.QUICK_STEPS.slice(0, 5).every((s) => {
+const survives = Q.FIRST_VIDEO_FLOW.steps.slice(0, 5).every((s) => {
   try { s.isDone(none, none); return true; } catch { return false; }
 });
 check('every predicate survives a project that has not loaded', survives);
-check('nothing completes without a project', Q.QUICK_STEPS.slice(0, 5).every((s) => !s.isDone(none, none)));
+check('nothing completes without a project', Q.FIRST_VIDEO_FLOW.steps.slice(0, 5).every((s) => !s.isDone(none, none)));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

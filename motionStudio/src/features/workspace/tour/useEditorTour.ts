@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
 import type { Driver, DriveStep, PopoverDOM } from 'driver.js';
 import { HELP } from '@/content/help';
-import { QUICK_STEPS, type QuickStep, type World } from './quickStart';
+import { FIRST_VIDEO_FLOW } from './quickStart';
+import type { FlowStep, World } from './flow';
 import { anchorFor } from './anchors';
 import { renderCard, renderTitle } from './popoverCard';
 import { useEditorStore } from '@/engines/editor';
 import { useProjectStore } from '@/engines/project';
-import { pauseHelperDots, resumeHelperDots } from './helperMode';
+import { useTourActive } from './tourActive';
 import { track } from '@/lib/analytics';
 
 /**
@@ -50,7 +51,7 @@ function world(): World {
   };
 }
 
-function toDriveStep(step: QuickStep, element: string): DriveStep {
+function toDriveStep(step: FlowStep, element: string): DriveStep {
   const entry = HELP[step.id];
   return {
     element,
@@ -78,7 +79,7 @@ function toDriveStep(step: QuickStep, element: string): DriveStep {
 }
 
 /** Swap the waiting row for the reward, and stop the button saying "Skip". */
-function celebrate(driverObj: Driver, step: QuickStep): void {
+function celebrate(driverObj: Driver, step: FlowStep): void {
   const popover = driverObj.getState('popover') as PopoverDOM | undefined;
   if (!popover) return;
   popover.description.innerHTML = renderCard(HELP[step.id], {
@@ -94,7 +95,7 @@ function celebrate(driverObj: Driver, step: QuickStep): void {
  * Watch the stores until this step's action happens. Returns its own teardown,
  * or null for a step with nothing to wait for.
  */
-function watchStep(driverObj: Driver, step: QuickStep, index: number): (() => void) | null {
+function watchStep(driverObj: Driver, step: FlowStep, index: number): (() => void) | null {
   if (!step.isDone) return null;
 
   const atStart = world();
@@ -134,12 +135,12 @@ export async function startEditorTour(replay = false): Promise<void> {
     ]);
 
     /* Resolved against the live DOM, so a step whose anchor isn't rendered is
-       dropped rather than pointed at nothing. Keeping the QuickStep alongside
+       dropped rather than pointed at nothing. Keeping the FlowStep alongside
        its DriveStep is what lets the hooks below look up a step by index. */
-    const live = QUICK_STEPS.map((step) => ({
+    const live = FIRST_VIDEO_FLOW.steps.map((step) => ({
       step,
       element: anchorFor(step.anchor ?? step.id),
-    })).filter((s): s is { step: QuickStep; element: string } => s.element !== null);
+    })).filter((s): s is { step: FlowStep; element: string } => s.element !== null);
 
     if (live.length === 0) {
       running = false;
@@ -147,7 +148,10 @@ export async function startEditorTour(replay = false): Promise<void> {
     }
 
     track.editorTourStarted({ replay });
-    pauseHelperDots();
+    // Stand the hover layer down while the tour has the screen — driver.js is
+    // already spotlighting one control, and a hover-flash on whatever the
+    // cursor happens to be resting on would compete with that.
+    useTourActive.getState().setActive(true);
 
     let stopWatching: (() => void) | null = null;
     const clear = () => {
@@ -173,7 +177,7 @@ export async function startEditorTour(replay = false): Promise<void> {
 
       onDestroyed: (_el, _driveStep, opts) => {
         clear();
-        resumeHelperDots();
+        useTourActive.getState().setActive(false);
         running = false;
         localStorage.setItem(TOUR_SEEN_KEY, '1');
 

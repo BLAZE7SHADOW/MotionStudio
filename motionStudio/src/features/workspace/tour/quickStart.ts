@@ -1,6 +1,6 @@
-import type { CanvasElement, Project, TextElement } from '@/engines/project/types';
+import type { CanvasElement, TextElement } from '@/engines/project/types';
 import { scenesOf } from '@/engines/project/scenes';
-import type { HelpId } from '@/content/help';
+import type { Flow, FlowStep, World } from './flow';
 
 /**
  * The first-run walkthrough: six things you *do*, not twenty-one you read.
@@ -12,55 +12,14 @@ import type { HelpId } from '@/content/help';
  * over a second shot and plays back — which is the thing that makes someone
  * want a video editor, and which the old tour never once let you feel.
  *
- * Everything the old tour said still exists; it moved to the helper dots
- * (`helperMode.ts`), where it is available on demand instead of up front.
+ * Everything the old tour said still exists; it moved to the hover cards
+ * (`hooks/useHelperLayer.ts`), where it is available on demand instead of up
+ * front.
  *
- * ## Why `isDone` is a pure function
- *
- * These predicates are the only part of the walkthrough with real logic, and
- * the expensive way to get them wrong is a step that never completes — the user
- * is then stuck staring at an instruction they have already followed. So they
- * take **plain data and return a boolean**: no store, no DOM, no React. The
- * subscription that feeds them live state lives in `useEditorTour.ts`, and
- * `tests/quickStart.test.mjs` drives all six against fixtures in milliseconds.
- *
- * ## Why they compare against `atStart`
- *
- * "A text element exists" is wrong on a replay — someone with a finished
- * project would have step 1 complete instantly and the walkthrough would flash
- * past without them touching anything. Every predicate therefore asks whether
- * something changed **since this step opened**, so a replay is as hands-on as
- * a first run.
+ * The mechanics — why `isDone` is pure, why it compares against `atStart` —
+ * are documented on `FlowStep` in `flow.ts`, the primitive this is an
+ * instance of.
  */
-
-/** Everything the predicates are allowed to see. Plain data, deliberately. */
-export interface World {
-  project: Project | undefined;
-  editor: { selectedElementId: string | null; isPlaying: boolean };
-}
-
-export interface QuickStep {
-  /** Which `HELP` entry supplies the card's words. */
-  id: HelpId;
-  /**
-   * Where to point, when that isn't the same place as the words.
-   *
-   * driver.js makes everything outside the highlighted element
-   * `pointer-events: none`, so an interactive step must be anchored to a
-   * container holding whatever the user has to click. `effects-section` is a
-   * header `<div>` with the effect picker as its *sibling* — spotlight it and
-   * the picker goes dead, and the step can never complete. Anchoring on the
-   * whole Properties panel keeps the copy about Effects and the clicking
-   * possible. Defaults to `id`.
-   */
-  anchor?: HelpId;
-  /** What to go and do, shown beside a hollow circle. */
-  prompt: string;
-  /** The reward, shown for a beat after they do it. */
-  done: string;
-  /** Absent on the last step, which is read-only and ends the walkthrough. */
-  isDone?: (now: World, atStart: World) => boolean;
-}
 
 const elementsOf = (w: World): CanvasElement[] => w.project?.canvas.elements ?? [];
 
@@ -74,7 +33,7 @@ const box = (el: CanvasElement) =>
 /** `scenesOf` wants a real project; a World may not have one yet. */
 const shotCount = (w: World) => (w.project ? scenesOf(w.project).length : 0);
 
-export const QUICK_STEPS: QuickStep[] = [
+const STEPS: FlowStep[] = [
   {
     id: 'insert',
     prompt: 'Your turn — click T',
@@ -137,3 +96,5 @@ export const QUICK_STEPS: QuickStep[] = [
     done: '',
   },
 ];
+
+export const FIRST_VIDEO_FLOW: Flow = { id: 'first-video', steps: STEPS };
