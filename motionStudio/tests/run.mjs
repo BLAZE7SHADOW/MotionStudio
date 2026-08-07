@@ -31,6 +31,7 @@ const TARGETS = [
   { test: 'migrations.test.mjs', src: 'src/engines/project/migrations.ts', bundle: 'migrations.bundle.js' },
   { test: 'forStorage.test.mjs', src: 'src/engines/project/forStorage.ts', bundle: 'forStorage.bundle.js' },
   { test: 'help.test.mjs', src: 'src/content/help.ts', bundle: 'help.bundle.js' },
+  { test: 'quickStart.test.mjs', src: 'src/features/workspace/tour/quickStart.ts', bundle: 'quickStart.bundle.js' },
 ];
 
 const work = mkdtempSync(join(tmpdir(), 'ms-tests-'));
@@ -41,7 +42,12 @@ try {
     console.log(`\n\x1b[1m${test}\x1b[0m`);
     execFileSync(
       'npx',
+      /* `--tsconfig` is what teaches esbuild the `@/*` path alias. Subjects
+         used to be leaf modules with only relative imports; `quickStart.ts`
+         reaches for `@/engines/project/scenes`, and without this the bundle
+         fails to resolve rather than failing a check. */
       ['esbuild', join(here, '..', src), '--bundle', '--format=esm',
+       `--tsconfig=${join(here, '..', 'tsconfig.app.json')}`,
        `--outfile=${join(work, bundle)}`, '--log-level=error'],
       { stdio: 'inherit' },
     );
