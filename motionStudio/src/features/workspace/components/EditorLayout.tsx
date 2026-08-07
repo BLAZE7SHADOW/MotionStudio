@@ -6,7 +6,8 @@ import PropertiesPanel from './PropertiesPanel';
 import TimelinePanel from './TimelinePanel';
 import { useUndoRedoShortcuts } from '../hooks/useUndoRedoShortcuts';
 import { useEditorTour } from '../tour/useEditorTour';
-import { useHelperDots } from '../hooks/useHelperDots';
+import { useHelperLayer } from '../hooks/useHelperLayer';
+import HelperCard from '../tour/HelperCard';
 import { useProjectLock } from '../hooks/useProjectLock';
 import ProjectLockGate from './ProjectLockGate';
 
@@ -19,8 +20,9 @@ export default function EditorLayout({ project }: EditorLayoutProps) {
   useUndoRedoShortcuts();
   // first-run walkthrough; no-ops once the user has seen or dismissed it
   useEditorTour(true);
-  // the on-demand explanations that sit beside every control, unless turned off
-  useHelperDots();
+  // the on-demand explanation that appears while hovering an explainable
+  // control, unless turned off — see hooks/useHelperLayer.ts
+  const helper = useHelperLayer();
   // one editor per project across tabs — see lib/projectLock.ts
   const lock = useProjectLock(project.id);
 
@@ -55,6 +57,15 @@ export default function EditorLayout({ project }: EditorLayoutProps) {
         onTakeOver={lock.takeOver}
         onOpenReadOnly={lock.openReadOnly}
       />
+
+      {helper.open && (
+        <HelperCard
+          target={helper.open.target}
+          entry={helper.open.entry}
+          onMouseEnter={helper.onCardMouseEnter}
+          onMouseLeave={helper.onCardMouseLeave}
+        />
+      )}
     </div>
   );
 }
