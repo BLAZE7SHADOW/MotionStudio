@@ -27,8 +27,6 @@ export interface CardOptions {
   /** The reward line, swapped in once they've done it. */
   done?: string;
   state?: TryState;
-  /** Include the long-form answer. Helper dots do; the quick start doesn't. */
-  includeMore?: boolean;
 }
 
 /** Emoji plus headline. Goes in driver's title slot. */
@@ -48,10 +46,6 @@ export function renderCard(entry: HelpEntry, opts: CardOptions = {}): string {
       )
       .join('');
     parts.push(`<div class="ms-card-chips">${chips}</div>`);
-  }
-
-  if (opts.includeMore && entry.more) {
-    parts.push(`<p class="ms-card-more">${entry.more}</p>`);
   }
 
   if (opts.prompt) {

@@ -5,7 +5,7 @@ import { useHelperMode } from '@/lib/helperMode';
 import { track } from '@/lib/analytics';
 
 /**
- * The switch for hover-to-learn.
+ * The switch for helper mode.
  *
  * It earns a permanent toolbar slot — rather than living only in the ? menu —
  * because it is a *mode*, and a mode you cannot see the state of is a mode you
@@ -18,7 +18,7 @@ export default function HelperToggle() {
   const setOn = useHelperMode((s) => s.setOn);
 
   return (
-    <TooltipHint label={on ? 'Turn off hover-to-learn' : 'Turn on hover-to-learn'}>
+    <TooltipHint label={on ? 'Turn off helper mode' : 'Turn on helper mode'}>
       <Button
         variant="ghost"
         size="icon"

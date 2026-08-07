@@ -1,17 +1,19 @@
 import { create } from 'zustand';
 
 /**
- * Whether the helper dots are switched on.
+ * Whether helper mode is switched on.
  *
- * Split from the driver.js lifecycle in `features/workspace/tour/helperMode.ts`
- * for the same reason `notices.ts` is split from `noticeStore.ts`: this is a
- * boolean and a storage key, the other one loads a library and touches the DOM,
- * and the toolbar button only needs the boolean.
+ * Split from the hover-and-render lifecycle in `hooks/useHelperLayer.ts` /
+ * `tour/HelperCard.tsx` for the same reason `notices.ts` is split from
+ * `noticeStore.ts`: this is a boolean and a storage key, the other two touch
+ * the DOM and render, and the toolbar button only needs the boolean.
  *
- * **Default on.** The dots never block a click and never cover a control, so
- * leaving them on costs a first-time user nothing — and a mode nobody discovers
- * is a mode that doesn't exist. Only "off" is written to storage: absence means
- * on, so a cleared profile gets the helpful default rather than the quiet one.
+ * **Default on.** Helper mode never blocks a click and never covers a control
+ * — a card only ever appears while the cursor rests on the one thing it
+ * describes — so leaving it on costs a first-time user nothing, and a mode
+ * nobody discovers is a mode that doesn't exist. Only "off" is written to
+ * storage: absence means on, so a cleared profile gets the helpful default
+ * rather than the quiet one.
  */
 
 const KEY = 'ms_helper_mode';

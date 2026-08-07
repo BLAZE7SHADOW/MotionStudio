@@ -4,7 +4,7 @@ import type { HelpId } from '@/content/help';
  * Turning a `HelpId` into a selector that is actually on screen right now.
  *
  * Pointing driver.js at a missing element gives a popover floating over
- * nothing, so both the quick start and the helper dots resolve against the live
+ * nothing, so both the quick start and helper mode resolve against the live
  * DOM rather than trusting that a panel exists. Half the ids here belong to
  * sections that only render while something is selected — Sound needs a music
  * clip, Effects needs text — so "not mounted" is the normal case, not an error.
