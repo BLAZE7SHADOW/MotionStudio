@@ -45,6 +45,11 @@ jobs:
       - name: Test
         run: npm test
 
+      # build now prerenders / and /contact via Playwright (scripts/prerender.mjs);
+      # the browser binary isn't part of npm ci, it needs its own install step.
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       # Catches what the other three cannot: a Vite/Rolldown resolution failure,
       # or a lazy import path that only breaks when chunks are actually emitted.
       - name: Build
