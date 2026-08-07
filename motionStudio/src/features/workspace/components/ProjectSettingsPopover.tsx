@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Settings2 } from 'lucide-react';
 import {
   Popover,
@@ -37,23 +36,27 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
   const setProjectDuration = useProjectStore((s) => s.setProjectDuration);
   const setProjectFps = useProjectStore((s) => s.setProjectFps);
 
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>(project.aspectRatio);
-  const [fps, setFps] = useState(project.fps);
-  const [seconds, setSeconds] = useState(Math.round(project.durationInFrames / project.fps));
-
-  useEffect(() => {
-    setAspectRatio(project.aspectRatio);
-    setFps(project.fps);
-    setSeconds(Math.round(project.durationInFrames / project.fps));
-  }, [project.id, project.aspectRatio, project.fps, project.durationInFrames]);
+  /* Read straight off the project rather than mirrored into state.
+     There were three `useState`s seeded from the project and an effect copying
+     the project back over them on every change — a copy that can only ever be
+     right by being immediately corrected, at the cost of a second render every
+     time. It could also disagree with the truth: the store is free to decline a
+     write (`setProjectDuration` bails when `setTotalDuration` returns the
+     project unchanged), and the mirrored value had already moved, so the control
+     would sit showing a setting the project never took. The store is
+     synchronous and this component re-renders on the new `project` prop, so the
+     controls stay just as responsive — and the trigger button below already read
+     `project.*` directly, which is what proves the prop was the real source all
+     along. */
+  const aspectRatio = project.aspectRatio;
+  const fps = project.fps;
+  const seconds = Math.round(project.durationInFrames / project.fps);
 
   function handleAspectRatioChange(value: AspectRatio) {
-    setAspectRatio(value);
     updateProject(project.id, { aspectRatio: value });
   }
 
   function handleFpsChange(value: number) {
-    setFps(value);
     // Rescales shots AND element timings, so everything keeps the length in
     // seconds the user gave it. Changing fps used to move only the project
     // total, which silently halved or doubled how long every clip ran for.
@@ -61,7 +64,6 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
   }
 
   function handleDurationChange(secs: number) {
-    setSeconds(secs);
     // Absorbed into the last shot, keeping total === sum of shots.
     setProjectDuration(project.id, Math.round(secs * fps));
   }

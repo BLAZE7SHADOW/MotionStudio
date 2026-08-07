@@ -49,10 +49,15 @@ export default function ExportDialog({ project }: { project: Project }) {
   const [progress, setProgress] = useState<number | null>(null);
   const [browserError, setBrowserError] = useState<string | null>(null);
 
-  // cloud render state
-  const [quota, setQuota] = useState<QuotaResult | null>(null);
-  const [cloudStatus, setCloudStatus] = useState<'idle' | 'rendering' | 'done' | 'error'>('idle');
-  const [cloudProgress, setCloudProgress] = useState(0);
+  /* ── cloud render state ──
+     Signing out abandons a cloud render, and that used to be four setState
+     calls inside an effect watching `user`: a second render every time, and a
+     window in which a signed-out user could still see a finished render and its
+     download link. Signed-out *is* the idle state, so it is derived rather than
+     restored — the raw values below are only meaningful while signed in. */
+  const [fetchedQuota, setFetchedQuota] = useState<QuotaResult | null>(null);
+  const [rawCloudStatus, setCloudStatus] = useState<'idle' | 'rendering' | 'done' | 'error'>('idle');
+  const [rawCloudProgress, setCloudProgress] = useState(0);
   // What this project contains that the canvas-based browser export can't draw.
   const unsupportedSummary = (() => {
     const els = project.canvas.elements;
@@ -81,8 +86,17 @@ export default function ExportDialog({ project }: { project: Project }) {
   // instead — the user gets a video, but not the one they asked for, so say so.
   const [fellBackToCanvas, setFellBackToCanvas] = useState(false);
   const openFeedback = useFeedbackStore((s) => s.openFeedback);
-  const [cloudError, setCloudError] = useState<string | null>(null);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [rawCloudError, setCloudError] = useState<string | null>(null);
+  const [rawDownloadUrl, setDownloadUrl] = useState<string | null>(null);
+
+  /* Everything the cloud tab reads, gated on being signed in. Every existing
+     read below is unchanged — only where the value comes from moved. */
+  const signedIn = !!user;
+  const quota         = signedIn ? fetchedQuota     : null;
+  const cloudStatus   = signedIn ? rawCloudStatus   : 'idle';
+  const cloudProgress = signedIn ? rawCloudProgress : 0;
+  const cloudError    = signedIn ? rawCloudError    : null;
+  const downloadUrl   = signedIn ? rawDownloadUrl   : null;
 
   // How many assets referenced by elements still lack a cloud storage URL
   const pendingAssets = (() => {
@@ -98,21 +112,19 @@ export default function ExportDialog({ project }: { project: Project }) {
   const supported = isExportSupported();
   const exporting = progress !== null;
 
-  // fetch quota whenever auth changes
+  /* Fetch quota whenever auth changes.
+     The signed-out case is derived below rather than written here — clearing it
+     in the effect body was a synchronous setState that cost an extra render on
+     every auth change. `cancelled` matters too: without it a slow response from
+     the previous token could land after a newer one and overwrite it. */
   useEffect(() => {
-    if (!token) { setQuota(null); return; }
-    api.getQuota().then(setQuota).catch(() => setQuota(null));
+    if (!token) return;
+    let cancelled = false;
+    api.getQuota()
+      .then((q) => { if (!cancelled) setFetchedQuota(q); })
+      .catch(() => { if (!cancelled) setFetchedQuota(null); });
+    return () => { cancelled = true; };
   }, [token]);
-
-  // reset cloud state on sign-out
-  useEffect(() => {
-    if (!user) {
-      setCloudStatus('idle');
-      setCloudProgress(0);
-      setDownloadUrl(null);
-      setCloudError(null);
-    }
-  }, [user]);
 
   async function handleBrowserExport() {
     const resolution = RESOLUTIONS.find((r) => r.id === resolutionId) ?? RESOLUTIONS[0];
@@ -209,7 +221,7 @@ export default function ExportDialog({ project }: { project: Project }) {
           setCloudProgress(1);
           setCloudStatus('done');
           track.exportCloudCompleted();
-          api.getQuota().then(setQuota).catch(() => null);
+          api.getQuota().then(setFetchedQuota).catch(() => null);
           return;
         }
         setCloudProgress(status.progress);

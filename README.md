@@ -2,6 +2,8 @@
 
 **A browser-based motion graphics editor built on [Remotion](https://remotion.dev)** — compose text, image, video, audio, and shader backgrounds on a frame-accurate timeline, animate with keyframes and 34 text effects, and export to MP4 in the browser or on the cloud.
 
+[![CI](https://github.com/BLAZE7SHADOW/MotionStudio/actions/workflows/ci.yml/badge.svg)](https://github.com/BLAZE7SHADOW/MotionStudio/actions/workflows/ci.yml)
+
 **Live demo → [motionstudio-six.vercel.app](https://motionstudio-six.vercel.app/)**
 
 Built by [Shivam Govind Rao](https://shivamgovindrao.com/) · [get in touch](https://motionstudio-six.vercel.app/#contact)
@@ -83,7 +85,12 @@ git clone <repo-url> && cd MotionStudio/motionStudio
 npm install
 npm run dev          # http://localhost:5173
 npm test             # headless unit tests for the pure engine modules
+npm run lint         # zero problems is the gate — CI runs with --max-warnings=0
 ```
+
+CI (`.github/workflows/ci.yml`) runs typecheck, lint, tests and a production
+build on every push and PR, plus a separate typecheck for the `api/` functions,
+which are their own npm project and would otherwise never be compiled.
 
 Frontend env (`motionStudio/.env.local`):
 

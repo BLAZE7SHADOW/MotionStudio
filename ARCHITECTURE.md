@@ -641,6 +641,19 @@ every other effect in the `Effects` map already uses.
 - **Asset bytes don't follow you across devices** — project JSON syncs via Supabase,
   but media blobs live in local IndexedDB (S3 copies exist only for Lambda's use).
 - **No scene grouping yet** — sequencing is done by positioning clips on the timeline.
+- **Tests cover the engines, not the components** — the suite exercises the pure
+  modules (`scenes`, `scale`, `beatDetect`, `transitions`, `projectLock`,
+  `notices`, `migrations`), which is where the logic that is expensive to get
+  wrong lives. `PropertiesPanel` and `CanvasPanel` have no tests, and both have
+  produced real bugs: six hooks below an early return, and `Add shot` leaving
+  the playhead in the previous shot. CI's typecheck and lint catch a useful
+  slice of that class, but not behaviour.
+- **Vendored components are exempt from two lint rules.** `components/remocn`
+  and `components/ui` are copy-paste installs from registries and are replaced
+  wholesale on re-sync, so `eslint.config.js` turns off `no-empty-object-type`
+  and `react-refresh/only-export-components` for those paths rather than
+  carrying edits that the next install would silently discard. Everything the
+  project actually authors is held to zero problems.
 - **Dashboard and editor are desktop-only** — both rely on fixed multi-panel
   layouts (220px+260px side panels, 224px timeline) that assume a laptop-sized
   viewport; below `1024px` a `DesktopOnlyGate` (`components/DesktopOnlyGate.tsx`,

@@ -5,6 +5,73 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-07] — A gate, and zero lint problems to hold it at
+
+There was no CI. `npm test` (190 assertions), `npm run lint` and `tsc -b` all
+existed and nothing ran them, so the repo had drifted to **30 lint problems
+across 26 files** with nothing to stop the next one. Both bugs fixed this week
+shipped through that gap.
+
+Now **0 problems**, and a workflow that fails if that ever stops being true.
+
+### Added
+- **`.github/workflows/ci.yml`** — typecheck, lint, test and a production build
+  on every push to `main` and every PR, plus a second job typechecking `api/`,
+  which is its own npm project with its own tsconfig and would otherwise never
+  be compiled by anything. `concurrency` cancels superseded runs.
+  `--max-warnings=0` is deliberate: letting warnings accumulate is exactly how
+  this reached 30, and a warning nobody is obliged to read is a comment.
+  Verified by running all five steps locally before committing.
+- **`engines/rendering/shaders.ts`** — the preset → lazy-component map, lifted
+  out of `ShaderRenderer.tsx`. Two unrelated callers need it (the renderer and
+  the Properties preview thumbnail), and a component file that also exports a
+  registry is one Fast Refresh gives up on. The `satisfies Record<ShaderPreset,
+  …>` came with it, so adding a preset still fails to compile until it is wired
+  up. This was the last `react-refresh` error in code the project authors — the
+  fix was the structure, not a suppression.
+
+### Fixed
+- **`ProjectSettingsPopover` mirrored three props into state** and ran an effect
+  copying the project back over them on every change — a copy that can only be
+  correct by being immediately corrected, costing a render each time. It could
+  also disagree with the store, which is free to decline a write
+  (`setProjectDuration` bails when `setTotalDuration` returns the project
+  unchanged), leaving the control showing a setting the project never took. Now
+  read straight off `project`; the trigger button already did, which is what
+  proved the prop was the real source. Removes 3 `useState` and 1 `useEffect`.
+- **`ExportDialog` cleared four pieces of cloud state in an effect watching
+  `user`** — a second render on every auth change, and a window where a
+  signed-out user could still see a finished render and its download link.
+  Signed-out *is* idle, so it is now derived rather than restored. All 14
+  existing reads are untouched; only where the value comes from moved.
+- **A stale-response race in the quota fetch.** `api.getQuota().then(setQuota)`
+  had no cancellation, so a slow reply for a previous token could land after a
+  newer one and overwrite it. Now guarded by a `cancelled` flag in the effect's
+  cleanup.
+
+### Changed
+- **`eslint.config.js` exempts vendored components from two rules.**
+  `components/remocn` and `components/ui` are copy-paste installs, replaced
+  wholesale on re-sync — so a local lint fix in them is work that gets discarded
+  silently by the next install. Both rules flag deliberate registry idioms:
+  `interface XProps extends Omit<YProps, 'frame'> {}` names a derived type with
+  no members of its own, and shadcn exports `buttonVariants` beside `Button`.
+  That is 25 of the 30 problems, and none of them were defects.
+- **`no-unused-vars` now honours a leading underscore**, which is what this
+  codebase already meant by it — `deleteAssetFromStorage(_assetId, _filename)`
+  keeps parameters documenting the endpoint it will take once S3 deletion
+  exists.
+
+### Verified
+Typecheck, `eslint . --max-warnings=0`, 190 tests, production build and the
+`api` typecheck all pass locally — the exact five steps CI runs. Both refactored
+components were then driven in a browser: project settings changed fps to 60 and
+duration to 30s with the controls and the `0/1800` frame count following, the
+shader still renders from its new module and its preview thumbnail with it, and
+both export tabs open with quota reading correctly. No console errors.
+
+---
+
 ## [2026-08-06] — Add shot stranded the playhead in the previous shot
 
 Found by sweeping the deployed site end to end after the CanvasPanel work.

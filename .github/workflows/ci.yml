@@ -1,0 +1,72 @@
+name: CI
+
+# Push and PR both, so a direct push to main is checked too — most of this
+# project's history is committed straight to main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A new push supersedes the run in flight for the same branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: typecheck · lint · test · build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: motionStudio
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: motionStudio/package-lock.json
+
+      - run: npm ci
+
+      # Each step is named for what breaking it would mean, and none is allowed
+      # to fail silently — the whole point of the gate is that a red run blocks.
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      # --max-warnings=0 is deliberate. The repo reached zero problems when this
+      # workflow was added; letting warnings accumulate is how it got to 30 the
+      # first time, and a warning nobody is required to read is just a comment.
+      - name: Lint
+        run: npx eslint . --max-warnings=0
+
+      - name: Test
+        run: npm test
+
+      # Catches what the other three cannot: a Vite/Rolldown resolution failure,
+      # or a lazy import path that only breaks when chunks are actually emitted.
+      - name: Build
+        run: npm run build
+
+  api:
+    name: api typecheck
+    runs-on: ubuntu-latest
+    # The Vercel functions in `api/` are their own npm project with their own
+    # tsconfig, and nothing else in this workflow would ever compile them.
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install
+
+      - name: Typecheck
+        run: npx tsc --noEmit

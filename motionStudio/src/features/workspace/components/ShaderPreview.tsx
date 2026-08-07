@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Player } from '@remotion/player';
 import type { PlayerRef } from '@remotion/player';
 import { AbsoluteFill } from 'remotion';
-import { Shaders } from '@/engines/rendering/components/renderers/ShaderRenderer';
+import { Shaders } from '@/engines/rendering/shaders';
 import type { ShaderPreset } from '@/engines/project';
 
 const PREVIEW_W = 320;
