@@ -1,9 +1,10 @@
 {
-  "buildCommand": "cd motionStudio && npm install && npm run build",
+  "buildCommand": "cd motionStudio && npm install && npx playwright install --with-deps chromium && npm run build",
   "outputDirectory": "motionStudio/dist",
   "installCommand": "npm install --prefix api",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/((?!api/|assets/|favicon\\.svg|icons\\.svg|version\\.json).*)", "destination": "/index.html" }
+    { "source": "/contact", "destination": "/contact/index.html" },
+    { "source": "/((?!api/|assets/|contact|favicon\\.svg|icons\\.svg|version\\.json).*)", "destination": "/app.html" }
   ]
 }
