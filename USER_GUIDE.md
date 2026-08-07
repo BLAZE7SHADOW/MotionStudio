@@ -76,8 +76,10 @@ It's **on to begin with**. Turn it off with the 💡 in the toolbar, or under
 **?** → **Helper mode**, and it stays off until you ask for it back.
 
 **Hints.** When something changes on its own — a tempo detected, another tab
-taking over the project — MotionStudio says so in the top-right corner rather
-than leaving you to work it out. Each one can be dismissed for good.
+taking over the project, a title/background/block landing on the canvas from
+one of the toolbar's one-click buttons or an asset tile — MotionStudio says so
+in the top-right corner rather than leaving you to work it out. Each one can be
+dismissed for good.
 
 ---
 

@@ -5,6 +5,46 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-07] — A notice for the one-click add buttons
+
+Text, background, and block landed on the canvas already selected with no
+other confirmation. Click one and immediately click it again — easy to do
+without watching the toolbar, especially for shader/block where the visible
+change sits behind a closing popover — and a duplicate lands before the first
+is noticed. Clicking an asset tile in the Assets panel has the same shape, and
+for a song specifically there is no canvas visual at all, only a thin bar on
+the timeline.
+
+### Added
+
+- **`element-added`** (`lib/notices.ts`) — a new `NoticeId` reusing the
+  existing top-right notice surface, not a new toast library. Suppressible
+  (one "Don't show again" retires it for every one-click add, not per-button)
+  and self-dismissing after 5s, matching `beat-found`'s shape exactly.
+- **`notifyAdded(what)`** (`lib/noticeStore.ts`) — a one-line helper next to
+  `showNotice` so the id/timeout/suppressible shape lives in one place rather
+  than being recomposed at each of the four call sites: `Toolbar.tsx`'s
+  insert/shader/block buttons, and `AssetsPanel.tsx`'s click-to-place.
+
+### Decision
+
+Considered and skipped: a matching notice for the Motion preset buttons
+(Properties panel). Clicking a preset already switches the panel from
+Presets to Manual and shows an animation count on the section header — a
+persistent signal, not a toast that disappears in 5 seconds — so the "did
+that work?" question this round is solving is already answered there. Adding
+a redundant notice on top would be pure nagging for a spot that doesn't have
+the problem.
+
+This codebase's own notice doc comment sets the bar deliberately high: *"a
+notice earns its place by firing at the moment of confusion and nowhere
+else... if it would fire on every visit it is documentation, not a notice."*
+A raw notice on every single click of a routine action would fail that test
+outright — suppressibility is what keeps it inside it: shown until it's
+understood, then out of the way for good.
+
+---
+
 ## [2026-08-07] — Hover to learn: replacing the dots with a border flash
 
 Live feedback on the dots shipped earlier today: the beacon-beside-a-`side`

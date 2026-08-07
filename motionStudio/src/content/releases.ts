@@ -41,7 +41,11 @@ export const RELEASES: Release[] = [
       },
       {
         kind: 'new',
-        text: 'Everything else the app can tell you is now one click away, whenever you want it. A small dot sits beside anything with something to say — 21 of them, across the toolbar, both side panels, the canvas and the timeline. Click one for a short answer and a longer one underneath.\n\nThey never block anything: nothing goes grey, and whatever is under the card still works while it is open. New dots appear as you go — pick a music clip and one shows up on Sound. Turn them off with the 💡 in the toolbar and they stay off.',
+        text: 'Everything else the app can tell you is now a hover away, whenever you want it. Rest the pointer on anything with something to say — across the toolbar, both side panels, the canvas and the timeline — and its border lights up while a card opens beside it: a short answer and a longer one underneath. Move on and it closes.\n\nOnly one shows at a time and nothing blocks a click — the control underneath still works exactly as normal while its card is open. What is hoverable comes and goes with what you have selected: pick a music clip and Sound joins the list. Turn it off with the 💡 in the toolbar and it stays off.',
+      },
+      {
+        kind: 'new',
+        text: 'Clicking T, the background sparkle, a block, or a photo/video/song tile now tells you it landed — “Text added — look for it on the timeline below” — for a beat, in the corner. Nothing to click through: it goes away on its own, and “Don’t show again” retires it if you already know the ropes.',
       },
       {
         kind: 'fixed',
