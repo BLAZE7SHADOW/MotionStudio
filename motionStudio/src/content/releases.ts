@@ -32,6 +32,16 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: '2026-08-07',
+    title: 'Your music comes back when you reload',
+    changes: [
+      {
+        kind: 'fixed',
+        text: 'Reopening a project could show your photos, video and music as “Re-upload needed”, as though they had been lost. Nothing ever was — the files were safe the whole time, and the app was throwing away the link to them a second after finding it. Reloading now brings your media straight back.',
+      },
+    ],
+  },
+  {
     id: '2026-08-06',
     title: 'The tour actually teaches you the app',
     changes: [

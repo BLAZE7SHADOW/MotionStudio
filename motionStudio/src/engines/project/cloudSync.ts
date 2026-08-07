@@ -1,5 +1,6 @@
 import { getSupabase } from '@/lib/supabase';
 import type { Project } from './types';
+import { forStorage } from './forStorage';
 
 /**
  * Why this returns a result instead of logging.
@@ -24,7 +25,10 @@ export async function saveProject(project: Project, userId: string): Promise<Sav
     const { error } = await getSupabase().from('projects').upsert({
       id: project.id,
       user_id: userId,
-      data: project,
+      // Session-scoped `blob:` urls are stripped on the way out — a row that
+      // carries one hands every future reader a URL that can never resolve,
+      // and the cloud copy is the one that wins on load. See `forStorage`.
+      data: forStorage(project),
       updated_at: new Date().toISOString(),
     });
     if (error) return { ok: false, offline: false, message: error.message };

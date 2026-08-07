@@ -12,6 +12,7 @@ import UpdateBanner from './components/UpdateBanner';
 import NoticeHost from './components/NoticeHost';
 import { useAuth } from './hooks/useAuth';
 import { useProjectStore, saveProject, loadProjects, isFromFuture } from './engines/project';
+import { rehydrateAssets } from './engines/asset';
 import { isReadOnly } from './lib/projectLock';
 import { setSaveStatus } from './lib/saveState';
 import { showNotice } from './lib/noticeStore';
@@ -89,7 +90,22 @@ function CloudSync() {
     if (!user) return;
     loadingRef.current = true;
     void loadProjects(user.id).then((cloud) => {
-      if (cloud.length > 0) setProjects(cloud);
+      if (cloud.length > 0) {
+        setProjects(cloud);
+        /* `setProjects` replaces the whole array, so it also replaces whatever
+           `rehydrateAssets` resolved when the editor opened — and it lands
+           roughly a second later, so it always wins. Every project with media
+           came back from a reload showing "Re-upload needed" while its files sat
+           safely in IndexedDB and S3.
+
+           `forStorage` stops new rows carrying dead `blob:` urls, but rows
+           written before it, and the empty urls it writes now, both still need
+           resolving against this device. Re-running the relink here is what
+           makes the order stop mattering. Only the open project needs it; the
+           dashboard reads thumbnails, not asset bytes. */
+        const openId = useProjectStore.getState().activeProjectId;
+        if (openId) void rehydrateAssets(openId);
+      }
       loadingRef.current = false;
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps

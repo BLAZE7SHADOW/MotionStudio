@@ -5,6 +5,79 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-07] — Media came back from every reload as "Re-upload needed"
+
+Reported through the in-app feedback form: `water2-1017.mp3` showing
+"Re-upload needed". Reproducible on any project with media, on any hard reload
+while signed in — and nothing was actually lost. The bytes were in IndexedDB,
+the S3 copies existed, the project JSON was intact. The app resolved three
+working URLs and then threw them away.
+
+Two wrong diagnoses came first and are recorded here because both were
+plausible and both were wrong: a cross-device explanation (the reporter was in
+DevTools device mode — same profile, same IndexedDB), then a silent S3 upload
+failure (checked the data: `storageUrl` was present on all three assets). What
+settled it was instrumenting both writers and reading the order:
+
+```
+t=508   rehydrate WRITES     → f2ff5ea, cbfd887, f6f247d   fresh, live
+t=532   rehydrate WRITES     → 3931aeb, 2a64949, 2a1a922   fresh, live
+t=1514  setProjects OVERWRITES (Supabase) → 15728ac, 4bc4ab0, 6568768   dead
+final stored                 → 15728ac, 4bc4ab0, 6568768
+```
+
+The surviving URLs are byte-identical to what the cloud load wrote.
+
+### Fixed
+- **A `blob:` URL was being persisted.** It is a pointer into the memory of the
+  tab that created it and dies with that tab, so every saved project carried a
+  URL guaranteed to be invalid by the time anything read it back. On load,
+  `rehydrateAssets` (`EditorPage.tsx:31`) correctly relinked from IndexedDB at
+  ~500ms; the Supabase load landed at ~1.5s and `setProjects` (`store.ts:123`)
+  replaced the whole projects array, dead URLs and all. The slower write always
+  won, so the repair was discarded on every reload.
+
+  `forStorage()` now blanks session-scoped URLs on the way out, applied at
+  **both** persistence points — `partialize` for local, `saveProject` for the
+  cloud — because both serialise the same array to different places and fixing
+  one would have left the other lying. An empty url was already this codebase's
+  word for "unresolved, go find it": `rehydrate` fills it from the local blob or
+  the S3 `storageUrl`, and `ElementRenderer` and the web renderer already skip
+  on it.
+- **Re-relink after the cloud load lands** (`App.tsx`). `forStorage` stops *new*
+  rows carrying dead URLs, but rows written before it still do, and the blank
+  URLs it writes now need resolving against this device. Re-running
+  `rehydrateAssets` for the open project after `setProjects` is what makes the
+  ordering stop mattering at all — and it repairs existing bad rows without a
+  migration.
+
+### Added
+- **`tests/forStorage.test.mjs`** — 9 assertions covering the whole contract: a
+  `blob:` url is never written, `storageUrl` survives (it is the fallback that
+  makes another device work), the input is not mutated (the live store keeps its
+  working url), https urls are untouched, and a project with nothing to strip
+  comes back as the same object so persisting cannot churn the row.
+
+### Changed
+- **`ARCHITECTURE.md` §7 claimed S3 copies "exist only for Lambda's use".** Not
+  true since `rehydrate` started falling back to `storageUrl` — media does cross
+  devices once the upload lands. Rewritten, including the part that is still a
+  real limitation: the upload is fire-and-forget with no user-visible state, so
+  you cannot tell which files are safe to leave the machine.
+- **`USER_GUIDE.md`** explained "Re-upload needed" as purely a cross-device
+  thing. It now says what it actually means — no local copy *and* no cloud
+  fallback — and that opening a project made on this machine should never show
+  it.
+
+### Verified
+9 new tests plus the existing 190; typecheck and lint clean. Then three
+consecutive hard reloads of the reported project in a browser: `reuploadShown:
+0` each time, all three filenames listed, persisted urls blank rather than dead,
+and `audioElsOnPage: 5` — the renderer mounting real audio, not just the panel
+drawing a label.
+
+---
+
 ## [2026-08-07] — A gate, and zero lint problems to hold it at
 
 There was no CI. `npm test` (190 assertions), `npm run lint` and `tsc -b` all

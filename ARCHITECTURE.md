@@ -638,8 +638,14 @@ every other effect in the `Effects` map already uses.
   render (device-tracked), signed-in users a monthly quota.
 - **Editor audio preview** is muted / browser-autoplay-dependent; the export
   is authoritative for sound and timing.
-- **Asset bytes don't follow you across devices** — project JSON syncs via Supabase,
-  but media blobs live in local IndexedDB (S3 copies exist only for Lambda's use).
+- **Asset bytes follow you only as far as the S3 copy got.** Project JSON syncs
+  via Supabase and media blobs live in local IndexedDB, but the background
+  upload also puts every file in S3 — and `rehydrateAssets` falls back to that
+  `storageUrl` when there is no local blob, so media *does* survive a move to
+  another device once the upload has landed. A file whose upload never
+  completed is local-only, and shows "Re-upload needed" elsewhere. The upload is
+  fire-and-forget with no user-visible state, so there is currently no way to
+  tell which of your files are safe to leave the machine.
 - **No scene grouping yet** — sequencing is done by positioning clips on the timeline.
 - **Tests cover the engines, not the components** — the suite exercises the pure
   modules (`scenes`, `scale`, `beatDetect`, `transitions`, `projectLock`,

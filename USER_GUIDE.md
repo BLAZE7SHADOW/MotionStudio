@@ -186,10 +186,12 @@ dragging invisible. A note on the canvas says so when it applies; press
 5. **Audio** has no on-screen visual — it drops straight onto the timeline as a
    sound clip.
 6. Remove an asset from the library with the **×** on its thumbnail (hover).
-7. **"Re-upload needed"** on a tile means that file isn't on this device — it was
-   added from another browser or session and only the reference synced across.
-   Elements using it render as empty rather than breaking the project. Re-add
-   the file, or remove the tile.
+7. **"Re-upload needed"** on a tile means the file isn't on this device *and*
+   has no cloud copy to fall back on — usually because it was added on another
+   machine and its background upload never finished. Elements using it render as
+   empty rather than breaking the project. Re-add the file, or remove the tile.
+   Opening a project you made on this machine should never show this: media is
+   relinked from local storage on every load.
 
 ### Stock photos & video (Pexels)
 Open the **Assets** panel → **Stock** tab. Search, toggle **Photos**/**Videos**,

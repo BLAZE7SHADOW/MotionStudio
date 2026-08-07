@@ -13,6 +13,7 @@ import {
   setSceneTransition,
 } from './scenes';
 import { migrateProject } from './migrations';
+import { forStorage } from './forStorage';
 import type { TransitionId } from '../animation/transitions';
 import { getCompositionDimensions } from './dimensions';
 
@@ -267,8 +268,11 @@ export const useProjectStore = create<ProjectStore>()(
     }),
     {
       name: 'motionstudio-projects',
-      // persist only project data — not history or session UI state
-      partialize: (s) => ({ projects: s.projects }),
+      // Persist only project data — not history or session UI state — and never
+      // a `blob:` url, which cannot survive the session that made it. See
+      // `forStorage`; the cloud path in `cloudSync.saveProject` does the same,
+      // because both paths serialise the same array to two different places.
+      partialize: (s) => ({ projects: s.projects.map(forStorage) }),
       /* The envelope version, which is not the same thing as the project's own
          `schemaVersion`. This one only says "the persisted blob changed shape";
          the per-project one travels to the cloud and back. Both are needed, and
