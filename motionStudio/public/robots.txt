@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Allow: /contact
+Disallow: /dashboard
+Disallow: /editor/
+
+Sitemap: https://motionstudio-six.vercel.app/sitemap.xml
