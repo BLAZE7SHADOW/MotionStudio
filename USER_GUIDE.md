@@ -53,7 +53,7 @@ back. Any step can be passed with **Skip**, and the ✕ closes the whole thing.
 Replay it any time from the **?** menu in the toolbar → **Quick start**; that
 also brings back any hint you dismissed with "don't show again".
 
-### Hover to learn
+### Helper mode
 
 Everything the quick start *doesn't* cover is one hover away instead. Rest the
 pointer on any of the 21 controls that has something to say — across the
@@ -73,7 +73,7 @@ only responds once something is selected — before that there's nothing there
 for it to describe.
 
 It's **on to begin with**. Turn it off with the 💡 in the toolbar, or under
-**?** → **Hover to learn**, and it stays off until you ask for it back.
+**?** → **Helper mode**, and it stays off until you ask for it back.
 
 **Hints.** When something changes on its own — a tempo detected, another tab
 taking over the project — MotionStudio says so in the top-right corner rather
@@ -662,8 +662,8 @@ the problem already described, so you only add what happened from your side.
 - **What's new** — a short list of what changed recently, in plain terms. It
   opens by itself once per release, and a dot sits on the **?** button until
   you've read it. Brand-new accounts never see it: a changelog needs a "before".
-- **Quick start** and **Hover to learn** — the two ways the app explains itself, both
-  covered in §1. The menu row shows whether hover-to-learn is on, so it matches
+- **Quick start** and **Helper mode** — the two ways the app explains itself, both
+  covered in §1. The menu row shows whether helper mode is on, so it matches
   the 💡 in the toolbar whichever one you used last.
 
 ---

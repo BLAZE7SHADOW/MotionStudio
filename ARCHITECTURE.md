@@ -37,7 +37,7 @@ Vercel Functions (render/quota/upload/contact API), Supabase (auth + project syn
 | **Remocn** | 57 copy-paste Remotion components (text effects, shaders, UI blocks) — animation polish bought, not built, and owned as source in the repo. |
 | **PostHog** | Product analytics *and* exception capture. A dedicated error vendor (Sentry) would buy a nicer stack-trace UI for a second script on every page load; `__APP_VERSION__` already carries the Vercel commit SHA, so the "release = git SHA" half was free. |
 | **Resend** | Transactional email for the contact form — a single `emails.send()` call instead of managing SMTP or a mail server. |
-| **driver.js** | Drives the guided quick start — spotlighting one control at a time, keeping it clickable through the overlay. Loaded lazily, only for that once-per-user walkthrough. (Its `hints` entry point drove an earlier version of hover-to-learn; that surface is now built directly on `@radix-ui/react-popper` instead — see the onboarding section.) |
+| **driver.js** | Drives the guided quick start — spotlighting one control at a time, keeping it clickable through the overlay. Loaded lazily, only for that once-per-user walkthrough. (Its `hints` entry point drove an earlier version of helper mode; that surface is now built directly on `@radix-ui/react-popper` instead — see the onboarding section.) |
 
 ---
 
@@ -535,7 +535,7 @@ is a wall nobody finishes. It split into two:
 - **A six-step quick start** (`tour/quickStart.ts`, an instance of the `Flow`
   primitive in `tour/flow.ts`) that waits for the user to do each thing and
   advances off live store state, driven by `driver.js`.
-- **Hover to learn** (`hooks/useHelperLayer.ts` + `tour/HelperCard.tsx`) — a
+- **Helper mode** (`hooks/useHelperLayer.ts` + `tour/HelperCard.tsx`) — a
   border flash and a card on whichever of the 21 explainable controls the
   cursor is currently resting on, on demand, blocking nothing.
 
@@ -545,7 +545,7 @@ is two things to keep true and one of them always rots — the same reasoning as
 the living-docs rule. `Record<HelpId, HelpEntry>` makes a forgotten entry a
 compile error rather than a blank popover.
 
-**Hover to learn went through two designs before this one**, both proven wrong
+**Helper mode went through two designs before this one**, both proven wrong
 live rather than in review, which is worth recording precisely because neither
 mistake was obvious in advance:
 
@@ -593,12 +593,33 @@ The decisions worth recording:
   holds the picker, so spotlighting it would have stranded the step forever.
   Hence `FlowStep.anchor`, which decouples where a step points from whose words
   it borrows.
-- **No click listener ever goes on a control being explained.** An earlier
-  version let a click pin the hover card open, on the control itself — clicking
-  `export` to pin its card also fired the real Export button underneath it.
-  Pinning was removed rather than patched: the card now shows everything on
-  hover, so there's nothing to click for, and that whole class of bug can't
-  recur because the listener it depended on doesn't exist.
+- **A click on a control closes its own card, but never intercepts the
+  click.** An earlier version let a click *pin* the hover card open, on the
+  control itself — clicking `export` to pin its card also fired the real
+  Export button underneath it. Pinning was removed rather than patched: the
+  card shows everything on hover, so there was nothing left to click *for*.
+  But a plain click still reaches the control (nothing stops it existing
+  entirely), and a second bug showed up once every control had a card:
+  clicking the **`?`** button opened its own menu underneath its own
+  still-open card, since the card's `z-index` simply outranked the menu's.
+  Rather than chase z-index ordering against every present and future
+  overlay, any click on a hovered control now closes that control's card
+  immediately — the click means the user is doing the thing, not asking
+  about it. The listener only reads the event and calls `close()`; it never
+  calls `preventDefault`/`stopPropagation`, so the control's real handler
+  still runs exactly as it would with helper mode off.
+- **`canvas` needed a different kind of anchor, not a different `side`.** Its
+  card clipped off the right of the viewport with `side: 'left'`, then off
+  the *bottom* once that was fixed to `side: 'bottom'` — the element is
+  nearly the full width **and** height of the editor, so no `side` has real
+  room on both axes relative to its own edges, whichever one is picked.
+  `HelpEntry.anchorMode: 'cursor'` (checked only for this one entry, same
+  generic-flag shape as `requiresSelection`) anchors the card to a point
+  captured where the pointer entered instead of the element's bounding box —
+  a point near the cursor has room on some side almost anywhere on screen,
+  which the element's own edges don't. `HelperCard` builds a synthetic
+  `Measurable` (anything with a `getBoundingClientRect()`) for that point and
+  hands it to `Popper.Anchor` exactly as it would a real DOM node.
 - **The flash's `outline-offset` is negative (inset), not positive.** Several
   anchors (`properties`, `assets`, `timeline`) clip their own overflow; an
   outward offset draws past the border box and gets clipped on whichever edges
