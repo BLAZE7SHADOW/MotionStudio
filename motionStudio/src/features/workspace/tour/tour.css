@@ -18,10 +18,24 @@
   padding: 14px 16px;
 }
 
+/* The title slot holds an emoji and a headline rather than a plain string.
+   driver.js writes both slots with innerHTML and sets `display: block` on the
+   title inline, so these stay inline elements instead of fighting that with
+   `!important`. */
 .driver-popover.ms-tour .driver-popover-title {
+  color: var(--studio-text);
+  padding-right: 20px; /* clear of driver's absolutely-positioned close button */
+}
+
+.driver-popover.ms-tour .ms-card-emoji {
+  font-size: 15px;
+  margin-right: 7px;
+  vertical-align: -1px;
+}
+
+.driver-popover.ms-tour .ms-card-title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--studio-text);
 }
 
 .driver-popover.ms-tour .driver-popover-description {
@@ -29,6 +43,95 @@
   line-height: 1.55;
   color: var(--studio-text-muted);
   margin-top: 6px;
+}
+
+/* One sentence. If this ever wraps past three lines, the copy is wrong —
+   see the word limits in content/help.ts. */
+.driver-popover.ms-tour .ms-card-line {
+  margin: 0;
+}
+
+/* ── Chips: the gotchas, glanceable ──────────────────────────────────── */
+
+.driver-popover.ms-tour .ms-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.driver-popover.ms-tour .ms-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border: 1px solid var(--studio-border);
+  border-radius: var(--radius-studio-sm, 6px);
+  background-color: var(--studio-surface);
+  color: var(--studio-text-secondary);
+  font-size: 10.5px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.driver-popover.ms-tour .ms-chip-emoji {
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* The long answer. Helper dots only — the quick start never shows it. */
+.driver-popover.ms-tour .ms-card-more {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--studio-border);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--studio-text-muted);
+}
+
+/* ── The "your turn" row ─────────────────────────────────────────────── */
+
+.driver-popover.ms-tour .ms-card-try {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--studio-border);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--studio-text);
+}
+
+.driver-popover.ms-tour .ms-card-try[data-state='done'] {
+  color: var(--studio-success);
+}
+
+.driver-popover.ms-tour .ms-try-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  flex-shrink: 0;
+}
+
+/* A hollow ring that breathes, so a step waiting on the user doesn't read as
+   a step that has stalled. */
+.driver-popover.ms-tour .ms-try-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--studio-accent);
+  animation: ms-try-breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes ms-try-breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.82); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .driver-popover.ms-tour .ms-try-dot { animation: none; }
 }
 
 .driver-popover.ms-tour .driver-popover-description strong {

@@ -1,0 +1,30 @@
+/*
+ * Helper dots — theming for driver.js's `hints` beacons.
+ *
+ * `hints.css` exposes exactly two knobs and handles the rest itself, including
+ * the pulse and its `prefers-reduced-motion` opt-out, so this file is small on
+ * purpose. Loaded with the mode, never with the editor.
+ *
+ * The card itself is styled by `tour.css`, which the quick start also loads —
+ * one card language for both surfaces, because they are one system speaking.
+ */
+
+:root {
+  /* Accent is reserved in this design system, and a beacon is precisely the
+     case it is reserved for: the one thing on screen asking to be clicked. */
+  --driver-hint-color: var(--studio-accent);
+  /* The hit target. The visible dot is the middle half of it, so this reads as
+     an 9px dot with a comfortable 18px area around it. */
+  --driver-hint-size: 18px;
+}
+
+/* Slightly wider than a quick-start card: these carry the long answer too. */
+.driver-popover.ms-tour.ms-help {
+  max-width: 340px;
+}
+
+/* No footer at all — helper cards have no buttons, and driver still lays out
+   an empty row for one. */
+.driver-popover.ms-tour.ms-help .driver-popover-footer {
+  display: none;
+}
