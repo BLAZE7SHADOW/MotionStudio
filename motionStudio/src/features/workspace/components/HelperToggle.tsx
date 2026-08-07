@@ -5,19 +5,20 @@ import { useHelperMode } from '@/lib/helperMode';
 import { track } from '@/lib/analytics';
 
 /**
- * The switch for the helper dots.
+ * The switch for hover-to-learn.
  *
  * It earns a permanent toolbar slot — rather than living only in the ? menu —
  * because it is a *mode*, and a mode you cannot see the state of is a mode you
- * will wonder about. Lit means the dots are out; unlit means they aren't. The ?
- * menu mirrors it for anyone who goes looking for help where help usually is.
+ * will wonder about. Lit means hovering an explainable control shows its
+ * card; unlit means it doesn't. The ? menu mirrors it for anyone who goes
+ * looking for help where help usually is.
  */
 export default function HelperToggle() {
   const on = useHelperMode((s) => s.on);
   const setOn = useHelperMode((s) => s.setOn);
 
   return (
-    <TooltipHint label={on ? 'Hide the helper dots' : 'Show the helper dots'}>
+    <TooltipHint label={on ? 'Turn off hover-to-learn' : 'Turn on hover-to-learn'}>
       <Button
         variant="ghost"
         size="icon"

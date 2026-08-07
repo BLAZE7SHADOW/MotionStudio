@@ -112,7 +112,7 @@ export default function HelpMenu() {
               className={item}
             >
               <Lightbulb className="w-3.5 h-3.5" />
-              Helper dots
+              Hover to learn
               <span className="ml-auto text-[10px] uppercase tracking-widest text-studio-text-faint">
                 {helperOn ? 'On' : 'Off'}
               </span>
