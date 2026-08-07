@@ -5,6 +5,37 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-07] — Helper mode as a labelled switch, not a tinted icon
+
+The toolbar toggle was a bare lightbulb icon that changed color when on —
+legible once you knew what to look for, not at a glance. Rebuilt as a real
+switch with its own visible label.
+
+### Added
+
+- **`components/ui/switch.tsx`** — a small shadcn-style wrapper around
+  `radix-ui`'s `Switch` primitive (already a transitive dependency of the
+  installed `radix-ui` package, same as `@radix-ui/react-popper` was for the
+  hover cards — no new line in `package.json`). Tailwind v4's `data-checked`/
+  `data-unchecked` variant shorthand targets Radix's `data-state="checked"` /
+  `"unchecked"` directly, the same mechanism already used for `data-active` on
+  `Tabs`.
+
+### Changed
+
+- **`HelperToggle.tsx`** rebuilt around it: `💡 Helper mode [——●]`, with the
+  icon and label tinted accent when on, muted when off. The label is a real
+  `<label htmlFor>` pointing at the switch's `id`, not a click handler on a
+  wrapping `<div>` — `Switch` renders an actual `<button>` internally, so a
+  div-level `onClick` around both would fire twice on a direct click (once
+  from the div, once from the switch's own `onCheckedChange`), cancelling
+  itself out and only working when you happened to click the text. `<label>`
+  forwarding to the switch's `id` is the one click path there is, and it's
+  native and keyboard-safe for free. Verified both the label and the switch
+  pill toggle exactly once per click, and the `?` menu row stays in sync.
+
+---
+
 ## [2026-08-07] — A notice for the one-click add buttons
 
 Text, background, and block landed on the canvas already selected with no
