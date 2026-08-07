@@ -1,30 +1,110 @@
 /*
- * Helper dots — theming for driver.js's `hints` beacons.
+ * Hover-only border flash and its card (`hooks/useHelperLayer.ts` /
+ * `tour/HelperCard.tsx`) — the explanation for every control in the editor,
+ * on demand.
  *
- * `hints.css` exposes exactly two knobs and handles the rest itself, including
- * the pulse and its `prefers-reduced-motion` opt-out, so this file is small on
- * purpose. Loaded with the mode, never with the editor.
+ * `outline`, not `box-shadow`, is the deliberate choice for the flash:
+ * `Button`'s own `focus-visible` state is a Tailwind `ring` utility, which is
+ * box-shadow-based (`components/ui/button.tsx`). Outline is a separate
+ * box-model layer, so the two states never fight for the same pixels.
+ * `border-radius: inherit` is what makes the flash hug a rounded toolbar icon
+ * the same way it hugs a square panel header.
  *
- * The card itself is styled by `tour.css`, which the quick start also loads —
- * one card language for both surfaces, because they are one system speaking.
+ * This class is applied to exactly one element at a time — whichever is
+ * currently hovered — and only for the duration of that hover. There is no
+ * "always on" state: an idle screen has none of these classes present
+ * anywhere, which is the entire point.
  */
 
-:root {
-  /* Accent is reserved in this design system, and a beacon is precisely the
-     case it is reserved for: the one thing on screen asking to be clicked. */
-  --driver-hint-color: var(--studio-accent);
-  /* The hit target. The visible dot is the middle half of it, so this reads as
-     an 9px dot with a comfortable 18px area around it. */
-  --driver-hint-size: 18px;
+.ms-help-flash {
+  outline: 1.5px solid var(--studio-accent);
+  /* Inset, not outward. A positive offset draws past the element's own
+     border box — and several anchors (`properties`, `assets`, `timeline`)
+     clip their own overflow, so whichever edges the surrounding flex layout
+     squeezes closest also clip that outward extension, leaving a partial
+     border instead of a rectangle. Inset can never be clipped by an
+     element's own overflow, regardless of layout. */
+  outline-offset: -2px;
+  border-radius: inherit;
+  animation: ms-help-blink 1.8s ease-in-out infinite;
 }
 
-/* Slightly wider than a quick-start card: these carry the long answer too. */
-.driver-popover.ms-tour.ms-help {
-  max-width: 340px;
+@keyframes ms-help-blink {
+  50% { outline-color: transparent; }
 }
 
-/* No footer at all — helper cards have no buttons, and driver still lays out
-   an empty row for one. */
-.driver-popover.ms-tour.ms-help .driver-popover-footer {
-  display: none;
+@media (prefers-reduced-motion: reduce) {
+  .ms-help-flash { animation: none; }
+}
+
+/* The Popper-positioned card — a real React tree, not driver.js writing
+   innerHTML, so it carries none of driver's own popover chrome. */
+.ms-help-card {
+  width: max-content;
+  max-width: 300px;
+  padding: 12px 14px;
+  background-color: var(--studio-panel);
+  color: var(--studio-text);
+  border: 1px solid var(--studio-border-strong);
+  border-radius: var(--radius-studio-lg, 12px);
+  box-shadow: 0 8px 30px oklch(0 0 0 / 55%);
+  z-index: 200;
+}
+
+.ms-help-card .ms-card-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ms-help-card .ms-card-emoji {
+  font-size: 15px;
+}
+
+.ms-help-card .ms-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--studio-text);
+}
+
+.ms-help-card .ms-card-line {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--studio-text-muted);
+}
+
+.ms-help-card .ms-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.ms-help-card .ms-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border: 1px solid var(--studio-border);
+  border-radius: var(--radius-studio-sm, 6px);
+  background-color: var(--studio-surface);
+  color: var(--studio-text-secondary);
+  font-size: 10.5px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.ms-help-card .ms-chip-emoji {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.ms-help-card .ms-card-more {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--studio-border);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--studio-text-muted);
 }
