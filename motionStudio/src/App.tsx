@@ -43,6 +43,30 @@ const router = createBrowserRouter([
 
 const LAST_USER_KEY = 'ms_last_user';
 
+/**
+ * Ties the PostHog person to whoever is actually signed in, right where the
+ * app already watches for an account switch — this is the same "identity
+ * changed" moment `clearAll` reacts to, not a second place to detect it.
+ *
+ * `distinct_id` stays the stable Supabase UUID, not the email itself: email
+ * is a property on the person, not the id PostHog keys events by. An email
+ * can change (or, for a guest, doesn't exist); a UUID never does, and
+ * merging two distinct_ids after an email edit is exactly the kind of
+ * cleanup this sidesteps. PostHog's own Persons view surfaces the `email`
+ * property as the person's display name automatically, so this is still
+ * "see the email in the dashboard" — just without keying identity on a
+ * value that can change.
+ *
+ * Guests have no email, so they're never identified — anonymous events stay
+ * anonymous, which is the honest state. `reset()` on sign-out (or a switch
+ * to a guest session) is what stops the *next* session on a shared device
+ * from inheriting the previous person's identity.
+ */
+function identify(user: { id: string; email?: string } | null): void {
+  if (user?.email) posthog.identify(user.id, { email: user.email });
+  else posthog.reset();
+}
+
 function AuthBridge() {
   const { user, loading } = useAuth();
   const clearAll = useProjectStore((s) => s.clearAll);
@@ -59,6 +83,7 @@ function AuthBridge() {
       prevUserIdRef.current = currentId;
       if (currentId) localStorage.setItem(LAST_USER_KEY, currentId);
       else localStorage.removeItem(LAST_USER_KEY);
+      identify(user);
       return;
     }
 
@@ -67,6 +92,7 @@ function AuthBridge() {
       prevUserIdRef.current = currentId;
       if (currentId) localStorage.setItem(LAST_USER_KEY, currentId);
       else localStorage.removeItem(LAST_USER_KEY);
+      identify(user);
     }
   }, [loading, user, clearAll]);
 

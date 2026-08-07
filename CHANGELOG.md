@@ -5,6 +5,37 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-07] — Signed-in users show up as themselves in PostHog
+
+Every event was anonymous — PostHog's own device-generated id, no way to tell
+which real person a session belonged to without cross-referencing Supabase
+directly.
+
+### Added
+
+- **`AuthBridge` (`App.tsx`) now calls `posthog.identify`/`posthog.reset`** at
+  the exact moment it already detects an account change — the same effect
+  that fires `clearAll()` on switching users, not a second place watching for
+  the same transition. `distinct_id` is the stable Supabase UUID, `email` is
+  a person property, not the id itself: PostHog's Persons view already
+  surfaces `email` as the display name automatically, and keying identity on
+  a value that can change (and that a guest doesn't have at all) is the wrong
+  tradeoff for the one line it would save. Guests are never identified —
+  anonymous stays anonymous, which is the honest state — and `reset()` on
+  sign-out (or a switch to a guest session) is what stops the next session on
+  a shared device from inheriting the previous person's identity.
+
+### Verified
+
+Typecheck, lint, tests, build all clean. Live: signed out of a guest session
+→ `posthog.reset()` fired and `identify` did not (no email to key on); the
+`identify(user.id, { email })` call shape was exercised directly against the
+same two `posthog` methods used by the real code path — a real account
+wasn't available to sign into during this session, so the auth-flow trigger
+itself is unverified live, only the call it makes once triggered.
+
+---
+
 ## [2026-08-07] — Helper mode as a labelled switch, not a tinted icon
 
 The toolbar toggle was a bare lightbulb icon that changed color when on —
