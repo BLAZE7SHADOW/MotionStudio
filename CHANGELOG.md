@@ -62,9 +62,16 @@ Now **0 problems**, and a workflow that fails if that ever stops being true.
   keeps parameters documenting the endpoint it will take once S3 deletion
   exists.
 
+- **`actions/checkout` and `actions/setup-node` bumped v4 → v5.** The first real
+  run went green but carried a deprecation annotation on both jobs: v4 targets
+  Node 20, which GitHub now force-runs on Node 24 and will eventually stop
+  supporting. Fixed while the workflow is new rather than waiting for the
+  annotation to become a failure.
+
 ### Verified
 Typecheck, `eslint . --max-warnings=0`, 190 tests, production build and the
-`api` typecheck all pass locally — the exact five steps CI runs. Both refactored
+`api` typecheck all pass locally — the exact five steps CI runs. The first CI
+run on GitHub passed both jobs in 1m6s. Both refactored
 components were then driven in a browser: project settings changed fps to 60 and
 duration to 30s with the controls and the `0/1800` frame count following, the
 shader still renders from its new module and its preview thumbnail with it, and
