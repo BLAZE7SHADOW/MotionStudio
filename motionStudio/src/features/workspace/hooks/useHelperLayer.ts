@@ -10,19 +10,29 @@ import { useTourActive } from '../tour/tourActive';
  * The hover-only border flash — every explainable control in the editor.
  *
  * Two rounds of live preview on a 4-control subset (`insert`, `export`,
- * `canvas`, `properties` — chosen to cover a small toolbar button, an edge
- * case for Popper's side-flip, a large non-button area, and an
- * `overflow-hidden` panel wrapper) validated the mechanism and caught three
- * real bugs before this widened to the full set: clicking a control to pin
- * its card also fired the control's own click handler (fixed by never
- * attaching a click listener to the control at all — see `HelperCard`'s doc
- * comment); the border only rendered on one edge of `overflow-hidden`
- * anchors (fixed by an inset `outline-offset`, see `helper.css`); and
- * `canvas`'s card clipped off-screen because a huge anchor has nowhere to fit
- * a `side: 'left'`/`'right'` card next to it (fixed in `content/help.ts` by
- * anchoring underneath instead). `HOVER_IDS` is derived from the registry
- * itself rather than hand-maintained, so a new `HelpId` added to
- * `content/help.ts` is automatically covered here with nothing else to edit.
+ * `canvas`, `properties`) validated the mechanism and caught bugs before this
+ * widened to the full set — `HOVER_IDS` is derived from the registry itself
+ * rather than hand-maintained, so a new `HelpId` added to `content/help.ts`
+ * is automatically covered here with nothing else to edit. The bugs, in the
+ * order they were found:
+ *
+ *   - Clicking a control to pin its card also fired the control's own click
+ *     handler (`export` opened its card *and* the real Export dialog).
+ *   - The border only rendered on one edge of `overflow-hidden` anchors —
+ *     fixed by an inset `outline-offset`, see `helper.css`.
+ *   - `canvas`'s card clipped off the right of the viewport with `side:
+ *     'left'`, then off the *bottom* once that was fixed to `side: 'bottom'`
+ *     — the element is nearly the full width and height of the editor, so no
+ *     side has room on both axes relative to its own edges. Fixed by
+ *     anchoring to the cursor position instead for that one entry
+ *     (`HelpEntry.anchorMode`), not by hand-tuning `side` further.
+ *   - Clicking the **`?` button** opened its own menu underneath its own
+ *     still-open hover card, since the card's `z-index` was simply higher.
+ *     Rather than tune z-indices against every future overlay, any click on a
+ *     hovered control now closes that control's card immediately — the
+ *     click means the user is doing the thing, not asking about it, the same
+ *     reasoning that already kept a click listener off the control in the
+ *     first bug above. This one only *reads* the click, never intercepts it.
  *
  * **Nothing is visible until the cursor is over a control, and only that one
  * control ever shows anything.** An earlier version of this hook applied a
@@ -31,7 +41,8 @@ import { useTourActive } from '../tour/tourActive';
  * different shape. There is no ambient state here at all: `mouseenter`/
  * `focus` is the *only* thing that ever adds the flash class, to the one
  * element it fired on, and `mouseleave`/`blur` (after a short grace period,
- * to let the pointer travel onto the card) is the only thing that removes it.
+ * to let the pointer travel onto the card) or a click is the only thing that
+ * removes it.
  */
 const HOVER_IDS = Object.keys(HELP) as HelpId[];
 
@@ -40,9 +51,16 @@ const HOVER_IDS = Object.keys(HELP) as HelpId[];
     it never reads as "stuck open". */
 const CLOSE_GRACE_MS = 150;
 
+/** A fixed point captured once, at the moment the pointer entered a
+    `cursor`-anchored control — not tracked live, the same as a normal
+    element anchor doesn't move mid-hover either. */
+export interface AnchorPoint { x: number; y: number }
+
 interface OpenState {
   id: HelpId;
   target: Element;
+  /** Set only for `anchorMode: 'cursor'` entries. */
+  pointer?: AnchorPoint;
   /** The shot active when this opened. A shot change while hovering is a
       context change; comparing at read time, rather than resetting state
       from a second effect, is what lets `open` below stay a pure derivation. */
@@ -59,6 +77,7 @@ interface OpenState {
 export interface OpenHelper {
   id: HelpId;
   target: Element;
+  pointer?: AnchorPoint;
   entry: HelpEntry;
 }
 
@@ -133,35 +152,48 @@ export function useHelperLayer(): HelperLayerState {
       const el = selector ? document.querySelector(selector) : null;
       if (!el) continue;
 
-      const onEnter = () => {
+      const onEnter = (e: Event) => {
         clearCloseTimer();
         unflash();
         el.classList.add('ms-help-flash');
         flashing.current = el;
+        const pointer =
+          entry.anchorMode === 'cursor' && e instanceof MouseEvent
+            ? { x: e.clientX, y: e.clientY }
+            : undefined;
         setOpen({
           id,
           target: el,
+          pointer,
           sceneId: useEditorStore.getState().activeSceneId,
           requiresSelection: !!entry.requiresSelection,
         });
       };
       const onLeave = () => scheduleClose();
+      // A click is the user doing the real thing, not asking about it again
+      // — close immediately rather than waiting out the grace period. Purely
+      // reads the event; nothing here calls preventDefault/stopPropagation,
+      // so the control's own click handler still runs exactly as it would
+      // with this layer switched off entirely.
+      const onClick = () => close();
 
       el.addEventListener('mouseenter', onEnter);
       el.addEventListener('mouseleave', onLeave);
       el.addEventListener('focus', onEnter);
       el.addEventListener('blur', onLeave);
+      el.addEventListener('click', onClick);
       cleanups.push(() => {
         if (flashing.current === el) unflash();
         el.removeEventListener('mouseenter', onEnter);
         el.removeEventListener('mouseleave', onLeave);
         el.removeEventListener('focus', onEnter);
         el.removeEventListener('blur', onLeave);
+        el.removeEventListener('click', onClick);
       });
     }
 
     return () => cleanups.forEach((fn) => fn());
-  }, [on, selectedElementId, activeSceneId, shape, clearCloseTimer, scheduleClose, unflash]);
+  }, [on, selectedElementId, activeSceneId, shape, clearCloseTimer, scheduleClose, unflash, close]);
 
   // Mode switched off mid-hover shouldn't leave the flash class stuck on a
   // control forever. Pure DOM cleanup, not a setState call — `visible` below
@@ -182,7 +214,7 @@ export function useHelperLayer(): HelperLayerState {
     open &&
     open.sceneId === activeSceneId &&
     !(open.requiresSelection && !selectedElementId)
-      ? { id: open.id, target: open.target, entry: HELP[open.id] }
+      ? { id: open.id, target: open.target, pointer: open.pointer, entry: HELP[open.id] }
       : null;
 
   return { open: visible, onCardMouseEnter: clearCloseTimer, onCardMouseLeave: scheduleClose };

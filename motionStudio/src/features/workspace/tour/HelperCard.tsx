@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import { Portal } from 'radix-ui';
 // Not re-exported by the `radix-ui` meta-package (only its higher-level
 // components — HoverCard, Popover, Tooltip — are), but it's a pinned
@@ -6,6 +6,7 @@ import { Portal } from 'radix-ui';
 // resolves without a separate line in this project's own package.json.
 import * as Popper from '@radix-ui/react-popper';
 import type { HelpEntry } from '@/content/help';
+import type { AnchorPoint } from '../hooks/useHelperLayer';
 // Static, not lazy: this preview is a handful of controls and a few KB of
 // CSS, and the old `helperMode.ts` lazy-loads the same file on its own
 // schedule for a different reason. Once the full rollout replaces that
@@ -45,17 +46,37 @@ import './helper.css';
  * `useHelperLayer`. This component only renders what it's told and forwards
  * its own mouse events back up so that grace period can tell "left toward the
  * card" apart from "left toward nothing".
+ *
+ * **`pointer`, not the control's own box, for a handful of entries.**
+ * `canvas` is nearly the full width and height of the editor, so no `side`
+ * ever has room on both axes relative to the *element's* edges — fixed twice
+ * (`side: 'left'` clipped right, `side: 'bottom'` then clipped off the
+ * bottom) before landing on anchoring to where the cursor actually entered
+ * instead (`HelpEntry.anchorMode: 'cursor'`, set by `useHelperLayer`). A
+ * point near the cursor has room on some side almost anywhere it's hovered,
+ * which a huge element's own edges don't.
  */
+
+/** Anything `Popper.Anchor`'s `virtualRef` accepts — a real `Element`, or a
+    zero-size point standing in for one. */
+interface Measurable { getBoundingClientRect(): DOMRect }
+
+function pointRect(x: number, y: number): DOMRect {
+  return { x, y, width: 0, height: 0, top: y, right: x, bottom: y, left: x, toJSON: () => ({}) };
+}
 
 export interface HelperCardProps {
   /** The control the card is anchored to. */
   target: Element;
+  /** When set, anchor to this point instead of `target`'s own box — see the
+      module doc above. */
+  pointer?: AnchorPoint;
   entry: HelpEntry;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }
 
-export default function HelperCard({ target, entry, onMouseEnter, onMouseLeave }: HelperCardProps) {
+export default function HelperCard({ target, pointer, entry, onMouseEnter, onMouseLeave }: HelperCardProps) {
   // Popper reads `.current` on measure; the ref object's identity staying
   // fixed across renders is what lets the anchor track a changing target
   // without Popper treating it as a remount. Written in a layout effect, not
@@ -63,8 +84,19 @@ export default function HelperCard({ target, entry, onMouseEnter, onMouseLeave }
   // behavior under React's concurrent renderer, even though the object
   // identity itself never changes. Layout, not a plain effect, so the value
   // is correct before Popper's own measurement runs.
-  const virtualRef = useRef<Element>(target);
-  useLayoutEffect(() => { virtualRef.current = target; }, [target]);
+  // Keyed on the point's coordinates, not `pointer`'s object identity — the
+  // caller rebuilds that object every render, and rebuilding this one to
+  // match would re-trigger the layout effect below on every unrelated
+  // render while a cursor-anchored card is open, not just when the anchor
+  // actually moves.
+  const px = pointer?.x;
+  const py = pointer?.y;
+  const measurable: Measurable = useMemo(
+    () => (px !== undefined && py !== undefined ? { getBoundingClientRect: () => pointRect(px, py) } : target),
+    [target, px, py],
+  );
+  const virtualRef = useRef<Measurable>(measurable);
+  useLayoutEffect(() => { virtualRef.current = measurable; }, [measurable]);
 
   return (
     <Popper.Root>

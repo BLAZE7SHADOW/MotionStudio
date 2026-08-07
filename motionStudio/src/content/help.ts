@@ -68,6 +68,16 @@ export interface HelpEntry {
    * id comparison.
    */
   requiresSelection?: boolean;
+  /**
+   * `'cursor'` anchors the card to where the pointer entered the control
+   * instead of the control's own bounding box. `canvas` is nearly the full
+   * width and height of the editor, so *no* `side` has real room on both
+   * axes next to it — a card that fit horizontally still ran off the bottom
+   * of the viewport. A point near the cursor has room on some side almost
+   * anywhere it's hovered, which the control's own edges don't. Defaults to
+   * `'element'`; only set this where the anchor is that large.
+   */
+  anchorMode?: 'element' | 'cursor';
 }
 
 /**
@@ -235,15 +245,14 @@ export const HELP: Record<HelpId, HelpEntry> = {
       { emoji: '⏸️', text: 'motion waits while picked' },
     ],
     more: 'This is the real frame. The one thing that catches everyone out: while something is selected the motion freezes so you can position it — the canvas says so, and Preview brings it back. ⌘Z undoes anything, so nothing here is a mistake you cannot take back.',
-    // Nearly the full width of the editor, so 'left'/'right' leave the card
-    // nowhere to fit and Popper's collision-avoidance clips it against the
-    // viewport edge regardless of which way it flips. Anchoring underneath
-    // instead — centred against the canvas's own width — keeps the card's
-    // horizontal extent well inside the viewport no matter where within the
-    // canvas the cursor is; a card briefly overlapping the timeline below it
-    // is an ordinary floating layer, not a clip.
+    // Nearly the full width AND height of the editor — no `side` has real
+    // room on both axes relative to the *element's own edges*. Anchoring to
+    // the cursor instead (anchorMode below) is what actually fixes it;
+    // `side`/`align` here describe placement relative to that point, same as
+    // for any other entry.
     side: 'bottom',
     align: 'center',
+    anchorMode: 'cursor',
   },
 
   /* ───────────────────────── Right panel ───────────────────────── */

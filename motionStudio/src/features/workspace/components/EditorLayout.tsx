@@ -61,6 +61,7 @@ export default function EditorLayout({ project }: EditorLayoutProps) {
       {helper.open && (
         <HelperCard
           target={helper.open.target}
+          pointer={helper.open.pointer}
           entry={helper.open.entry}
           onMouseEnter={helper.onCardMouseEnter}
           onMouseLeave={helper.onCardMouseLeave}
