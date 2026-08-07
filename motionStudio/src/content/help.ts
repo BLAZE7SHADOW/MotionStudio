@@ -6,8 +6,9 @@
  *
  *   - the **quick start** (`tour/quickStart.ts`) — six hands-on steps on first
  *     run, which use `emoji` + `title` + `line` + `chips`
- *   - the **helper dots** (`tour/helperMode.ts`) — a beacon beside every control
- *     below, on demand, which use all of the above plus `more`
+ *   - **hover** (`hooks/useHelperLayer.ts`) — a border flash on whichever
+ *     control is under the cursor, on demand, which use all of the above plus
+ *     `more`
  *
  * Before this file the copy lived only in the tour, so anything the tour didn't
  * cover was undocumented in the product and anything it did cover was told to
@@ -53,10 +54,20 @@ export interface HelpEntry {
   line: string;
   /** ≤ 2. The things that catch people out. */
   chips?: HelpChip[];
-  /** ≤ 60 words. Helper dots only — the quick start never shows this. */
+  /** ≤ 60 words. Hover only — the quick start never shows this. */
   more?: string;
   side: HelpSide;
   align: HelpAlign;
+  /**
+   * Skip this control on hover while nothing is selected. For a control whose
+   * whole DOM presence doesn't track its relevance — the Properties panel's
+   * wrapper always renders, selected or not, unlike `effects-section` and
+   * friends which simply don't exist in the DOM until something matching is
+   * selected. Data, not a special case in `useHelperLayer`: any future entry
+   * needing the same treatment sets this flag rather than the hook growing an
+   * id comparison.
+   */
+  requiresSelection?: boolean;
 }
 
 /**
@@ -224,7 +235,14 @@ export const HELP: Record<HelpId, HelpEntry> = {
       { emoji: '⏸️', text: 'motion waits while picked' },
     ],
     more: 'This is the real frame. The one thing that catches everyone out: while something is selected the motion freezes so you can position it — the canvas says so, and Preview brings it back. ⌘Z undoes anything, so nothing here is a mistake you cannot take back.',
-    side: 'left',
+    // Nearly the full width of the editor, so 'left'/'right' leave the card
+    // nowhere to fit and Popper's collision-avoidance clips it against the
+    // viewport edge regardless of which way it flips. Anchoring underneath
+    // instead — centred against the canvas's own width — keeps the card's
+    // horizontal extent well inside the viewport no matter where within the
+    // canvas the cursor is; a card briefly overlapping the timeline below it
+    // is an ordinary floating layer, not a clip.
+    side: 'bottom',
     align: 'center',
   },
 
@@ -241,6 +259,10 @@ export const HELP: Record<HelpId, HelpEntry> = {
     more: 'Headings with a small arrow open and close, and a diamond beside one means something inside it moves — so a closed section can still tell you. Every number box can be dragged sideways like a slider, which beats typing while you feel out a value. Click into it when you want an exact number.',
     side: 'left',
     align: 'start',
+    // The panel's wrapper always renders — empty or not — unlike the
+    // conditional sections below it, so its relevance has to be gated
+    // explicitly rather than by the DOM simply not existing yet.
+    requiresSelection: true,
   },
 
   'media-layout': {
