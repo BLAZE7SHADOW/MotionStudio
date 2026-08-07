@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd motionStudio && npm install && npx playwright install --with-deps chromium && npm run build",
+  "buildCommand": "dnf install -y nss nspr atk cups-libs libdrm libxkbcommon libXcomposite libXdamage libXext libXfixes libXrandr mesa-libgbm pango cairo alsa-lib at-spi2-atk gtk3 && cd motionStudio && npm install && npx playwright install chromium && npm run build",
   "outputDirectory": "motionStudio/dist",
   "installCommand": "npm install --prefix api",
   "rewrites": [

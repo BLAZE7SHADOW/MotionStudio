@@ -74,8 +74,15 @@ should be public at all.
   directory-index static server showed `/contact` (no trailing slash, the
   form every in-app link actually uses) does *not* resolve automatically the
   way `/contact/` does, so this is deterministic rather than assumed.
-  `buildCommand` gains `npx playwright install --with-deps chromium` before
-  `npm run build`.
+  `buildCommand` gains `dnf install -y nss nspr atk cups-libs libdrm
+  libxkbcommon libXcomposite libXdamage libXext libXfixes libXrandr
+  mesa-libgbm pango cairo alsa-lib at-spi2-atk gtk3 && npx playwright install
+  chromium` before `npm run build` — Vercel's build image turned out to be
+  Amazon Linux 2023 (root, `dnf`), not Ubuntu, so Playwright's own
+  `--with-deps` (which shells out to `apt-get`) fails outright there; without
+  system libs at all, Chromium launches and immediately dies with
+  `libnspr4.so: cannot open shared object file`, found by inspecting a real
+  failed preview-deploy build log.
 - **`package.json`**: `build` becomes
   `tsc -b && vite build && node scripts/prerender.mjs`. New devDependency:
   **Playwright** (over Puppeteer — better maintained for exactly this
@@ -106,11 +113,19 @@ route's own meta, and restores the landing values on the way back);
 server. JSON-LD parses as valid JSON. `tsc --noEmit`/`eslint --max-warnings=0`
 clean.
 
-**Not verified — flagged, not assumed**: whether Vercel's actual build
-container has what headless Chromium needs (`--with-deps` uses `apt`, which
-may not be available in Vercel's build image), and whether the explicit
-`/contact` rewrite resolves the way intended on Vercel's real routing engine.
-Both need a preview deploy, not production, before this is trusted.
+**Both flagged risks now verified against a real Vercel preview deploy**
+(`vercel deploy`, not production): the build failed twice before the `dnf`
+fix above (see Changed) — first on missing `apt-get`, then on a missing
+shared library once the browser download alone wasn't enough — then
+succeeded, logging `✓ prerendered / → dist/index.html` and
+`✓ prerendered /contact → dist/contact/index.html`. Checked the deployed
+preview directly (it sits behind Vercel's SSO wall, so via an authenticated
+browser session rather than bare `curl`): `/` and `/contact` serve real
+prerendered HTML with correct distinct titles; `/dashboard` serves the
+generic `app.html` shell with `noindex`; `/robots.txt` and `/sitemap.xml`
+serve their real content; `/og-image.png` returns `200 image/png`; the
+JSON-LD block parses and matches; the explicit `/contact` rewrite resolves
+correctly on Vercel's actual routing engine.
 
 ---
 
