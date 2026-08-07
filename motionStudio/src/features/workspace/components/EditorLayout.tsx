@@ -6,6 +6,7 @@ import PropertiesPanel from './PropertiesPanel';
 import TimelinePanel from './TimelinePanel';
 import { useUndoRedoShortcuts } from '../hooks/useUndoRedoShortcuts';
 import { useEditorTour } from '../tour/useEditorTour';
+import { useHelperDots } from '../hooks/useHelperDots';
 import { useProjectLock } from '../hooks/useProjectLock';
 import ProjectLockGate from './ProjectLockGate';
 
@@ -18,6 +19,8 @@ export default function EditorLayout({ project }: EditorLayoutProps) {
   useUndoRedoShortcuts();
   // first-run walkthrough; no-ops once the user has seen or dismissed it
   useEditorTour(true);
+  // the on-demand explanations that sit beside every control, unless turned off
+  useHelperDots();
   // one editor per project across tabs — see lib/projectLock.ts
   const lock = useProjectLock(project.id);
 

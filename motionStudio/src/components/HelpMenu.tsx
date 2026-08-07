@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { HelpCircle, MessageSquare, Sparkles, Compass, Keyboard } from 'lucide-react';
+import { HelpCircle, MessageSquare, Sparkles, Rocket, Keyboard, Lightbulb } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { startEditorTour } from '@/features/workspace/tour/useEditorTour';
 import { hasUnseenRelease, markReleasesSeen } from '@/lib/releaseSeen';
 import { clearSuppressions } from '@/lib/notices';
+import { useHelperMode } from '@/lib/helperMode';
+import { track } from '@/lib/analytics';
 import { useFeedbackStore } from '@/lib/feedbackStore';
 import FeedbackDialog from './FeedbackDialog';
 import WhatsNewDialog from './WhatsNewDialog';
@@ -40,10 +42,13 @@ export default function HelpMenu() {
 
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
-  /* Replaying the tour also brings back every hint the user dismissed with
-     DON'T SHOW AGAIN. Both are the same request — "explain this to me again" —
-     and a replayed tour that still can't show the beat hint would be a tour
-     that lies about what the app tells you. */
+  const helperOn = useHelperMode((s) => s.on);
+  const setHelperOn = useHelperMode((s) => s.setOn);
+
+  /* Replaying the walkthrough also brings back every hint the user dismissed
+     with DON'T SHOW AGAIN. Both are the same request — "explain this to me
+     again" — and a replayed walkthrough that still can't show the beat hint
+     would be one that lies about what the app tells you. */
   function replayTour() {
     clearSuppressions();
     startEditorTour(true);
@@ -81,15 +86,36 @@ export default function HelpMenu() {
           className="w-52 p-2 bg-studio-panel border-studio-border-strong rounded-studio-lg shadow-studio-lg"
         >
           {/* Replaying the walkthrough matters: the one time it runs by itself
-              is the moment you understand the app least. */}
+              is the moment you understand the app least — and replaying it with
+              things on the canvas is when its steps have something to act on. */}
           {inEditor && (
             <button
               type="button"
               onClick={() => { setOpen(false); replayTour(); }}
               className={item}
             >
-              <Compass className="w-3.5 h-3.5" />
-              Replay tour
+              <Rocket className="w-3.5 h-3.5" />
+              Quick start
+            </button>
+          )}
+
+          {/* Mirrors the toolbar switch. Someone hunting for help looks under
+              the question mark, not at an icon they haven't decoded yet. */}
+          {inEditor && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                track.helperModeToggled({ on: !helperOn });
+                setHelperOn(!helperOn);
+              }}
+              className={item}
+            >
+              <Lightbulb className="w-3.5 h-3.5" />
+              Helper dots
+              <span className="ml-auto text-[10px] uppercase tracking-widest text-studio-text-faint">
+                {helperOn ? 'On' : 'Off'}
+              </span>
             </button>
           )}
 

@@ -14,6 +14,7 @@ import ProjectSettingsPopover from './ProjectSettingsPopover';
 import ExportDialog from './ExportDialog';
 import UserMenu from '@/components/UserMenu';
 import HelpMenu from '@/components/HelpMenu';
+import HelperToggle from './HelperToggle';
 import SaveIndicator from './SaveIndicator';
 import { track } from '@/lib/analytics';
 
@@ -81,9 +82,15 @@ export default function Toolbar({ project }: ToolbarProps) {
       <Separator orientation="vertical" className="h-4 bg-studio-border-strong mx-1.5" />
 
       {/* Insert tools */}
-      <span data-tour="insert" className="flex items-center gap-0.5">
+      <span className="flex items-center gap-0.5">
       <TooltipHint label="Add text">
+        {/* The anchor is this button rather than the group around it. The group
+            ends where the blocks button ends, so a helper dot on it landed on
+            the exact pixel as the blocks dot and hid it — and the copy is about
+            T specifically ("click T, then start typing"), so pointing at the
+            group was the less honest of the two anyway. */}
         <Button
+          data-tour="insert"
           variant="ghost"
           size="icon"
           onClick={() => { track.editorTextAdded(); const el = addText(); if (el) setSelectedElement(el.id); }}
@@ -170,6 +177,7 @@ export default function Toolbar({ project }: ToolbarProps) {
       {/* Preview toggle */}
       <div className="ml-auto flex items-center gap-2">
         <SaveIndicator />
+        <HelperToggle />
         <HelpMenu />
 
         <Button
