@@ -59,6 +59,26 @@ export const track = {
   editorTourStarted: (props: { replay: boolean }) =>
     posthog.capture('editor_tour_started', props),
 
+  // ── Onboarding ────────────────────────────────────────────────────────
+  /* The quick start advances on what the user *does*, so `step_done` is the
+     only honest measure of whether a step teaches anything: a high abandon
+     index next to a low done count on the same step means the instruction is
+     wrong, not the feature. */
+  quickStartStepDone: (props: { id: string; index: number }) =>
+    posthog.capture('quick_start_step_done', props),
+
+  quickStartFinished: () =>
+    posthog.capture('quick_start_finished'),
+
+  quickStartAbandoned: (props: { index: number }) =>
+    posthog.capture('quick_start_abandoned', props),
+
+  helperModeToggled: (props: { on: boolean }) =>
+    posthog.capture('helper_mode_toggled', props),
+
+  helperHintOpened: (props: { id: string }) =>
+    posthog.capture('helper_hint_opened', props),
+
   editorPreviewToggled: (playing: boolean) =>
     posthog.capture('editor_preview_toggled', { playing }),
 
