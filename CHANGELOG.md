@@ -5,6 +5,134 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-07] — Hover to learn: replacing the dots with a border flash
+
+Live feedback on the dots shipped earlier today: the beacon-beside-a-`side`
+model put two of twenty-one in the wrong place outright (toolbar dots at
+`y = -3`, one landing on top of another), and even placed correctly, a field of
+independently-pulsing dots read as noise rather than guidance. Rebuilt twice
+more in this session, each version proven live rather than in review:
+
+1. **Ambient ring on every control, always on.** Fixed the position bugs — a
+   ring drawn from the control's own bounding box has no `side` to get wrong —
+   but reproduced the dots' real problem in a new shape: several things
+   competing for attention, and a ring around the entire canvas read as "the
+   whole screen is highlighted."
+2. **Hover-only, one control at a time — this version.** Nothing is visible
+   until the cursor is over a control; only that one control ever shows
+   anything; leaving it closes it. This is what shipped.
+
+### Added
+
+- **`tour/HelperCard.tsx`** — the floating card, rewritten from scratch on
+  `@radix-ui/react-popper` used directly (`Popper.Root` + `Popper.Anchor
+  virtualRef={...}` + `Popper.Content`) rather than the packaged `HoverCard`,
+  because `HoverCard` requires `<HoverCardTrigger asChild>` wrapping the target
+  JSX — which would mean editing all 21 components carrying a `data-tour`
+  attribute, undoing the whole point of that attribute being that none of them
+  know onboarding exists. `Popper.Anchor`'s `virtualRef` accepts anything with
+  a `getBoundingClientRect()`, which a plain `document.querySelector(...)`
+  result already is.
+- **`hooks/useHelperLayer.ts`** — the hover state machine. `mouseenter`/`focus`
+  is the only thing that ever adds the flash class, to the one element it
+  fired on; `mouseleave`/`blur` removes it after a short grace period (to let
+  the pointer travel from the control onto the card and read it). No click
+  listener anywhere near a control — see Fixed, below.
+- **`tour/tourActive.ts`** — a one-boolean zustand store so the hover layer can
+  stand down while the guided quick start has the screen (driver.js is already
+  spotlighting one control; a hover-flash on wherever the cursor happens to be
+  resting would compete with that).
+- **`tour/flow.ts`** — `Flow`/`FlowStep`/`World`, generalized out of
+  `quickStart.ts`'s first-run steps unchanged, so a future guided sequence
+  (search a stock photo → add it → make it the background) is a new `Flow`
+  object and a trigger point, not new machinery. `quickStart.ts` now exports
+  `FIRST_VIDEO_FLOW: Flow` built on these types; all 29 existing test
+  assertions pass against it unchanged.
+- **`HelpEntry.requiresSelection?: boolean`** (`content/help.ts`) — lets one
+  registry entry opt out of hover while nothing is selected, checked generically
+  in `useHelperLayer`'s registration loop rather than as an id comparison in the
+  hook. Set on `properties`: its wrapper always renders, empty or not, unlike
+  the conditional sections below it, so its relevance can't be read off the DOM
+  the way theirs can.
+
+### Changed
+
+- **`.ms-help-flash`** (`tour/helper.css`) — `outline-offset` is negative
+  (inset), `ease-in-out` timing, 1.8s cycle: slower and smoother than the
+  ambient version's breathing pulse, and — separately — the inset is what
+  makes the border a complete rectangle on `overflow-hidden` anchors (see
+  Fixed).
+- **`content/help.ts`**: `canvas`'s `side` moves from `left` to `bottom`. A
+  huge anchor has no side with real room next to it; centering underneath
+  keeps the card's horizontal extent inside the viewport regardless of where
+  within the canvas the cursor is.
+- **`hooks/useHelperLayer.ts`**: the hoverable id set is `Object.keys(HELP)`,
+  derived from the registry, not a hand-maintained array — widened from the
+  4-control preview (`insert`/`export`/`canvas`/`properties`) to all 21 with no
+  second list to keep in sync.
+
+### Fixed
+
+- **The border only rendered on one edge of `properties`, `assets` and
+  `timeline`** — a line down the left, not a box. Root cause: those three
+  anchors clip their own overflow, and a positive `outline-offset` draws
+  *outward*, past the border box; whichever edges the surrounding flex layout
+  squeezes closest clip that outward extension too. `properties`'s left edge
+  was the one side not pinched against anything, so it was the only one that
+  survived. Fixed by making the offset negative — inset can never be clipped
+  by an element's own overflow, regardless of layout.
+- **Clicking a control to pin its card also fired the control's own click
+  handler.** Caught in the previous preview round: clicking `export` opened
+  both the help card and the real Export dialog. Not patched — the pinning
+  mechanism it depended on is gone. The card now shows everything (line,
+  chips, the longer answer) the instant it opens, so there's nothing to click
+  for, and no click listener goes anywhere near a control being explained.
+- **The card didn't close when a selection cleared mid-hover.** Deselecting
+  fires no `mouseleave` — the mouse never moved — so `properties`'s card, and
+  its now-defunct border, could sit open describing a panel that had gone back
+  to its empty state. `OpenState` now carries the `requiresSelection` fact
+  captured when the card opened, and the visible-card derivation re-checks it
+  against live selection at read time — the same idiom already used for
+  closing on a shot change, extended rather than patched around.
+- **`canvas`'s card clipped off the viewport's right edge.** The element is
+  nearly the full width of the editor; `side: 'left'`/`'right'` leaves nowhere
+  for a 300px card to fit next to it, and Popper's collision-avoidance picked
+  the least-bad option, which still overflowed. Fixed in content, not code:
+  `side: 'bottom'`, centered.
+
+### Removed
+
+- **`hooks/useHelperDots.ts`, `tour/helperMode.ts`** — the driver.js-`hints`
+  beacon system, superseded entirely.
+- `driver.js/hints` and its CSS chunk no longer appear in the build output at
+  all (confirmed via `dist/assets/` listing) — the plain `driver.js` chunk
+  remains, still driving the quick start.
+
+### Verified
+
+Full pipeline green: typecheck · lint · 40 test checks (11 help + 29
+quickStart, unchanged by the `FIRST_VIDEO_FLOW` rename) · build. `dist/assets/`
+confirmed free of any `hints-*` chunk.
+
+Live in the browser: idle screen shows zero flashing elements and no card;
+hovering `insert` produces exactly one flashing element, matching; moving
+across `insert` → `export` → `canvas` → `properties` never left two flashing at
+once; `properties` and `timeline` (both `overflow-hidden`) confirmed rendering
+a complete rectangle via `getComputedStyle` (`outline-offset: -2px`,
+`animation-duration: 1.8s`, `ease-in-out`); `canvas`'s card confirmed fully
+inside the viewport at several hover points; selecting text made
+`effects-section`/`motion-section` hoverable with identical behavior to the
+always-on ids; clicking the real Export button while its card was open opened
+the actual dialog with the card never interfering; deselecting text while
+hovering `properties` (mouse stationary) closed both the card and the border
+immediately — the fix for the bug found during this same verification pass;
+the quick start ran unaffected, and hover-to-learn correctly showed zero
+flashes for its duration, resuming the instant it closed; toggling the mode
+off mid-hover cleared everything immediately, on brought it back without a
+reload.
+
+---
+
 ## [2026-08-07] — Onboarding split in two: a quick start you do, and dots you ask
 
 The editor explained itself with a 21-step first-run tour. The information in it

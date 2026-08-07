@@ -37,7 +37,7 @@ Vercel Functions (render/quota/upload/contact API), Supabase (auth + project syn
 | **Remocn** | 57 copy-paste Remotion components (text effects, shaders, UI blocks) — animation polish bought, not built, and owned as source in the repo. |
 | **PostHog** | Product analytics *and* exception capture. A dedicated error vendor (Sentry) would buy a nicer stack-trace UI for a second script on every page load; `__APP_VERSION__` already carries the Vercel commit SHA, so the "release = git SHA" half was free. |
 | **Resend** | Transactional email for the contact form — a single `emails.send()` call instead of managing SMTP or a mail server. |
-| **driver.js** | Both onboarding surfaces. Its `hints` entry point does the awkward parts of a helper-dot mode properly — beacons repositioned from a **capture-phase** scroll listener, so a dot inside a scrolling panel tracks that panel and not just the window — and it ships as a second lazy chunk, so the editor pays nothing when the mode is off. |
+| **driver.js** | Drives the guided quick start — spotlighting one control at a time, keeping it clickable through the overlay. Loaded lazily, only for that once-per-user walkthrough. (Its `hints` entry point drove an earlier version of hover-to-learn; that surface is now built directly on `@radix-ui/react-popper` instead — see the onboarding section.) |
 
 ---
 
@@ -532,10 +532,12 @@ was right; the *timing* was the bug. Everything the app knew was delivered as a
 compulsory wall before the user had touched anything, and a wall of correct prose
 is a wall nobody finishes. It split into two:
 
-- **A six-step quick start** (`tour/quickStart.ts`) that waits for the user to do
-  each thing and advances off live store state.
-- **Helper dots** (`tour/helperMode.ts`) — a beacon beside each of the 21
-  explainable controls, on demand, blocking nothing.
+- **A six-step quick start** (`tour/quickStart.ts`, an instance of the `Flow`
+  primitive in `tour/flow.ts`) that waits for the user to do each thing and
+  advances off live store state, driven by `driver.js`.
+- **Hover to learn** (`hooks/useHelperLayer.ts` + `tour/HelperCard.tsx`) — a
+  border flash and a card on whichever of the 21 explainable controls the
+  cursor is currently resting on, on demand, blocking nothing.
 
 Both read their words from **one registry**, `content/help.ts`, keyed by the
 `data-tour` attributes already on the components. Two descriptions of one feature
@@ -543,13 +545,41 @@ is two things to keep true and one of them always rots — the same reasoning as
 the living-docs rule. `Record<HelpId, HelpEntry>` makes a forgotten entry a
 compile error rather than a blank popover.
 
+**Hover to learn went through two designs before this one**, both proven wrong
+live rather than in review, which is worth recording precisely because neither
+mistake was obvious in advance:
+
+1. A **floating beacon beside the control** (built on `driver.js`'s `hints`
+   module), positioned on a guessed `side`. Two of the twenty-one landed wrong
+   (the toolbar's at `y = -3`, half off-screen; one directly on top of another,
+   hiding it) — not a tuning problem, the wrong interaction model: a beacon
+   *beside* an element is a position to get right, and there were 21 chances to
+   get it wrong.
+2. An **ambient ring on every control, always present** while the mode was on.
+   Fixed the position bugs — the ring is drawn from the control's own bounding
+   box via `outline`, so there's no `side` decision left to make — but
+   reproduced the beacons' real problem in a new shape: several things visible
+   and competing for attention at once, and a ring around the entire canvas
+   read as "the whole screen is highlighted" rather than pointing at anything.
+
+The current version fixes both at once: **the border only exists on the one
+control currently hovered**, appearing and disappearing with the hover itself.
+An idle screen has none of it anywhere. `Popper.Anchor`'s `virtualRef` — accepts
+anything with a `getBoundingClientRect()`, so a plain
+`document.querySelector('[data-tour="…"]')` result qualifies — is what
+positions the card without requiring any of the 21 components to know
+onboarding exists, the same way `HoverCard`/`Popover`/`Tooltip` position
+themselves; using `Popper` directly rather than the packaged `HoverCard` is what
+avoids wrapping each anchor in `<HoverCardTrigger asChild>`.
+
 The decisions worth recording:
 
-- **The completion predicates are pure functions over plain data** — no store, no
-  DOM, no React. The expensive failure here is a step that never completes,
-  leaving the user staring at an instruction they have already followed, so all
-  six are driven headlessly by `tests/quickStart.test.mjs` against fixtures.
-  The store subscription that feeds them lives in the React layer.
+- **The quick start's completion predicates are pure functions over plain
+  data** — no store, no DOM, no React. The expensive failure here is a step
+  that never completes, leaving the user staring at an instruction they have
+  already followed, so all six are driven headlessly by
+  `tests/quickStart.test.mjs` against fixtures. The store subscription that
+  feeds them lives in `useEditorTour.ts`.
 - **They compare against a snapshot taken when the step opened**, not against
   absolute state. "A text element exists" is already true when a returning user
   replays on a finished project, and the whole thing would flash past untouched.
@@ -561,17 +591,41 @@ The decisions worth recording:
   to click.** driver.js makes everything outside the highlight
   `pointer-events: none`; `effects-section` is a header `<div>` whose *sibling*
   holds the picker, so spotlighting it would have stranded the step forever.
-  Hence `QuickStep.anchor`, which decouples where a step points from whose words
+  Hence `FlowStep.anchor`, which decouples where a step points from whose words
   it borrows.
-- **Beacon placement is derived, not stored.** Dots default to their anchor's top
-  edge, which puts the toolbar's at `y = -3`. `side: 'bottom'` on the popover
-  already means "no room above this element", so it is exactly the set needing
-  the beacon underneath — one rule with no exceptions beats a second placement
-  field on 21 entries.
-- **Anchors are re-resolved from React state, not a `MutationObserver`.** Half
-  the dots are conditional (Sound needs a music clip selected, the transition
-  picker needs a second shot), so `useHelperDots` re-runs on the handful of
-  values that *cause* those panels to mount.
+- **No click listener ever goes on a control being explained.** An earlier
+  version let a click pin the hover card open, on the control itself — clicking
+  `export` to pin its card also fired the real Export button underneath it.
+  Pinning was removed rather than patched: the card now shows everything on
+  hover, so there's nothing to click for, and that whole class of bug can't
+  recur because the listener it depended on doesn't exist.
+- **The flash's `outline-offset` is negative (inset), not positive.** Several
+  anchors (`properties`, `assets`, `timeline`) clip their own overflow; an
+  outward offset draws past the border box and gets clipped on whichever edges
+  the surrounding flex layout squeezes closest, leaving a partial border instead
+  of a rectangle. Inset can never be clipped by an element's own overflow,
+  regardless of layout.
+- **Behavior differences are data on `HelpEntry`, not branches in the hook.**
+  The Properties panel only makes sense to explain once something is selected —
+  unlike the conditional sections below it, its wrapper always renders, so the
+  DOM alone can't gate it. That's `requiresSelection?: boolean` on the registry
+  entry, checked generically in `useHelperLayer`'s registration loop; a future
+  entry needing the same treatment is a data change, not a hook edit. In the
+  same spirit, the hoverable id set is `Object.keys(HELP)`, not a hand-maintained
+  list — a new `HelpId` is covered with nothing else to update.
+- **Closing is a derivation, not a reset.** `useHelperLayer` captures the shot
+  and the `requiresSelection` fact at the moment a card opens, then compares
+  both at *read* time against current state — a shot change or a selection
+  clearing mid-hover (with no `mouseleave` to trigger anything, since the mouse
+  never moved) simply stops matching, and the card disappears without a second
+  effect hunting for another way state could go stale.
+- **Standing down for the quick start is a reactive store, not an imperative
+  pair of calls.** `tour/tourActive.ts` is a one-boolean zustand store;
+  `useEditorTour` sets it, `useHelperLayer` reads it as an ordinary dependency.
+  The `driver.js`-hints version of this used module-level `pause`/`resume`
+  functions because the hints instance lived outside React; once the hover
+  layer became a real hook, a plain reactive value it can read like any other
+  piece of state was the better fit.
 
 ---
 

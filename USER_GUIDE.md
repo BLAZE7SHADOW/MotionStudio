@@ -53,24 +53,27 @@ back. Any step can be passed with **Skip**, and the ✕ closes the whole thing.
 Replay it any time from the **?** menu in the toolbar → **Quick start**; that
 also brings back any hint you dismissed with "don't show again".
 
-### Helper dots
+### Hover to learn
 
-Everything the quick start *doesn't* cover is one click away instead. A small
-purple dot sits beside every control that has something to say — 21 of them,
-across the toolbar, both side panels, the canvas and the timeline. Click one and
-you get a card: what it is, the one thing worth knowing, and a longer answer
-underneath.
+Everything the quick start *doesn't* cover is one hover away instead. Rest the
+pointer on any of the 21 controls that has something to say — across the
+toolbar, both side panels, the canvas and the timeline — and its border
+flashes gently while a card opens beside it: what it is, the one thing worth
+knowing, and a longer answer underneath. Move on, and it closes.
 
-**They never block anything.** There is no dimming, nothing goes grey, and the
-control under the card still works while it's open — the dots complement what
-you're doing rather than interrupting it.
+**Only one shows at a time**, and **nothing blocks a click.** There's no
+dimming, nothing goes grey, and the control itself still works exactly as
+normal while its card is open — hovering complements what you're doing rather
+than getting in its way.
 
-Dots come and go with the app. Select a music clip and a dot appears on
-**Sound**; select text and dots appear on **Effects** and **Motion**; open a
-second shot and one appears on the transition picker.
+What's hoverable comes and goes with the app. Select a music clip and **Sound**
+becomes reachable; select text and **Effects** and **Motion** do too; open a
+second shot and the transition picker joins them. The Properties panel itself
+only responds once something is selected — before that there's nothing there
+for it to describe.
 
-They are **on to begin with**. Turn them off with the 💡 in the toolbar, or under
-**?** → **Helper dots**, and they stay off until you ask for them back.
+It's **on to begin with**. Turn it off with the 💡 in the toolbar, or under
+**?** → **Hover to learn**, and it stays off until you ask for it back.
 
 **Hints.** When something changes on its own — a tempo detected, another tab
 taking over the project — MotionStudio says so in the top-right corner rather
@@ -659,9 +662,9 @@ the problem already described, so you only add what happened from your side.
 - **What's new** — a short list of what changed recently, in plain terms. It
   opens by itself once per release, and a dot sits on the **?** button until
   you've read it. Brand-new accounts never see it: a changelog needs a "before".
-- **Quick start** and **Helper dots** — the two ways the app explains itself, both
-  covered in §1. The menu row shows whether the dots are on, so it matches the 💡
-  in the toolbar whichever one you used last.
+- **Quick start** and **Hover to learn** — the two ways the app explains itself, both
+  covered in §1. The menu row shows whether hover-to-learn is on, so it matches
+  the 💡 in the toolbar whichever one you used last.
 
 ---
 

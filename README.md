@@ -20,7 +20,7 @@ MotionStudio is a full video compositor that runs in the browser. You place elem
 
 - **In-app feedback + release notes** — a feedback form that auto-attaches build, browser and project context, and a "What's new" dialog shown once per release
 - **Hands-on quick start** — a six-step first run that waits for you to *do* each thing (add text, drag it, animate it, press play, add a shot) and advances off live store state rather than a Next button; the completion predicates are pure functions over plain data, unit-tested headlessly
-- **Helper dots** — an opt-out mode that puts a beacon beside all 21 explainable controls, on demand and never blocking a click; built on `driver.js`'s `hints` entry point over the `data-tour` anchors the quick start already uses, and re-resolved as panels mount and unmount
+- **Hover to learn** — an opt-out mode where any of the 21 explainable controls flashes and opens a card while the cursor rests on it, closes the instant it doesn't, and never intercepts a click; built on the same `data-tour` anchors as the quick start, positioned with `@radix-ui/react-popper`
 - **One copy registry** — both surfaces read `content/help.ts`, so a control cannot be described two different ways; a test enforces the shape of the writing (5-word titles, one-sentence bodies, ≤2 chips) so it can't drift back into prose
 - **Contextual hints** — the app says what just changed on its own (tempo detected, another tab taking over), each dismissable for good and restored by replaying the quick start
 - **21 ready-made templates** — announcement clips, dev/product demos, hooks, offers, title cards; pick one and you have an animated composition in three clicks instead of twenty
