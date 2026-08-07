@@ -295,12 +295,35 @@ Legend: `[x]` shipped · `[~]` partial · `[ ]` missing
       it starts life on the clipboard; the picker route means saving it to disk
       purely to find it again. No quick-capture shortcut — we cannot take a
       screenshot from a web page.)*
-- [~] Rich OG image and full keyword meta (they rank for "mockup generator").
+- [x] Rich OG image and full keyword meta (they rank for "mockup generator").
       *(2026-07-30 — title, description, `og:title`, `og:description` and
       `twitter:card` shipped; `index.html` had a bare `<title>motionstudio</title>`
       and no description at all. **No `og:image`**: it needs a real 1200×630
       raster, and pointing the tag at a file that 404s is worse than omitting
       it. Left open deliberately.)*
+      *(2026-08-07 — closed. `og:image`/`twitter:image` generated
+      (`scripts/generate-og-image.mjs`, a Playwright screenshot of a
+      brand-styled static HTML card — not a product screenshot, replaceable
+      later without touching anything else), plus `og:url`/`og:site_name`
+      and the `twitter:title`/`description`/`image` that were missing
+      entirely. Also went beyond this row: `robots.txt`, `sitemap.xml`, a
+      canonical tag, per-route `<title>`/description (`usePageMeta.ts` —
+      every route shared one static tag before this), and a
+      `SoftwareApplication` JSON-LD block with no fabricated
+      `aggregateRating`.)*
+- [x] ~~Prerendering~~ **the SPA/prerendered gap noted in §2's stack table**
+      is closed for the two routes that need it. *(2026-08-07 —
+      `scripts/prerender.mjs`, run as part of `build`: snapshots real
+      rendered HTML for `/` and `/contact` via a headless Chromium
+      (Playwright) hitting Vite's own `preview()` server post-build, so a
+      crawler or link-preview bot that doesn't execute JS sees actual
+      content instead of an empty `<div id="root">`. `dist/index.html` and
+      `dist/contact/index.html` become the real pages; the generic
+      pre-JS skeleton moves to `dist/app.html` (gains `noindex`) as the
+      shell for `/dashboard`/`/editor/:id`, which stay disallowed in
+      `robots.txt` and were never going to rank regardless. Full SSR this is
+      not — real users still get the plain CSR app, unchanged — but it's the
+      cheap 80% of the gap Next.js's App Router buys them for free.)*
 
 ### I. Engineering hygiene
 
@@ -387,3 +410,4 @@ Append a line whenever something above is ticked.
 | 2026-07-30 | F/I — save state, schema versioning, exception capture | Phase 2. `saveProject` returned void and swallowed failures — the root of the whole gap. Per-project `schemaVersion` because the envelope version doesn't survive Supabase. Also fixed the autosave re-uploading every project on every edit. |
 | 2026-07-30 | E — contextual hints, tour steps, shortcuts sheet | Phase 1 of the close-the-gaps plan. Notice primitive with DON'T SHOW AGAIN (17 new assertions); hints for tempo found / tempo shaky / taken over; tour steps for the beat grid and transitions; shortcuts sheet. Live run moved the notice stack top-right — it was covering the grid it described. |
 | 2026-07-30 | — | Scorecard re-audited against the code. 14 of ~40 ticked; **all five items in §6 "order of attack" are now done**. Sections **D** (perceived performance) and **I** (hygiene) remain untouched; **G** deferred by the owner. Next candidates, ranked: schema versioning (§I — the doc predicted it was "needed the day we ship shots", and that day has passed), offline save states (§F), the prerendered skeleton (§D). |
+| 2026-08-07 | H — og:image closed, prerendering, technical SEO | Owner asked for organic reach directly, prompted by a PostHog export showing near-zero real traffic. `og:image`/`twitter:image` generated (Playwright screenshot of a brand-styled static card, not a product screenshot); `robots.txt`, `sitemap.xml`, canonical, per-route `<title>`/description (`usePageMeta.ts`), `SoftwareApplication` JSON-LD with no fabricated rating. Also closed the SPA-vs-prerendered gap §2's stack table called out against Ultramock's Next.js App Router: `scripts/prerender.mjs` snapshots real HTML for `/` and `/contact` post-build via headless Chromium against Vite's own `preview()` server; `dist/index.html` becomes the real landing page, the generic skeleton moves to `dist/app.html` (`noindex`) as the shell for the private, `robots.txt`-disallowed routes. H1 gained a descriptive line (`Browser-based motion graphics editor`) under the wordmark — the old H1 was the brand name alone, no keyword text a search engine or a first-time visitor could use. **Unverified**: whether Vercel's build container has what headless Chromium needs (`--with-deps` added to `buildCommand`, can't confirm it works without a real deploy), and whether `/contact`'s explicit rewrite resolves correctly on Vercel's actual routing (added defensively rather than relying on default clean-URL behavior, which a local static-server test showed is not something to assume). Flagged for a preview deploy before this is trusted, not production. |

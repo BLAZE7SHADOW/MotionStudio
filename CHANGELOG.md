@@ -5,6 +5,115 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-07] — SEO foundation: crawlable public pages, real metadata
+
+`docs/benchmark-ultramock.md` already tracked `og:image` as an open gap
+("needs a real 1200×630 raster... pointing the tag at a file that 404s is
+worse than omitting it"), and a PostHog export the owner pulled confirmed
+there's essentially no organic traffic yet. An audit found the deeper issue:
+this is a pure client-side SPA with no prerendering, so most non-Google
+crawlers and every link-preview bot (Slack, X, iMessage, Discord) see an
+empty `<div id="root">` for `/` and `/contact` — the only two routes that
+should be public at all.
+
+### Added
+
+- **`public/robots.txt`** — `/` and `/contact` allowed; `/dashboard` and
+  `/editor/*` disallowed on purpose. They require auth, render nothing to a
+  logged-out crawler, and indexing them would only waste crawl budget on
+  pages that can never rank.
+- **`public/sitemap.xml`** — the two public URLs, `<lastmod>` only. No
+  `<priority>`/`<changefreq>` — Google has long ignored both; guessing values
+  would be less honest than omitting them.
+- **`public/og-image.png`** — generated, not sourced: `scripts/og-card.html`
+  is a small standalone page (not part of the React app) styled with the
+  exact `--studio-bg`/`--studio-accent` tokens and the real Bricolage
+  Grotesque wordmark font, and `scripts/generate-og-image.mjs` screenshots it
+  at 1200×630 with Playwright. Run once by hand, not on every build — it's
+  static brand content. A clean placeholder, not a product screenshot;
+  replacing it later touches nothing else in this change.
+- **JSON-LD `SoftwareApplication` schema** (`index.html`) — name, url,
+  description, a genuine `$0` `Offer`. Deliberately no `aggregateRating`: a
+  fabricated one is exactly the structured-data spam Google penalizes, and
+  there's no real rating to report.
+- **`og:url`/`og:site_name`/`og:image(+width/height)`, the missing
+  `twitter:title`/`description`/`image`, and a canonical tag** — `index.html`
+  previously had `og:type`/`og:title`/`og:description` and a bare
+  `twitter:card` with nothing else.
+- **`src/hooks/usePageMeta.ts`** — sets title/description/canonical/OG/
+  Twitter copies for whichever of the two public routes is mounted, restoring
+  the previous values on unmount. No `react-helmet`: with exactly two routes
+  that need this (`DashboardPage`/`EditorPage` are private, `noindex`
+  regardless), a dependency buys nothing a declarative list of
+  `document.querySelector` calls doesn't already do.
+- **`scripts/prerender.mjs`**, run as the last step of `build` — the
+  structural piece. Starts Vite's own `preview()` server against the
+  just-built `dist/` (no new static-file-serving dependency), launches
+  headless Chromium via Playwright, visits `/` and `/contact`, waits for the
+  real content to render (not just `networkidle` — waits for the landing
+  page's async-auth-gated spinner to be gone, so a slow chunk load can't
+  produce a half-rendered snapshot), and writes the fully-rendered
+  `page.content()` to `dist/index.html` and `dist/contact/index.html`. Real
+  users are unaffected — React mounts over the static markup exactly as it
+  does today over the loading skeleton; this only changes what a non-JS
+  request sees.
+
+### Changed
+
+- **The landing page H1** gained a second line inside the same `<h1>`:
+  "Browser-based motion graphics editor", in the body font (`--font-sans`),
+  under the unchanged brand-mark wordmark (`--font-display`, needed an
+  explicit inline-style override — the h1's own inline `fontFamily` beats any
+  Tailwind class on specificity). The old H1 was the brand name alone, no
+  descriptive text a search engine — or a first-time visitor with no
+  context — could use.
+- **`vercel.json`**: the SPA catch-all's `destination` moves from
+  `/index.html` to `/app.html` (see Added, below, for why); `/contact` gets
+  its own explicit rewrite to `/contact/index.html` rather than relying on
+  Vercel's default clean-URL resolution — a local test against a plain
+  directory-index static server showed `/contact` (no trailing slash, the
+  form every in-app link actually uses) does *not* resolve automatically the
+  way `/contact/` does, so this is deterministic rather than assumed.
+  `buildCommand` gains `npx playwright install --with-deps chromium` before
+  `npm run build`.
+- **`package.json`**: `build` becomes
+  `tsc -b && vite build && node scripts/prerender.mjs`. New devDependency:
+  **Playwright** (over Puppeteer — better maintained for exactly this
+  render-and-snapshot use case, and the same browser instance does double
+  duty for the OG-image screenshot, one new tool instead of two).
+
+### Added — `dist/app.html`
+
+The as-built shell (skeleton, generic meta) is copied here, unmodified except
+for an added `<meta name="robots" content="noindex">`, *before*
+`dist/index.html` is overwritten with the real landing page. Without this
+split, every other route's first paint — `/dashboard`, `/editor/:id`,
+anything unmatched — would flash real landing-page content before React
+Router corrected it, a regression from today's neutral skeleton for zero
+benefit (`robots.txt` already keeps crawlers off those routes regardless).
+
+### Verified
+
+`npm run build` end to end: `dist/index.html` (27.8 KB) contains the real
+landing page's H1, subhead and CTA text with a correct per-page `<title>` and
+canonical; `dist/contact/index.html` (14.6 KB) contains the contact page's
+own title/canonical/description, confirmed distinct from the landing page's
+and confirmed set by `usePageMeta` rather than hardcoded (checked live via
+dev server: navigating `/` → `/contact` → `/` in the browser shows each
+route's own meta, and restores the landing values on the way back);
+`dist/app.html` (6.1 KB) still has the generic skeleton, gained `noindex`.
+`robots.txt`/`sitemap.xml`/`og-image.png` all served correctly from a static
+server. JSON-LD parses as valid JSON. `tsc --noEmit`/`eslint --max-warnings=0`
+clean.
+
+**Not verified — flagged, not assumed**: whether Vercel's actual build
+container has what headless Chromium needs (`--with-deps` uses `apt`, which
+may not be available in Vercel's build image), and whether the explicit
+`/contact` rewrite resolves the way intended on Vercel's real routing engine.
+Both need a preview deploy, not production, before this is trusted.
+
+---
+
 ## [2026-08-07] — Signed-in users show up as themselves in PostHog
 
 Every event was anonymous — PostHog's own device-generated id, no way to tell
