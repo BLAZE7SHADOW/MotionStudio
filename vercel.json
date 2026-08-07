@@ -5,6 +5,6 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/contact", "destination": "/contact/index.html" },
-    { "source": "/((?!api/|assets/|contact|favicon\\.svg|icons\\.svg|version\\.json).*)", "destination": "/app.html" }
+    { "source": "/((?!api/|assets/|contact|favicon\\.svg|icons\\.svg|version\\.json|google[a-z0-9]+\\.html).*)", "destination": "/app.html" }
   ]
 }
