@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Clapperboard, Music, Cloud, Loader2, ArrowRight, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { track } from '@/lib/analytics';
 import { profile } from '@/content/profile';
 import { GithubIcon, LinkedinIcon, XIcon } from '@/components/icons/BrandIcons';
@@ -45,6 +46,13 @@ const SPECS = [
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+
+  usePageMeta({
+    title: 'MotionStudio — browser-based motion graphics editor',
+    description:
+      'A video compositor that runs in your browser. Compose text, media and shader backgrounds on a frame-accurate timeline, cut shots to the beat of your music, and export MP4 — no install.',
+    path: '/',
+  });
 
   // already logged in → skip landing
   useEffect(() => {
@@ -113,6 +121,18 @@ export default function LandingPage() {
             className="text-[48px] sm:text-[68px] lg:text-[76px] leading-[0.98] font-semibold text-studio-text tracking-tight mb-4"
           >
             Motion<span className="text-studio-accent">Studio</span>
+            {/* Inline style, not a Tailwind class: the h1's own inline
+                `fontFamily: var(--font-display)` (Bricolage) has higher
+                specificity than any class, so a class-based reset would be
+                silently overridden. This resets to the body's own font —
+                the same face the subhead paragraph below already uses,
+                unstyled. */}
+            <span
+              style={{ fontFamily: 'var(--font-sans)' }}
+              className="block text-xl md:text-2xl font-medium text-studio-text-muted mt-2"
+            >
+              Browser-based motion graphics editor
+            </span>
           </h1>
 
           <p className="text-[17px] lg:text-[19px] text-studio-text-secondary leading-snug mb-3 max-w-[480px]">

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Clapperboard, ArrowLeft, ExternalLink } from 'lucide-react';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { profile } from '@/content/profile';
 import { GithubIcon, LinkedinIcon, XIcon } from '@/components/icons/BrandIcons';
 import CopyEmail from '@/components/CopyEmail';
@@ -28,6 +29,12 @@ const SOCIALS = [
  * not a CV. Anyone who wants the full story has the portfolio link.
  */
 export default function ContactPage() {
+  usePageMeta({
+    title: `Contact — ${profile.name} — MotionStudio`,
+    description: `Reach ${profile.name}, the person behind MotionStudio — a browser-based motion graphics editor.`,
+    path: '/contact',
+  });
+
   return (
     <div className="min-h-screen bg-studio-bg flex flex-col">
       <nav className="h-14 border-b border-studio-border bg-studio-panel/80 backdrop-blur-sm flex items-center justify-between px-6 shrink-0 sticky top-0 z-20">
