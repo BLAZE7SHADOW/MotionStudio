@@ -33,6 +33,15 @@ import { useTourActive } from '../tour/tourActive';
  *     click means the user is doing the thing, not asking about it, the same
  *     reasoning that already kept a click listener off the control in the
  *     first bug above. This one only *reads* the click, never intercepts it.
+ *   - The click-close above only handles the *opening* click. **Leaving the
+ *     `?` button and hovering it again while its menu was still open**
+ *     re-triggered the card, stacking it on the open menu a second time.
+ *     Fixed generically, not with an id check: Radix sets
+ *     `aria-expanded="true"` on any trigger — `help`, `blocks`,
+ *     `project-settings` — while its own popover is open, and `onEnter` now
+ *     reads that before opening anything. Any current or future popover
+ *     trigger is covered without content needing to know it's also
+ *     explainable.
  *
  * **Nothing is visible until the cursor is over a control, and only that one
  * control ever shows anything.** An earlier version of this hook applied a
@@ -153,6 +162,17 @@ export function useHelperLayer(): HelperLayerState {
       if (!el) continue;
 
       const onEnter = (e: Event) => {
+        // A control whose own menu/popover is already open (`help`, `blocks`,
+        // `project-settings` — any Radix trigger) sets `aria-expanded="true"`
+        // itself; re-hovering it — easy to do while reading what you just
+        // opened — would otherwise stack the card on top of that menu, the
+        // same visual collision the click-close fix addresses for the
+        // opening click but not for a hover that happens afterward. A DOM
+        // signal Radix already provides, not a flag on the registry: this
+        // applies to any current or future trigger without content needing
+        // to know it's also explainable.
+        if (el.getAttribute('aria-expanded') === 'true') return;
+
         clearCloseTimer();
         unflash();
         el.classList.add('ms-help-flash');

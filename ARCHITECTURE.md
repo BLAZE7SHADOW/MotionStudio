@@ -608,6 +608,14 @@ The decisions worth recording:
   about it. The listener only reads the event and calls `close()`; it never
   calls `preventDefault`/`stopPropagation`, so the control's real handler
   still runs exactly as it would with helper mode off.
+- **That click-close only covers the opening click.** Leaving `?` and
+  hovering it again while its menu was still open re-triggered the card on
+  top of the open menu a second time — a different path through the same
+  collision, not fixed by the bullet above. Fixed generically rather than as
+  an id check: Radix sets `aria-expanded="true"` on any popover trigger
+  while its own content is open — `help`, `blocks`, `project-settings`, and
+  any future one — and `onEnter` now reads that before opening anything. No
+  entry in `content/help.ts` needs to know it also happens to be a trigger.
 - **`canvas` needed a different kind of anchor, not a different `side`.** Its
   card clipped off the right of the viewport with `side: 'left'`, then off
   the *bottom* once that was fixed to `side: 'bottom'` — the element is
