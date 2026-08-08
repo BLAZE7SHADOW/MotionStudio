@@ -32,6 +32,16 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: '2026-08-08',
+    title: 'Insert confirmations no longer get lost',
+    changes: [
+      {
+        kind: 'improved',
+        text: 'Clicking Add Text, Add Background, or a block button now always shows its own "added" confirmation, even if you click a second one right after — before, the second click could silently swallow the first confirmation.',
+      },
+    ],
+  },
+  {
     id: '2026-08-07',
     title: 'The app shows you around now',
     changes: [

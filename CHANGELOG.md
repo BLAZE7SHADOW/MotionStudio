@@ -5,6 +5,34 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-08] — Toolbar insert confirmations moved to react-toastify
+
+The "Text added" / "Background added" / block-added confirmations (fired by
+`notifyAdded()` in `src/lib/noticeStore.tsx`) used to go through the same
+single-notice store as things like the read-only and beat-detection hints —
+a deliberate one-at-a-time design meant to stop the app from nagging. That
+design is wrong for these specific confirmations: clicking insert twice in a
+row is a legitimate double action, not nagging, and the old system silently
+dropped the second confirmation by overwriting the first.
+
+### Changed
+- `notifyAdded()` now fires via `react-toastify` (`toast()`, top-center,
+  `Don't show again` respects the existing `element-added` suppression id in
+  `src/lib/notices.ts` — no change to the suppression mechanism itself) so
+  rapid inserts stack instead of clobbering each other. `noticeStore.tsx`
+  (renamed from `.ts` — the toast content is JSX) and `NoticeHost.tsx` are
+  otherwise untouched and still own every other notice (`read-only`,
+  `beat-found`, `project-from-future`).
+- `App.tsx` mounts a `<ToastContainer>` alongside the existing
+  `NoticeHost`/`UpdateBanner` stack, styled with `!`-prefixed Tailwind
+  utilities against the studio design tokens — `ReactToastify.css`'s own
+  `.Toastify__toast` rule (white background) loads after Tailwind's
+  utilities in the bundle and wins the cascade outright otherwise, not just
+  on a specificity tie.
+- Added `react-toastify` as a dependency.
+
+---
+
 ## [2026-08-07] — SEO foundation: crawlable public pages, real metadata
 
 `docs/benchmark-ultramock.md` already tracked `og:image` as an open gap
