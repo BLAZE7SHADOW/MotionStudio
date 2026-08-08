@@ -38,6 +38,7 @@
     "react-dom": "^19.2.7",
     "react-moveable": "^0.56.0",
     "react-router-dom": "^7.18.0",
+    "react-toastify": "^11.1.0",
     "remotion": "4.0.488",
     "shadcn": "^4.11.1",
     "tailwind-merge": "^3.6.0",

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { toast } from 'react-toastify';
 import { isSuppressed, suppress, type NoticeId } from './notices';
 
 /**
@@ -71,14 +72,45 @@ export function dismissNotice(id: NoticeId): void {
  * tile. All of those can be clicked again before the first result is
  * noticed, especially when the visible change is behind a closing popover or
  * (for audio) has no canvas presence at all. One shared helper rather than
- * this composed at each call site, so the id/timeout/suppressible shape
- * can't drift between the two places that need it.
+ * this composed at each call site, so the id/suppressible shape can't drift
+ * between the two places that need it.
+ *
+ * Routed through react-toastify rather than `showNotice`: unlike the single
+ * contextual hint the store/host pair handles (read-only, beat detection,
+ * project-from-future — one at a time, by design), clicking insert twice in
+ * quick succession is a legitimate double confirmation, not nagging. The
+ * toast stack handles that; the notice store deliberately doesn't.
  */
 export function notifyAdded(what: string): void {
-  showNotice({
-    id: 'element-added',
-    message: `${what} added — look for it on the timeline below.`,
-    suppressible: true,
-    timeoutMs: 5_000,
-  });
+  if (isSuppressed('element-added')) return;
+  toast(
+    ({ closeToast }) => (
+      <div className="flex items-center gap-3 p-3">
+        <p className="text-[13px] leading-relaxed text-studio-text">
+          {what} added — look for it on the timeline below.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            suppress('element-added');
+            closeToast();
+          }}
+          className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-studio-text-faint hover:text-studio-text"
+        >
+          Don't show again
+        </button>
+      </div>
+    ),
+    {
+      position: 'top-center',
+      autoClose: 3_000,
+      hideProgressBar: true,
+      closeButton: false,
+      // `!` variants because ReactToastify.css's own `.Toastify__toast` rule
+      // (white background) loads after Tailwind's utilities in the bundle and
+      // otherwise wins the cascade outright, not just on specificity ties.
+      className:
+        '!rounded-studio-lg !border !border-studio-border-strong !bg-studio-panel !shadow-lg !min-h-0',
+    },
+  );
 }

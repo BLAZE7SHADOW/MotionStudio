@@ -2,6 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { createBrowserRouter, RouterProvider, Outlet, useLocation } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import posthog from 'posthog-js';
 import LandingPage from './features/landing/LandingPage';
 import DashboardPage from './features/dashboard/DashboardPage';
@@ -244,6 +246,17 @@ export default function App() {
         <NoticeHost />
         <UpdateBanner />
       </div>
+      {/* "You did that" toolbar confirmations (text/shader/block added) — a
+          separate stack from the notice pair above because these can
+          legitimately fire more than once in a row (double-click insert),
+          which the single-notice host deliberately never does. */}
+      <ToastContainer
+        position="top-center"
+        icon={false}
+        closeButton={false}
+        hideProgressBar
+        toastClassName="!min-h-0 !p-0 !shadow-none !bg-transparent"
+      />
       <Analytics />
       <SpeedInsights />
     </>
