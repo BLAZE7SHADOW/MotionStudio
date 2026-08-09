@@ -244,7 +244,7 @@ export default function ExportDialog({ project }: { project: Project }) {
       <button
         type="button"
         onClick={() => openFeedback(`Export problem: ${what}\n\n${detail}\n\nWhat I was trying to do:\n`)}
-        className="underline underline-offset-2 hover:text-studio-text transition-colors"
+        className="underline underline-offset-2 hover:text-studio-text transition-colors ease-studio"
       >
         Report this
       </button>
@@ -306,7 +306,7 @@ export default function ExportDialog({ project }: { project: Project }) {
                       disabled={exporting}
                       onClick={() => setResolutionId(r.id)}
                       className={[
-                        'h-8 text-[11px] font-medium rounded-studio-md border transition-colors duration-120 disabled:opacity-40',
+                        'h-8 text-[11px] font-medium rounded-studio-md border transition-colors duration-120 ease-studio disabled:opacity-40',
                         resolutionId === r.id
                           ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent-text'
                           : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',
@@ -328,7 +328,7 @@ export default function ExportDialog({ project }: { project: Project }) {
                       disabled={exporting}
                       onClick={() => setQualityId(q.id)}
                       className={[
-                        'h-8 text-[11px] font-medium rounded-studio-md border transition-colors duration-120 disabled:opacity-40',
+                        'h-8 text-[11px] font-medium rounded-studio-md border transition-colors duration-120 ease-studio disabled:opacity-40',
                         qualityId === q.id
                           ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent-text'
                           : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',
@@ -539,7 +539,7 @@ export default function ExportDialog({ project }: { project: Project }) {
                   {quota && (
                     <div className="h-1 bg-studio-surface rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-studio-accent rounded-full transition-all"
+                        className="h-full bg-studio-accent rounded-full transition-all ease-studio"
                         style={{ width: `${Math.min((quota.used / quota.limit) * 100, 100)}%` }}
                       />
                     </div>

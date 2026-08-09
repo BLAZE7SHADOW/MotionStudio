@@ -138,7 +138,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
             type="button"
             title={activeScene ? 'Jump to the start of this shot' : 'Jump to start'}
             onClick={() => setCurrentFrame(viewWindow.start)}
-            className="w-7 h-7 flex items-center justify-center rounded-studio-sm text-studio-text-muted hover:text-studio-text hover:bg-studio-surface transition-colors duration-120"
+            className="w-7 h-7 flex items-center justify-center rounded-studio-sm text-studio-text-muted hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio"
           >
             <SkipBack className="w-3.5 h-3.5" />
           </button>
@@ -146,7 +146,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
             type="button"
             title={isPlaying ? 'Pause' : 'Play'}
             onClick={() => setIsPlaying(!isPlaying)}
-            className="w-7 h-7 flex items-center justify-center rounded-studio-sm text-studio-text hover:bg-studio-surface transition-colors duration-120"
+            className="w-7 h-7 flex items-center justify-center rounded-studio-sm text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio"
           >
             {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
           </button>
@@ -180,7 +180,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
           <div
             ref={headerScrollRef}
             onScroll={() => syncScroll('header')}
-            className="flex-1 overflow-y-auto overflow-x-hidden"
+            className="flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable]"
           >
             {ordered.map((el) => (
               <div
@@ -190,7 +190,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                 onClick={() => setSelectedElement(el.id)}
                 onKeyDown={(e) => e.key === 'Enter' && setSelectedElement(el.id)}
                 className={[
-                  'group w-full flex items-center gap-1 px-3 border-b border-studio-border shrink-0 text-left cursor-pointer transition-colors duration-120',
+                  'group w-full flex items-center gap-1 px-3 border-b border-studio-border shrink-0 text-left cursor-pointer transition-colors duration-120 ease-studio',
                   selectedElementId === el.id
                     ? 'bg-studio-surface text-studio-text'
                     : 'text-studio-text-muted hover:bg-studio-surface/50',
@@ -208,7 +208,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                     ? 'Plays through the whole video — click to keep it to this shot only'
                     : 'Only in this shot — click to play it through the whole video'}
                   className={[
-                    'w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs transition-all duration-120',
+                    'w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs transition-all duration-120 ease-studio',
                     spansAllShots(el)
                       ? 'text-studio-accent-text'
                       : 'text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-studio-text',
@@ -224,7 +224,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                     if (selectedElementId === el.id) setSelectedElement(null);
                   }}
                   title="Delete element"
-                  className="w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all duration-120"
+                  className="w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all duration-120 ease-studio"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
@@ -252,7 +252,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
               <div
                 ref={bodyScrollRef}
                 onScroll={() => syncScroll('body')}
-                className="flex-1 overflow-y-auto overflow-x-hidden"
+                className="flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable]"
               >
                 {!activeScene ? (
                   /* Sequence view: the video as its shots. Element rows would

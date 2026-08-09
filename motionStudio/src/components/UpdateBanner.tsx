@@ -16,7 +16,7 @@ export default function UpdateBanner() {
       <button
         type="button"
         onClick={() => window.location.reload()}
-        className="flex items-center gap-1.5 h-7 px-3 rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover text-white text-[12px] font-medium transition-colors"
+        className="flex items-center gap-1.5 h-7 px-3 rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover text-white text-[12px] font-medium transition-colors ease-studio"
       >
         <RefreshCw className="size-3.5" />
         Refresh
@@ -25,7 +25,7 @@ export default function UpdateBanner() {
         type="button"
         onClick={() => setDismissed(true)}
         title="Dismiss"
-        className="flex items-center justify-center size-7 rounded-studio-md text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors"
+        className="flex items-center justify-center size-7 rounded-studio-md text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors ease-studio"
       >
         <X className="size-3.5" />
       </button>

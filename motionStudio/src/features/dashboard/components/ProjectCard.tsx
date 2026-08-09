@@ -60,7 +60,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         tabIndex={0}
         onClick={() => navigate(`/editor/${project.id}`)}
         onKeyDown={(e) => e.key === 'Enter' && navigate(`/editor/${project.id}`)}
-        className="group relative text-left rounded-studio-lg bg-studio-surface border border-studio-border hover:border-studio-border-strong hover:bg-studio-surface-hover transition-colors duration-[180ms] overflow-hidden cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-studio-accent"
+        className="group relative text-left rounded-studio-lg bg-studio-surface border border-studio-border hover:border-studio-border-strong hover:bg-studio-surface-hover transition-colors ease-studio overflow-hidden cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-studio-accent"
       >
         <button
           type="button"
@@ -69,7 +69,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             setConfirmOpen(true);
           }}
           title="Delete project"
-          className="absolute top-2 right-2 z-10 flex items-center justify-center size-7 rounded-studio-md bg-studio-bg/80 border border-studio-border text-studio-text-faint opacity-0 group-hover:opacity-100 hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/10 transition-all focus-visible:opacity-100"
+          className="absolute top-2 right-2 z-10 flex items-center justify-center size-7 rounded-studio-md bg-studio-bg/80 border border-studio-border text-studio-text-faint opacity-0 group-hover:opacity-100 hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/10 transition-all focus-visible:opacity-100 ease-studio"
         >
           <Trash2 className="size-3.5" />
         </button>

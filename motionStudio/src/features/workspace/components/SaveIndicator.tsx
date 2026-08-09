@@ -29,8 +29,22 @@ export default function SaveIndicator() {
 
   if (status === 'idle') return null;
 
+  /* Fixed width, not just fixed height. This sits first in a right-aligned
+     `ml-auto` row (Toolbar.tsx) ahead of Helper Mode, the `?` menu, Preview
+     and Export — every one of those shifts sideways whenever this element's
+     own width changes, which it did on every status change *and* on the
+     60-second timer above that only redraws "3 minutes ago" into "4 minutes
+     ago". `min-w` sized to the longest label ("Offline — saved on this
+     device") makes the box a stable size once mounted; shorter labels just
+     leave trailing space inside it rather than resizing it. The one shift
+     this doesn't remove is the first one — idle renders nothing, so the very
+     first save still inserts a new element into the row. Reserving that
+     space permanently while nothing has been saved yet would be its own
+     regression (see the doc comment above: a badge with nothing to report is
+     noise), so that single appearance is left as the one deliberate
+     exception. */
   const base =
-    'flex items-center gap-1.5 h-7 px-2 rounded-studio-md text-[11px] font-medium select-none';
+    'flex items-center gap-1.5 h-7 px-2 rounded-studio-md text-[11px] font-medium select-none min-w-[190px] justify-start';
 
   if (status === 'saving') {
     return (

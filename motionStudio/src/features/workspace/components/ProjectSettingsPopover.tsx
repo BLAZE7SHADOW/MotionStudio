@@ -74,7 +74,7 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
         <button
           type="button"
           title="Project settings"
-          className="flex items-center gap-1.5 h-7 px-2.5 rounded-studio-sm text-[12px] font-medium text-studio-text-muted hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 border border-transparent hover:border-studio-border"
+          className="flex items-center gap-1.5 h-7 px-2.5 rounded-studio-sm text-[12px] font-medium text-studio-text-muted hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio border border-transparent hover:border-studio-border"
         >
           <span className="font-mono">{project.aspectRatio}</span>
           <span className="text-studio-text-faint">·</span>
@@ -136,7 +136,7 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
                   type="button"
                   onClick={() => handleFpsChange(f)}
                   className={[
-                    'flex-1 h-8 text-[12px] font-medium rounded-studio-md border transition-colors duration-120',
+                    'flex-1 h-8 text-[12px] font-medium rounded-studio-md border transition-colors duration-120 ease-studio',
                     fps === f
                       ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent-text'
                       : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',
@@ -161,7 +161,7 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
                   type="button"
                   onClick={() => handleDurationChange(s)}
                   className={[
-                    'h-8 text-[12px] font-medium rounded-studio-md border transition-colors duration-120',
+                    'h-8 text-[12px] font-medium rounded-studio-md border transition-colors duration-120 ease-studio',
                     seconds === s
                       ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent-text'
                       : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',

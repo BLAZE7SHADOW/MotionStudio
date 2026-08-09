@@ -117,7 +117,7 @@ export function ScrubInput({
       onPointerCancel={onPointerUp}
       className={[
         'group relative flex-1 h-7 flex items-center rounded-studio-sm border overflow-hidden',
-        'bg-studio-surface border-studio-border transition-colors duration-120',
+        'bg-studio-surface border-studio-border transition-colors duration-120 ease-studio',
         typing ? 'border-studio-accent-border' : 'hover:border-studio-border-strong',
         dragging ? 'cursor-ew-resize select-none' : typing ? 'cursor-text' : 'cursor-ew-resize',
         className,
@@ -152,7 +152,7 @@ export function ScrubInput({
           {/* The hint occupies the same row as the value, so revealing it on
               hover doesn't reflow anything. */}
           {!hideHint && (
-            <span className="relative ml-2 text-[9px] font-medium tracking-wider text-studio-text-faint bg-studio-bg/60 px-1 py-px rounded-studio-xs opacity-0 group-hover:opacity-100 transition-opacity duration-120 pointer-events-none select-none">
+            <span className="relative ml-2 text-[9px] font-medium tracking-wider text-studio-text-faint bg-studio-bg/60 px-1 py-px rounded-studio-xs opacity-0 group-hover:opacity-100 transition-opacity duration-120 ease-studio pointer-events-none select-none">
               DRAG
             </span>
           )}

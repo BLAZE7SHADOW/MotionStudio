@@ -41,7 +41,7 @@ export default function ErrorPage() {
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="inline-flex items-center gap-2 h-10 px-5 rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover text-white text-[13px] font-medium transition-colors"
+          className="inline-flex items-center gap-2 h-10 px-5 rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover text-white text-[13px] font-medium transition-colors ease-studio"
         >
           <Home className="w-4 h-4" />
           Back to home

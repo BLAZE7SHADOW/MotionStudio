@@ -37,7 +37,7 @@ export default function WhatsNewDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="max-h-[60vh] overflow-y-auto px-5 py-4 flex flex-col gap-6">
+        <div className="max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable] px-5 py-4 flex flex-col gap-6">
           {RELEASES.map((release) => (
             <div key={release.id} className="flex flex-col gap-3">
               <div className="flex items-baseline gap-2">

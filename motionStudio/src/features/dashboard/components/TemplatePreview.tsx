@@ -75,7 +75,7 @@ export default function TemplatePreview({ template }: { template: TemplateDefini
           p.play();
           setPlaying(true);
         }}
-        className="self-start inline-flex items-center gap-1.5 h-7 px-3 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors"
+        className="self-start inline-flex items-center gap-1.5 h-7 px-3 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors ease-studio"
       >
         <Play className="w-3 h-3" fill="currentColor" />
         {playing ? 'Replay' : 'Play preview'}

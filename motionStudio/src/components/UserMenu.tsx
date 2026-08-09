@@ -27,7 +27,7 @@ export default function UserMenu() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="w-6 h-6 rounded-full bg-studio-surface border border-studio-border flex items-center justify-center text-[10px] font-bold text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors"
+          className="w-6 h-6 rounded-full bg-studio-surface border border-studio-border flex items-center justify-center text-[10px] font-bold text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors ease-studio"
           title={isAnonymous ? 'Guest user' : (user.email ?? 'User')}
         >
           {initials}
@@ -55,7 +55,7 @@ export default function UserMenu() {
           <button
             type="button"
             onClick={() => { track.authUpgradeClicked(); signInWithGoogle(); }}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-studio-accent-text hover:bg-studio-accent-subtle rounded-studio-sm transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-studio-accent-text hover:bg-studio-accent-subtle rounded-studio-sm transition-colors ease-studio"
           >
             <LogIn className="w-3.5 h-3.5" />
             Sign in with Google
@@ -66,7 +66,7 @@ export default function UserMenu() {
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm transition-colors"
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm transition-colors ease-studio"
         >
           <LogOut className="w-3.5 h-3.5" />
           Sign out

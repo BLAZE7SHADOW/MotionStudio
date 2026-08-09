@@ -249,6 +249,7 @@ function Section({
   tourId,
   onReset,
   marker,
+  instant,
 }: {
   title: string;
   children?: React.ReactNode;
@@ -265,6 +266,13 @@ function Section({
       is animated. Present precisely so a closed section can still say so —
       which is the whole point when sections default closed. */
   marker?: string;
+  /** Skip the collapse animation and unmount immediately. Only Motion needs
+      this — its content is up to seven looping `<AnimationPreview>`s, each a
+      full Remotion `<Player>`, and animating the collapse means keeping them
+      mounted (just visually clipped) for the transition's duration. Every
+      other section is plain inputs, cheap to leave mounted-but-hidden, so
+      they get the smooth version by default. */
+  instant?: boolean;
 }) {
   const [closed, setClosed] = useState(() => readClosedSections().includes(title));
 
@@ -306,7 +314,7 @@ function Section({
           closed — which is when Motion and Transform normally are. */}
       <div
         data-tour={tourId}
-        className="group w-full border-b border-studio-border shrink-0 flex items-center hover:bg-studio-surface/50 transition-colors duration-120"
+        className="group w-full border-b border-studio-border shrink-0 flex items-center hover:bg-studio-surface/50 transition-colors duration-120 ease-studio"
       >
         <button
           type="button"
@@ -315,7 +323,7 @@ function Section({
           className="flex-1 min-w-0 px-4 py-2 flex items-center gap-1.5 text-left"
         >
           <ChevronRight
-            className={`w-3 h-3 text-studio-text-faint transition-transform duration-120 ${closed ? '' : 'rotate-90'}`}
+            className={`w-3 h-3 text-studio-text-faint transition-transform duration-120 ease-studio ${closed ? '' : 'rotate-90'}`}
           />
           <span className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">
             {title}
@@ -328,13 +336,31 @@ function Section({
             onClick={onReset}
             title={`Reset ${title.toLowerCase()}`}
             aria-label={`Reset ${title.toLowerCase()}`}
-            className="mr-2 w-6 h-6 shrink-0 flex items-center justify-center rounded-studio-xs text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-studio-text hover:bg-studio-surface transition-all duration-120"
+            className="mr-2 w-6 h-6 shrink-0 flex items-center justify-center rounded-studio-xs text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-studio-text hover:bg-studio-surface transition-all duration-120 ease-studio"
           >
             <RotateCcw className="w-3 h-3" />
           </button>
         )}
       </div>
-      {!closed && children}
+      {instant ? (
+        !closed && children
+      ) : (
+        /* Height 0→auto has no native CSS transition, so this animates
+           `grid-template-rows` instead — 0fr collapses the row to nothing,
+           1fr gives it exactly its content's height, and both are
+           interpolatable. `min-h-0` on the inner wrapper is required: a grid
+           row still refuses to shrink below its content's intrinsic height
+           without it, which is what made every earlier attempt at this snap
+           instead of animate. Content stays mounted at 0fr rather than
+           unmounting, which is fine for the cheap sections this is used on —
+           see `instant` above for the one section where it deliberately
+           isn't. */
+        <div
+          className={`grid transition-[grid-template-rows] duration-studio-base ease-studio ${closed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'}`}
+        >
+          <div className="overflow-hidden min-h-0">{children}</div>
+        </div>
+      )}
     </>
   );
 }
@@ -377,7 +403,7 @@ function AnimationRow({
             type="button"
             onClick={onRemove}
             title="Remove animation"
-            className="w-6 h-6 flex items-center justify-center rounded-studio-xs text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120"
+            className="w-6 h-6 flex items-center justify-center rounded-studio-xs text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio"
           >
             <X className="w-3 h-3" />
           </button>
@@ -461,7 +487,7 @@ function LayerSection({ reorder }: { reorder: (dir: LayerDir) => void }) {
             key={dir}
             type="button"
             onClick={() => reorder(dir)}
-            className="flex items-center justify-center gap-1.5 h-8 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
+            className="flex items-center justify-center gap-1.5 h-8 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120 ease-studio"
           >
             <Icon className="w-3.5 h-3.5" />
             {label}
@@ -508,6 +534,7 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
         tourId="motion-section"
         onReset={anims.length > 0 ? () => writeAnims([]) : undefined}
         marker={anims.length > 0 ? `${anims.length} animation${anims.length === 1 ? '' : 's'}` : undefined}
+        instant
       >
       <div className="flex flex-col gap-2.5 px-4 py-3">
         {/* Presets for a beginner, dials for an expert, neither buried under the
@@ -521,7 +548,7 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
               type="button"
               onClick={() => setMode(m)}
               className={[
-                'flex-1 h-6 rounded-studio-sm text-[10px] font-semibold uppercase tracking-wider transition-colors duration-120',
+                'flex-1 h-6 rounded-studio-sm text-[10px] font-semibold uppercase tracking-wider transition-colors duration-120 ease-studio',
                 mode === m
                   ? 'bg-studio-panel text-studio-text'
                   : 'text-studio-text-faint hover:text-studio-text-muted',
@@ -550,7 +577,7 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
                          works if you can see the dials it set. */
                       setMode('manual');
                     }}
-                    className="flex items-center gap-1.5 h-8 px-1.5 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
+                    className="flex items-center gap-1.5 h-8 px-1.5 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120 ease-studio"
                   >
                     <AnimationPreview animations={PRESET_PREVIEW_ANIMATIONS.get(preset.id)!} size={22} />
                     {preset.label}
@@ -603,7 +630,7 @@ function AnimationSection({ el, update, hideHeader }: { el: BaseElement; update:
           <button
             type="button"
             onClick={() => update({ animations: undefined })}
-            className="h-7 rounded-studio-md text-[11px] font-medium text-studio-text-faint hover:text-studio-text border border-studio-border hover:border-studio-border-strong transition-colors duration-120"
+            className="h-7 rounded-studio-md text-[11px] font-medium text-studio-text-faint hover:text-studio-text border border-studio-border hover:border-studio-border-strong transition-colors duration-120 ease-studio"
           >
             Clear all
           </button>
@@ -637,7 +664,7 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
             value={el.content}
             onChange={(e) => update({ content: e.target.value })}
             rows={3}
-            className="w-full resize-none rounded-studio-sm bg-studio-surface border border-studio-border text-[12px] text-studio-text px-2.5 py-2 placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent-border focus:ring-1 focus:ring-studio-accent transition-colors"
+            className="w-full resize-none rounded-studio-sm bg-studio-surface border border-studio-border text-[12px] text-studio-text px-2.5 py-2 placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent-border focus:ring-1 focus:ring-studio-accent transition-colors ease-studio"
           />
           {isListEffect(el.textEffect) && (
             <p className="text-[10px] text-studio-text-faint leading-relaxed">
@@ -818,7 +845,7 @@ function BlockProperties({
                 value={String(value(field.key))}
                 onChange={(e) => setProp(field.key, e.target.value)}
                 rows={5}
-                className="w-full resize-none rounded-studio-sm bg-studio-surface border border-studio-border text-[12px] text-studio-text px-2.5 py-2 font-mono placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent-border focus:ring-1 focus:ring-studio-accent transition-colors"
+                className="w-full resize-none rounded-studio-sm bg-studio-surface border border-studio-border text-[12px] text-studio-text px-2.5 py-2 font-mono placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent-border focus:ring-1 focus:ring-studio-accent transition-colors ease-studio"
               />
             )}
 
@@ -897,7 +924,7 @@ function MediaProperties({
         <button
           type="button"
           onClick={onMakeBackground}
-          className="flex items-center justify-center gap-1.5 w-full h-8 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
+          className="flex items-center justify-center gap-1.5 w-full h-8 rounded-studio-md bg-studio-surface border border-studio-border text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120 ease-studio"
         >
           <Maximize2 className="w-3.5 h-3.5" />
           Make Background
@@ -1008,7 +1035,7 @@ export default function PropertiesPanel() {
               setSelectedElement(null);
             }}
             title="Delete element (Del)"
-            className="ml-auto w-6 h-6 flex items-center justify-center rounded-studio-xs text-studio-text-faint hover:text-red-400 hover:bg-red-500/10 transition-colors duration-120"
+            className="ml-auto w-6 h-6 flex items-center justify-center rounded-studio-xs text-studio-text-faint hover:text-red-400 hover:bg-red-500/10 transition-colors duration-120 ease-studio"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -1023,7 +1050,7 @@ export default function PropertiesPanel() {
           </p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable]">
           {selected.type === 'text' && (
             <TextProperties
               key={selected.id}

@@ -83,7 +83,7 @@ export default function ContactForm() {
       <button
         type="submit"
         disabled={state === 'sending'}
-        className="inline-flex items-center justify-center gap-2 h-11 px-6 rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover text-white text-[14px] font-medium transition-colors disabled:opacity-60"
+        className="inline-flex items-center justify-center gap-2 h-11 px-6 rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover text-white text-[14px] font-medium transition-colors disabled:opacity-60 ease-studio"
       >
         {state === 'sending' ? 'Sending…' : state === 'sent' ? 'Sent ✓' : (
           <>

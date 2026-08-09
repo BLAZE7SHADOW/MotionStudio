@@ -29,7 +29,7 @@ function Row({
       type="button"
       onClick={onClick}
       className={[
-        'w-full text-left px-2.5 py-2 rounded-studio-md border transition-colors duration-[120ms]',
+        'w-full text-left px-2.5 py-2 rounded-studio-md border transition-colors duration-120 ease-studio',
         active
           ? 'bg-studio-accent-subtle border-studio-accent-border'
           : 'bg-studio-surface border-studio-border hover:border-studio-border-strong',

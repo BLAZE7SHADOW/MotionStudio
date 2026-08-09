@@ -27,7 +27,7 @@ export default function ShortcutsDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="max-h-[60vh] overflow-y-auto px-5 py-4 flex flex-col gap-5">
+        <div className="max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable] px-5 py-4 flex flex-col gap-5">
           {SHORTCUT_GROUPS.map((group) => (
             <section key={group.title} className="flex flex-col gap-1.5">
               <h3 className="text-[10px] font-semibold text-studio-text-faint uppercase tracking-widest">

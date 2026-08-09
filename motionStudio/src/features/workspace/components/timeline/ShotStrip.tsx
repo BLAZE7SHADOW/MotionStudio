@@ -126,7 +126,7 @@ export default function ShotStrip({ project }: { project: Project }) {
         onClick={() => setActiveScene(null)}
         title="Show the whole sequence"
         className={[
-          'shrink-0 h-6 pl-1 pr-2 flex items-center gap-0.5 rounded-studio-sm text-[11px] font-medium uppercase tracking-wider transition-colors duration-120',
+          'shrink-0 h-6 pl-1 pr-2 flex items-center gap-0.5 rounded-studio-sm text-[11px] font-medium uppercase tracking-wider transition-colors duration-120 ease-studio',
           activeSceneId === null
             ? 'text-studio-text'
             : 'text-studio-text-faint hover:text-studio-text hover:bg-studio-surface',
@@ -161,7 +161,7 @@ export default function ShotStrip({ project }: { project: Project }) {
                 onDoubleClick={() => setRenaming(scene.id)}
                 title={`${sceneLabel(scenes, scene.id)} — double-click to rename`}
                 className={[
-                  'h-6 pl-2.5 flex items-center rounded-studio-sm text-[11px] font-medium transition-colors duration-120',
+                  'h-6 pl-2.5 flex items-center rounded-studio-sm text-[11px] font-medium transition-colors duration-120 ease-studio',
                   scenes.length > 1 ? 'pr-6' : 'pr-2.5',
                   // Accent marks the shot you are in — live state, which is one
                   // of the two things the accent is allowed to mean.
@@ -182,7 +182,7 @@ export default function ShotStrip({ project }: { project: Project }) {
                 onClick={() => requestDelete(scene.id)}
                 title={`Delete ${sceneLabel(scenes, scene.id)} and everything in it`}
                 className={[
-                  'absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-studio-xs opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-120',
+                  'absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-studio-xs opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-120 ease-studio',
                   active ? 'text-white/70 hover:text-white' : 'text-studio-text-faint hover:text-red-400',
                 ].join(' ')}
               >
@@ -205,7 +205,7 @@ export default function ShotStrip({ project }: { project: Project }) {
               data-tour="transition"
               title={`How ${sceneLabel(scenes, activeShot.id)} arrives`}
               className={[
-                'shrink-0 h-6 pl-1.5 pr-2.5 flex items-center gap-1 rounded-studio-sm text-[11px] font-medium transition-colors duration-120',
+                'shrink-0 h-6 pl-1.5 pr-2.5 flex items-center gap-1 rounded-studio-sm text-[11px] font-medium transition-colors duration-120 ease-studio',
                 activeShot.transition
                   ? 'text-studio-accent-text hover:bg-studio-surface'
                   : 'text-studio-text-faint hover:text-studio-text hover:bg-studio-surface',
@@ -227,7 +227,7 @@ export default function ShotStrip({ project }: { project: Project }) {
                   type="button"
                   onClick={() => setShotTransition(project.id, activeShot.id, t.id)}
                   className={[
-                    'w-full text-left px-2.5 py-2 rounded-studio-md transition-colors duration-120',
+                    'w-full text-left px-2.5 py-2 rounded-studio-md transition-colors duration-120 ease-studio',
                     on ? 'bg-studio-accent-subtle' : 'hover:bg-studio-surface',
                   ].join(' ')}
                 >
@@ -248,7 +248,7 @@ export default function ShotStrip({ project }: { project: Project }) {
         type="button"
         onClick={handleAdd}
         title="Add a shot to the end"
-        className="shrink-0 h-6 pl-1.5 pr-2.5 flex items-center gap-1 rounded-studio-sm text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:bg-studio-surface transition-colors duration-120"
+        className="shrink-0 h-6 pl-1.5 pr-2.5 flex items-center gap-1 rounded-studio-sm text-[11px] font-medium text-studio-text-muted hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio"
       >
         <Plus className="w-3 h-3" />
         Add shot

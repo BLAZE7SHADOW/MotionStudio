@@ -89,7 +89,7 @@ export default function TimelineSignature() {
           return (
             <div
               key={i}
-              className="absolute bottom-1 w-1.5 h-1.5 rotate-45 -translate-x-1/2 translate-y-1/2 transition-colors duration-150"
+              className="absolute bottom-1 w-1.5 h-1.5 rotate-45 -translate-x-1/2 translate-y-1/2 transition-colors duration-150 ease-studio"
               style={{
                 left: `${pos * 100}%`,
                 backgroundColor: lit ? '#ff5c5c' : 'oklch(1 0 0 / 30%)',

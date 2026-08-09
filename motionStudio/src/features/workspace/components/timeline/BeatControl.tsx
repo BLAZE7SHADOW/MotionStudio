@@ -74,7 +74,7 @@ export default function BeatControl({ project }: { project: Project }) {
             data-tour="beat"
             title={grid?.enabled ? `Beat grid — ${grid.bpm} BPM` : 'Beat grid'}
             className={[
-              'h-7 px-2 flex items-center gap-1.5 rounded-studio-sm text-[11px] font-medium transition-colors duration-120',
+              'h-7 px-2 flex items-center gap-1.5 rounded-studio-sm text-[11px] font-medium transition-colors duration-120 ease-studio',
               grid?.enabled
                 // Accent means live state, and a grid that is on is exactly that.
                 ? 'text-studio-accent-text hover:bg-studio-surface'
@@ -135,7 +135,7 @@ export default function BeatControl({ project }: { project: Project }) {
             <button
               type="button"
               onClick={tap}
-              className="h-7 rounded-studio-md bg-studio-surface border border-studio-border text-[12px] text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120"
+              className="h-7 rounded-studio-md bg-studio-surface border border-studio-border text-[12px] text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors duration-120 ease-studio"
             >
               {tapCount > 1 ? `Tap along — ${tapCount} taps` : 'Tap along to set the tempo'}
             </button>
@@ -151,7 +151,7 @@ export default function BeatControl({ project }: { project: Project }) {
               <button
                 type="button"
                 onClick={() => patch({ bpm: analysed.bpm!, offsetSec: analysed.beatOffsetSec ?? 0 })}
-                className="text-[11px] text-studio-text-faint hover:text-studio-text text-left transition-colors"
+                className="text-[11px] text-studio-text-faint hover:text-studio-text text-left transition-colors ease-studio"
               >
                 Back to the detected {Math.round(analysed.bpm!)} BPM
               </button>

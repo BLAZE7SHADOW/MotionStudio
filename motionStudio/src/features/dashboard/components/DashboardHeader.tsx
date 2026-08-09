@@ -14,7 +14,7 @@ export default function DashboardHeader({ onNewProject }: DashboardHeaderProps) 
       <Link
         to="/"
         title="Go to the home page"
-        className="flex items-center gap-2.5 rounded-studio-sm px-1 -mx-1 py-1 hover:bg-studio-surface transition-colors duration-[120ms]"
+        className="flex items-center gap-2.5 rounded-studio-sm px-1 -mx-1 py-1 hover:bg-studio-surface transition-colors duration-120 ease-studio"
       >
         <div className="w-7 h-7 rounded-studio-sm bg-studio-accent flex items-center justify-center">
           <Clapperboard className="w-4 h-4 text-white" />

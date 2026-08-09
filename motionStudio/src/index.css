@@ -92,7 +92,12 @@
   --studio-duration-fast:   120ms;  /* micro: button press, toggle */
   --studio-duration-base:   180ms;  /* standard: hover, fade */
   --studio-duration-slow:   260ms;  /* enter: modal, panel slide */
-  --studio-duration-exit:   150ms;  /* exit is always faster */
+  --studio-duration-exit:   150ms;  /* exit is always faster —
+     applied as `data-open:duration-260 data-closed:duration-150` on every
+     Radix overlay (dialog, popover, select, tooltip). It used to say this and
+     ship one flat `duration-100` for both directions instead; there's no
+     Tailwind theme namespace for named durations (see the motion-utilities
+     comment below), so the values are numeric literals, not token names. */
   --studio-ease:            cubic-bezier(0.16, 1, 0.3, 1);
   --studio-ease-smooth:     cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -195,6 +200,24 @@
   --radius-studio-lg: var(--studio-radius-lg);
   --radius-studio-xl: var(--studio-radius-xl);
 
+  /* Studio motion utilities.
+     `--ease-*` is a real Tailwind v4 theme namespace, so `ease-studio` works
+     as a normal utility class. Duration has no equivalent: Tailwind v4 only
+     reads bare numbers for `duration-<N>` (a dynamic ms utility, not a theme
+     lookup) plus the single `--default-transition-duration` override below —
+     a `--duration-120` theme entry compiles to nothing. Every site
+     that wants "fast" pairs `duration-120 ease-studio` directly; "base" relies
+     on the default below rather than repeating `duration-180` everywhere. */
+  --ease-studio:        var(--studio-ease);
+  --ease-studio-smooth: var(--studio-ease-smooth);
+
+  /* What a bare `transition-colors` (no duration/ease class of its own) falls
+     back to. This is the real fix for the sites that were silently running on
+     Tailwind's stock 150ms/ease-in-out — no per-site class needed, because
+     these two are exactly what Tailwind consults for the un-annotated case. */
+  --default-transition-duration:        var(--studio-duration-base);
+  --default-transition-timing-function: var(--studio-ease);
+
   /* shadcn → Tailwind mapping */
   --color-background:               var(--background);
   --color-foreground:               var(--foreground);
@@ -252,5 +275,40 @@
   }
   html {
     @apply font-sans;
+  }
+
+  /* Every plain button acknowledges a click. The shadcn `Button` component
+     already had this (`active:not-aria-[haspopup]:translate-y-px`, see
+     `ui/button.tsx`) — this is the same nudge for the ~78 hand-written
+     `<button>`s across the toolbar, timeline and panels that don't go through
+     that component and had no pressed state at all. Skipped for
+     `aria-haspopup` triggers (a shift reads as misalignment on a menu/popover
+     trigger) and disabled buttons (nothing to acknowledge). No transition on
+     purpose — a button that already declares its own `transition-colors`
+     would have that property win over one added here (base layer loses to
+     the utilities layer regardless of selector order), so an instant shift is
+     the one version that can't silently stop animating depending on what
+     else is on the element. */
+  button:not(:disabled):not([aria-haspopup]):active {
+    transform: translateY(1px);
+  }
+}
+
+/* `prefers-reduced-motion` had exactly three call sites in the whole app —
+   the landing page's hand-rolled timeline scrubber and the onboarding tour —
+   and none of them covered the editor, where the actual volume of motion
+   lives: every `transition-colors`/`transition-transform` utility, every
+   `animate-spin` loader, every Radix overlay's enter/exit. Rather than
+   auditing each one individually, this is the standard blunt override: make
+   every animation/transition in the app resolve near-instantly rather than
+   removing them outright, which is what lets code that waits on
+   `transitionend`/`animationend` keep working exactly as before — only the
+   motion itself disappears, not the state change it was animating toward. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

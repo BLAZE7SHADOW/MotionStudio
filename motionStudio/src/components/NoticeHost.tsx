@@ -39,7 +39,7 @@ export default function NoticeHost() {
         <button
           type="button"
           onClick={dismissForever}
-          className="shrink-0 h-7 px-2 rounded-studio-md text-[10px] font-semibold uppercase tracking-widest text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors"
+          className="shrink-0 h-7 px-2 rounded-studio-md text-[10px] font-semibold uppercase tracking-widest text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors ease-studio"
         >
           Don't show again
         </button>
@@ -50,7 +50,7 @@ export default function NoticeHost() {
         onClick={dismiss}
         title="Dismiss"
         aria-label="Dismiss"
-        className="shrink-0 flex items-center justify-center size-7 rounded-studio-md text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors"
+        className="shrink-0 flex items-center justify-center size-7 rounded-studio-md text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors ease-studio"
       >
         <X className="size-3.5" />
       </button>

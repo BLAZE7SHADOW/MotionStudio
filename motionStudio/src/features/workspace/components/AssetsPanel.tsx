@@ -34,7 +34,7 @@ function EmptyLibraryState({ onBrowse }: { onBrowse: () => void }) {
       <button
         type="button"
         onClick={onBrowse}
-        className="flex items-center justify-center gap-1.5 w-full h-8 px-3 text-[11px] font-medium text-studio-text-muted border border-studio-border rounded-studio-md hover:border-studio-border-strong hover:text-studio-text transition-colors duration-120"
+        className="flex items-center justify-center gap-1.5 w-full h-8 px-3 text-[11px] font-medium text-studio-text-muted border border-studio-border rounded-studio-md hover:border-studio-border-strong hover:text-studio-text transition-colors duration-120 ease-studio"
       >
         <FolderOpen className="w-3 h-3" />
         Browse files
@@ -82,7 +82,7 @@ function AssetCard({
               `Media went missing: "${asset.name}"\n\nIt shows "Re-upload needed" in the Assets panel.\n\nWhat I was doing:\n`,
             );
           }}
-          className="text-[9px] text-amber-300/60 hover:text-amber-200 underline underline-offset-2 transition-colors"
+          className="text-[9px] text-amber-300/60 hover:text-amber-200 underline underline-offset-2 transition-colors ease-studio"
         >
           Report this
         </button>
@@ -90,7 +90,7 @@ function AssetCard({
           type="button"
           onClick={(e) => { e.stopPropagation(); onRemove(); }}
           title="Remove asset"
-          className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-studio-xs bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-opacity duration-120"
+          className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-studio-xs bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-opacity duration-120 ease-studio"
         >
           <X className="w-3 h-3" />
         </button>
@@ -107,7 +107,7 @@ function AssetCard({
         e.dataTransfer.effectAllowed = 'copy';
       }}
       title="Click or drag onto the canvas"
-      className="group relative aspect-video rounded-studio-md overflow-hidden border border-studio-border bg-studio-surface cursor-pointer hover:border-studio-border-strong transition-colors duration-120"
+      className="group relative aspect-video rounded-studio-md overflow-hidden border border-studio-border bg-studio-surface cursor-pointer hover:border-studio-border-strong transition-colors duration-120 ease-studio"
     >
       {asset.type === 'image' && (
         <img src={asset.url} alt={asset.name} className="w-full h-full object-cover" />
@@ -152,7 +152,7 @@ function AssetCard({
         type="button"
         onClick={(e) => { e.stopPropagation(); onRemove(); }}
         title="Remove asset"
-        className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-studio-xs bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-opacity duration-120"
+        className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-studio-xs bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-opacity duration-120 ease-studio"
       >
         <X className="w-3 h-3" />
       </button>
@@ -278,7 +278,7 @@ function StockTab({
             type="submit"
             disabled={!token || !query.trim()}
             title="Search"
-            className="h-8 w-8 shrink-0 flex items-center justify-center rounded-studio-md bg-studio-surface border border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong disabled:opacity-40 transition-colors duration-120"
+            className="h-8 w-8 shrink-0 flex items-center justify-center rounded-studio-md bg-studio-surface border border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong disabled:opacity-40 transition-colors duration-120 ease-studio"
           >
             <Search className="w-3.5 h-3.5" />
           </button>
@@ -290,7 +290,7 @@ function StockTab({
               type="button"
               onClick={() => { setType(t); if (query.trim()) runSearch(query, t); }}
               className={[
-                'h-7 rounded-studio-sm text-[11px] font-medium capitalize transition-colors duration-120',
+                'h-7 rounded-studio-sm text-[11px] font-medium capitalize transition-colors duration-120 ease-studio',
                 type === t
                   ? 'bg-studio-overlay text-studio-text'
                   : 'bg-studio-surface text-studio-text-faint hover:text-studio-text-muted',
@@ -302,7 +302,7 @@ function StockTab({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 pb-3">
+      <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable] px-3 pb-3">
         {loading && (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-4 h-4 text-studio-text-faint animate-spin" />
@@ -347,11 +347,11 @@ function StockTab({
                   <span className="block text-[10px] text-white/80 truncate">{r.photographer}</span>
                 </div>
 
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-120 flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-120 ease-studio flex items-center justify-center">
                   {importingId === r.id ? (
                     <Loader2 className="w-5 h-5 text-white animate-spin" />
                   ) : (
-                    <span className="opacity-0 group-hover:opacity-100 text-[11px] font-medium text-white transition-opacity duration-120">
+                    <span className="opacity-0 group-hover:opacity-100 text-[11px] font-medium text-white transition-opacity duration-120 ease-studio">
                       Add to project
                     </span>
                   )}
@@ -499,7 +499,7 @@ export default function AssetsPanel() {
           data-tour="add-media"
           onClick={() => openPicker('image/*,video/*,audio/*')}
           disabled={busy}
-          className="w-full h-9 flex items-center justify-center gap-1.5 rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover disabled:opacity-60 text-white text-[12px] font-medium transition-colors duration-120"
+          className="w-full h-9 flex items-center justify-center gap-1.5 rounded-studio-md bg-studio-accent hover:bg-studio-accent-hover disabled:opacity-60 text-white text-[12px] font-medium transition-colors duration-120 ease-studio"
         >
           {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
           {busy ? 'Adding…' : 'Add media'}
@@ -539,7 +539,7 @@ export default function AssetsPanel() {
                 key={value}
                 value={value}
                 data-tour={`${value}-tab`}
-                className="h-full flex items-center justify-center gap-1.5 rounded-studio-md text-[11px] font-medium text-studio-text-faint transition-all duration-120 data-[state=active]:bg-studio-overlay data-[state=active]:text-studio-text"
+                className="h-full flex items-center justify-center gap-1.5 rounded-studio-md text-[11px] font-medium text-studio-text-faint transition-all duration-120 ease-studio data-[state=active]:bg-studio-overlay data-[state=active]:text-studio-text"
               >
                 <Icon className="w-3.5 h-3.5" strokeWidth={1.5} />
                 {label}
@@ -575,7 +575,7 @@ export default function AssetsPanel() {
                     type="button"
                     onClick={() => setTypeFilter(value)}
                     className={[
-                      'flex-1 h-6 rounded-studio-sm text-[10px] font-medium transition-colors duration-120',
+                      'flex-1 h-6 rounded-studio-sm text-[10px] font-medium transition-colors duration-120 ease-studio',
                       typeFilter === value
                         ? 'bg-studio-accent-subtle text-studio-accent-text'
                         : 'text-studio-text-faint hover:text-studio-text hover:bg-studio-surface',
@@ -588,7 +588,7 @@ export default function AssetsPanel() {
             </div>
           )}
 
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable]">
             <LibraryGrid
               assets={visibleAssets}
               hasAnyAssets={assets.length > 0}

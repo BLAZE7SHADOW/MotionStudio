@@ -149,7 +149,7 @@ export default function AuthPanel() {
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="h-10 px-3 rounded-studio-md bg-studio-surface border border-studio-border text-[13px] text-studio-text placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent focus:ring-2 focus:ring-studio-accent-text transition-colors"
+          className="h-10 px-3 rounded-studio-md bg-studio-surface border border-studio-border text-[13px] text-studio-text placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent focus:ring-2 focus:ring-studio-accent-text transition-colors ease-studio"
         />
         <input
           type="password"
@@ -158,7 +158,7 @@ export default function AuthPanel() {
           placeholder="Password (min. 6 characters)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="h-10 px-3 rounded-studio-md bg-studio-surface border border-studio-border text-[13px] text-studio-text placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent focus:ring-2 focus:ring-studio-accent-text transition-colors"
+          className="h-10 px-3 rounded-studio-md bg-studio-surface border border-studio-border text-[13px] text-studio-text placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent focus:ring-2 focus:ring-studio-accent-text transition-colors ease-studio"
         />
 
         {error && (
@@ -200,7 +200,7 @@ export default function AuthPanel() {
         type="button"
         onClick={handleGuest}
         disabled={busy}
-        className="flex items-center justify-center gap-2 text-[12px] text-studio-text-faint hover:text-studio-text-muted transition-colors disabled:opacity-50"
+        className="flex items-center justify-center gap-2 text-[12px] text-studio-text-faint hover:text-studio-text-muted transition-colors disabled:opacity-50 ease-studio"
       >
         {busyAction === 'guest' ? <Spinner className="w-3.5 h-3.5" /> : <User2 className="w-3.5 h-3.5" />}
         {busyAction === 'guest' ? 'Signing in…' : 'Try as guest · 1 free render, no sign-up'}

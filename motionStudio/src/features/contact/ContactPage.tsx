@@ -51,7 +51,7 @@ export default function ContactPage() {
         </Link>
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-studio-text-muted hover:text-studio-text transition-colors"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-studio-text-muted hover:text-studio-text transition-colors ease-studio"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to home
@@ -88,7 +88,7 @@ export default function ContactPage() {
             href={profile.portfolio}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 h-11 px-6 rounded-full text-[15px] font-semibold text-white mb-6 transition-transform hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 h-11 px-6 rounded-full text-[15px] font-semibold text-white mb-6 transition-transform hover:-translate-y-0.5 ease-studio"
             style={{
               background: 'linear-gradient(135deg, oklch(0.627 0.265 298.232), oklch(0.577 0.245 295))',
               boxShadow: '0 8px 30px oklch(0.627 0.265 298.232 / 30%)',
@@ -107,7 +107,7 @@ export default function ContactPage() {
                 target="_blank"
                 rel="noreferrer"
                 title={label}
-                className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:-translate-y-0.5 hover:scale-105"
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:-translate-y-0.5 hover:scale-105 ease-studio"
                 style={{ backgroundColor: bg, color: fg }}
               >
                 <Icon className="w-4.5 h-4.5" />

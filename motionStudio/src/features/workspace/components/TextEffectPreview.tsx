@@ -168,7 +168,7 @@ export default function TextEffectPreview({ effect, color }: { effect: TextEffec
           onClick={replay}
           title="Replay"
           aria-label="Replay preview"
-          className="absolute bottom-1 right-1 w-5 h-5 rounded-studio-sm flex items-center justify-center bg-studio-bg/70 text-studio-text-faint hover:text-studio-text transition-colors duration-120"
+          className="absolute bottom-1 right-1 w-5 h-5 rounded-studio-sm flex items-center justify-center bg-studio-bg/70 text-studio-text-faint hover:text-studio-text transition-colors duration-120 ease-studio"
         >
           <RotateCcw className="w-3 h-3" />
         </button>

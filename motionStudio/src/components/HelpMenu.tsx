@@ -72,7 +72,7 @@ export default function HelpMenu() {
             data-tour="help"
             title="Help, feedback and what's new"
             aria-label="Help and feedback"
-            className="relative w-7 h-7 rounded-studio-md flex items-center justify-center text-studio-text-muted hover:text-studio-text hover:bg-studio-surface transition-colors duration-120"
+            className="relative w-7 h-7 rounded-studio-md flex items-center justify-center text-studio-text-muted hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio"
           >
             <HelpCircle className="w-3.75 h-3.75" />
             {unseen && (

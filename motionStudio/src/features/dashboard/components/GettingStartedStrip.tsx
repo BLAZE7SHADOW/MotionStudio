@@ -54,7 +54,7 @@ export default function GettingStartedStrip() {
           type="button"
           onClick={dismiss}
           aria-label="Dismiss getting started"
-          className="shrink-0 w-6 h-6 rounded-studio-sm flex items-center justify-center text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120"
+          className="shrink-0 w-6 h-6 rounded-studio-sm flex items-center justify-center text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio"
         >
           <X className="w-3.5 h-3.5" />
         </button>

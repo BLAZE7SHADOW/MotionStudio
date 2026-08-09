@@ -386,7 +386,7 @@ export default function CanvasPanel({ project }: CanvasPanelProps) {
                         const el = addText();
                         if (el) setSelectedElement(el.id);
                       }}
-                      className="flex items-center gap-1.5 h-8 px-3 rounded-studio-md bg-white/10 border border-white/15 text-[12px] font-medium text-white/80 hover:bg-white/15 hover:text-white transition-colors duration-120"
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-studio-md bg-white/10 border border-white/15 text-[12px] font-medium text-white/80 hover:bg-white/15 hover:text-white transition-colors duration-120 ease-studio"
                     >
                       <Type className="w-3.5 h-3.5" />
                       Add Text
@@ -399,7 +399,7 @@ export default function CanvasPanel({ project }: CanvasPanelProps) {
                         const el = addShader('shader-mesh-gradient');
                         if (el) setSelectedElement(el.id);
                       }}
-                      className="flex items-center gap-1.5 h-8 px-3 rounded-studio-md bg-white/10 border border-white/15 text-[12px] font-medium text-white/80 hover:bg-white/15 hover:text-white transition-colors duration-120"
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-studio-md bg-white/10 border border-white/15 text-[12px] font-medium text-white/80 hover:bg-white/15 hover:text-white transition-colors duration-120 ease-studio"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       Add Background
@@ -497,7 +497,7 @@ export default function CanvasPanel({ project }: CanvasPanelProps) {
                 type="button"
                 onClick={toggleMuted}
                 title={muted ? 'Unmute' : 'Mute'}
-                className="flex items-center justify-center w-6 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120"
+                className="flex items-center justify-center w-6 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio"
               >
                 {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
               </button>
@@ -507,7 +507,7 @@ export default function CanvasPanel({ project }: CanvasPanelProps) {
               type="button"
               onClick={() => playerRef.current?.requestFullscreen()}
               title="Fullscreen preview"
-              className="flex items-center justify-center w-6 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120"
+              className="flex items-center justify-center w-6 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio"
             >
               <Maximize className="w-3.5 h-3.5" />
             </button>

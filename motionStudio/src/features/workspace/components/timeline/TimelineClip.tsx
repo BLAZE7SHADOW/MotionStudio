@@ -96,7 +96,7 @@ export default function TimelineClip({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       className={[
-        'absolute rounded-studio-sm border overflow-hidden select-none cursor-grab active:cursor-grabbing transition-colors duration-120',
+        'absolute rounded-studio-sm border overflow-hidden select-none cursor-grab active:cursor-grabbing transition-colors duration-120 ease-studio',
         selected
           ? 'bg-studio-accent-subtle border-studio-accent text-studio-text'
           : 'bg-studio-surface border-studio-border text-studio-text-muted hover:border-studio-border-strong',

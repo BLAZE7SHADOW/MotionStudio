@@ -161,7 +161,7 @@ export default function FeedbackDialog() {
             </p>
           </div>
         ) : (
-          <div className="px-5 py-4 flex flex-col gap-4 max-h-[60vh] overflow-y-auto">
+          <div className="px-5 py-4 flex flex-col gap-4 max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable]">
             <div className="flex flex-col gap-1.5">
               <Label className="text-[12px] font-medium text-studio-text-muted uppercase tracking-wider">
                 What kind of thing?
@@ -174,7 +174,7 @@ export default function FeedbackDialog() {
                     onClick={() => setCategory(c.value)}
                     title={c.hint}
                     className={[
-                      'h-8 text-[12px] font-medium rounded-studio-md border transition-colors duration-120',
+                      'h-8 text-[12px] font-medium rounded-studio-md border transition-colors duration-120 ease-studio',
                       category === c.value
                         ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent-text'
                         : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',
@@ -204,7 +204,7 @@ export default function FeedbackDialog() {
                     ? 'What were you doing, and what did you expect instead?'
                     : 'Describe it in your own words — detail helps but isn’t required.'
                 }
-                className="w-full resize-none rounded-studio-md bg-studio-surface border border-studio-border text-[12px] text-studio-text px-2.5 py-2 placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent-border focus:ring-1 focus:ring-studio-accent transition-colors"
+                className="w-full resize-none rounded-studio-md bg-studio-surface border border-studio-border text-[12px] text-studio-text px-2.5 py-2 placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent-border focus:ring-1 focus:ring-studio-accent transition-colors ease-studio"
               />
             </div>
 
@@ -233,7 +233,7 @@ export default function FeedbackDialog() {
               <button
                 type="button"
                 onClick={() => setShowContext((v) => !v)}
-                className="text-[11px] text-studio-text-muted hover:text-studio-text transition-colors"
+                className="text-[11px] text-studio-text-muted hover:text-studio-text transition-colors ease-studio"
               >
                 {showContext ? '▾' : '▸'} Sent with your message: browser, screen size
                 {project ? ', and this project’s format' : ''} ({context.length} details)

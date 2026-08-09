@@ -173,7 +173,7 @@ export default function SequenceTrack({
             }}
             title={`${sceneLabel(scenes, scene.id)} — click to open, drag to reorder`}
             className={[
-              'absolute top-2 bottom-2 rounded-studio-md border overflow-hidden transition-colors duration-120',
+              'absolute top-2 bottom-2 rounded-studio-md border overflow-hidden transition-colors duration-120 ease-studio',
               dragging === scene.id
                 ? 'border-studio-accent-border bg-studio-surface opacity-60 cursor-grabbing'
                 : 'border-studio-border bg-studio-surface hover:border-studio-border-strong cursor-pointer',

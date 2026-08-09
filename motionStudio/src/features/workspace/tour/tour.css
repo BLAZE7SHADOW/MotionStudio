@@ -141,7 +141,8 @@
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 12px;
-  transition: background-color 120ms, color 120ms;
+  transition: background-color var(--studio-duration-fast) var(--studio-ease),
+              color var(--studio-duration-fast) var(--studio-ease);
 }
 
 .driver-popover.ms-tour .driver-popover-footer-btn:hover {

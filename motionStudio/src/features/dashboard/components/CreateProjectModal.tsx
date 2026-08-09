@@ -97,12 +97,12 @@ export default function CreateProjectModal({ open, onClose }: CreateProjectModal
 
         <div className="grid grid-cols-[240px_1fr] max-h-[60vh]">
           {/* Template list */}
-          <div className="overflow-y-auto border-r border-studio-border px-4 py-4">
+          <div className="overflow-y-auto [scrollbar-gutter:stable] border-r border-studio-border px-4 py-4">
             <TemplatePicker selected={template} onSelect={setTemplate} />
           </div>
 
           {/* Preview + settings for the selection */}
-          <div className="overflow-y-auto px-5 py-4 flex flex-col gap-4">
+          <div className="overflow-y-auto [scrollbar-gutter:stable] px-5 py-4 flex flex-col gap-4">
             {template ? (
               <>
                 <TemplatePreview key={template.id} template={template} />
@@ -161,7 +161,7 @@ export default function CreateProjectModal({ open, onClose }: CreateProjectModal
                         type="button"
                         onClick={() => setFps(f)}
                         className={[
-                          'flex-1 h-9 text-[13px] font-medium rounded-studio-md border transition-colors duration-[120ms]',
+                          'flex-1 h-9 text-[13px] font-medium rounded-studio-md border transition-colors duration-120 ease-studio',
                           fps === f
                             ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent-text'
                             : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',

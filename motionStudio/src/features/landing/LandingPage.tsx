@@ -85,13 +85,13 @@ export default function LandingPage() {
         <div className="flex items-center gap-5">
           <Link
             to="/contact"
-            className="text-[13px] font-medium text-studio-text-muted hover:text-studio-text transition-colors"
+            className="text-[13px] font-medium text-studio-text-muted hover:text-studio-text transition-colors ease-studio"
           >
             Contact
           </Link>
           <a
             href="#auth"
-            className="text-[13px] font-medium text-studio-text-muted hover:text-studio-text transition-colors"
+            className="text-[13px] font-medium text-studio-text-muted hover:text-studio-text transition-colors ease-studio"
           >
             Sign in
           </a>
@@ -153,7 +153,7 @@ export default function LandingPage() {
           <a
             href="#auth"
             onClick={() => track.landingCtaClicked({ location: 'hero' })}
-            className="inline-flex items-center gap-2 h-12 px-7 rounded-full text-white text-[15px] font-semibold transition-transform hover:-translate-y-0.5 mb-16"
+            className="inline-flex items-center gap-2 h-12 px-7 rounded-full text-white text-[15px] font-semibold transition-transform hover:-translate-y-0.5 mb-16 ease-studio"
             style={{
               background: 'linear-gradient(135deg, oklch(0.627 0.265 298.232), oklch(0.577 0.245 295) )',
               boxShadow: '0 8px 30px oklch(0.627 0.265 298.232 / 35%)',
@@ -235,7 +235,7 @@ export default function LandingPage() {
                 href={profile.portfolio}
                 target="_blank"
                 rel="noreferrer"
-                className="text-studio-text font-medium hover:text-studio-accent-text transition-colors inline-flex items-center gap-1"
+                className="text-studio-text font-medium hover:text-studio-accent-text transition-colors inline-flex items-center gap-1 ease-studio"
               >
                 {profile.name}
                 <ExternalLink className="w-3 h-3" />
@@ -243,7 +243,7 @@ export default function LandingPage() {
             </p>
             <p className="text-[11px] text-studio-text-faint">
               {PORTFOLIO_DOMAIN} ·{' '}
-              <Link to="/contact" className="hover:text-studio-text-muted transition-colors">
+              <Link to="/contact" className="hover:text-studio-text-muted transition-colors ease-studio">
                 Get in touch
               </Link>
             </p>
@@ -257,7 +257,7 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noreferrer"
                 title={label}
-                className="w-8 h-8 rounded-full flex items-center justify-center border border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center border border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors ease-studio"
               >
                 <Icon className="w-4 h-4" />
               </a>
