@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Music, Upload, Search, FolderOpen, X, Play, Sparkle, Loader2, FileWarning } from 'lucide-react';
+import { Music, Upload, Search, FolderOpen, X, Play, Sparkle, Loader2, FileWarning, CloudOff } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { useAssetEngine, isUrlUsable, assetTypeFromFile } from '@/engines/asset';
@@ -125,6 +125,20 @@ function AssetCard({
       {asset.type === 'audio' && (
         <div className="w-full h-full flex items-center justify-center">
           <Music className="w-5 h-5 text-studio-text-faint" strokeWidth={1.5} />
+        </div>
+      )}
+
+      {/* Uploaded to the cloud? A failure here doesn't stop the file working
+          in the editor — it plays off the local blob — so this is a badge on a
+          normal tile rather than the "Re-upload needed" placeholder above.
+          What it costs you is the cloud render, and that is what it says. */}
+      {asset.uploadError && (
+        <div
+          title={`${asset.name} — couldn't be uploaded (${asset.uploadError}). It works here, but Cloud Render won't include it. Remove and add it again to retry.`}
+          className="absolute top-1 left-1 flex items-center gap-1 rounded-studio-xs bg-amber-500/15 border border-amber-500/40 px-1 py-0.5"
+        >
+          <CloudOff className="w-2.5 h-2.5 text-amber-300/90" strokeWidth={2} />
+          <span className="text-[8px] font-medium text-amber-300/90 leading-none">Not uploaded</span>
         </div>
       )}
 
@@ -563,7 +577,7 @@ export default function AssetsPanel() {
                     className={[
                       'flex-1 h-6 rounded-studio-sm text-[10px] font-medium transition-colors duration-120',
                       typeFilter === value
-                        ? 'bg-studio-accent-subtle text-studio-accent'
+                        ? 'bg-studio-accent-subtle text-studio-accent-text'
                         : 'text-studio-text-faint hover:text-studio-text hover:bg-studio-surface',
                     ].join(' ')}
                   >
@@ -594,7 +608,7 @@ export default function AssetsPanel() {
       {/* Drop anywhere in the panel, not just on one tab's zone */}
       {dragging && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-studio-accent-subtle/80 border-2 border-dashed border-studio-accent pointer-events-none">
-          <span className="text-[12px] font-medium text-studio-accent">Drop to add</span>
+          <span className="text-[12px] font-medium text-studio-accent-text">Drop to add</span>
         </div>
       )}
     </div>

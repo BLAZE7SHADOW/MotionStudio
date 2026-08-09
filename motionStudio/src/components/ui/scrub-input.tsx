@@ -95,7 +95,12 @@ export function ScrubInput({
 
   function commit() {
     const parsed = parseFloat(draft);
-    if (!Number.isNaN(parsed)) onChange(clamp(parsed));
+    /* `isFinite`, not `!isNaN`: `parseFloat('1e400')` is `Infinity`, which is
+       not NaN and so used to commit. On a field without explicit bounds
+       `clamp` is `Math.min(Infinity, …)`, so it passed straight through to the
+       store — and `JSON.stringify(Infinity)` is `null`, corrupting the project
+       through both the local and the cloud persistence paths. */
+    if (Number.isFinite(parsed)) onChange(clamp(parsed));
     setTyping(false);
   }
 
@@ -140,7 +145,7 @@ export function ScrubInput({
             if (e.key === 'Escape') setTyping(false);
           }}
           autoFocus
-          className="relative w-full h-full bg-transparent px-2 text-[12px] text-studio-text outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          className="relative w-full h-full bg-transparent px-2 text-[12px] text-studio-text outline-none focus:ring-2 focus:ring-studio-accent-text rounded-studio-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
       ) : (
         <>

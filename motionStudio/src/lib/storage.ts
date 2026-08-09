@@ -12,10 +12,24 @@ interface UploadUrlResponse {
   publicUrl: string;
 }
 
+/**
+ * Why this reports a reason instead of `null`.
+ *
+ * Every failure used to `console.warn` and return `null`, and the caller
+ * dropped it on the floor. The asset still worked locally off its blob URL, so
+ * nothing looked wrong — and the failure only surfaced much later as a cloud
+ * render that had quietly skipped that media. The API already produces
+ * genuinely useful reasons ("File exceeds 500 MB limit", "File type not
+ * allowed: …"); they were being thrown away one line after being parsed.
+ */
+export type UploadResult =
+  | { ok: true; url: string }
+  | { ok: false; message: string };
+
 export async function uploadAssetToStorage(
   assetId: string,
   file: File,
-): Promise<string | null> {
+): Promise<UploadResult> {
   try {
     // Resolved here, not passed in: an upload can start long after the caller
     // rendered, by which time a captured token may have expired.
@@ -38,8 +52,7 @@ export async function uploadAssetToStorage(
 
     if (!res.ok) {
       const { error } = await res.json().catch(() => ({ error: res.statusText }));
-      console.warn('[storage] failed to get upload URL:', error);
-      return null;
+      return { ok: false, message: String(error) };
     }
 
     const { uploadUrl, publicUrl } = (await res.json()) as UploadUrlResponse;
@@ -52,14 +65,15 @@ export async function uploadAssetToStorage(
     });
 
     if (!upload.ok) {
-      console.warn('[storage] S3 upload failed:', upload.status);
-      return null;
+      return { ok: false, message: `Upload failed (${upload.status})` };
     }
 
-    return publicUrl;
+    return { ok: true, url: publicUrl };
   } catch (err) {
-    console.warn('[storage] upload error:', err);
-    return null;
+    return {
+      ok: false,
+      message: err instanceof Error ? err.message : 'Network request failed',
+    };
   }
 }
 

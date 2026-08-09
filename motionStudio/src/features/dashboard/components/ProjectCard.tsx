@@ -30,6 +30,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   const ratio = RATIO_DISPLAY[project.aspectRatio];
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const formatted = new Date(project.createdAt).toLocaleDateString('en-US', {
     month: 'short',
@@ -39,9 +40,16 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
   async function handleDelete() {
     setDeleting(true);
+    setDeleteError(null);
     track.projectDeleted();
-    await deleteProjectCompletely(project);
+    const result = await deleteProjectCompletely(project);
     setDeleting(false);
+    // Stay open on failure. Closing the dialog here read as success while the
+    // project was still there, so the only feedback was it reappearing later.
+    if (!result.ok) {
+      setDeleteError(result.message);
+      return;
+    }
     setConfirmOpen(false);
   }
 
@@ -92,11 +100,23 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         <DialogContent className="sm:max-w-95 bg-studio-panel border-studio-border-strong">
           <DialogHeader>
             <DialogTitle className="text-studio-text">Delete “{project.name}”?</DialogTitle>
+            {/* Says only what actually happens. This used to claim the assets
+                were removed "everywhere — this device, the cloud"; the S3
+                originals are in fact retained (`deleteAssetFromStorage` is a
+                stub), so the promise was false. */}
             <DialogDescription className="text-studio-text-muted">
-              This removes the project and its assets everywhere — this device, the cloud, and any
-              other signed-in browser. This can’t be undone.
+              This removes the project and its media from this device and from your account,
+              including any other browser you’re signed into. This can’t be undone.
             </DialogDescription>
           </DialogHeader>
+
+          {deleteError && (
+            <p role="alert" className="text-[12px] text-red-400 leading-snug">
+              Couldn’t delete this project — {deleteError}. It’s still here; try again once
+              you’re back online.
+            </p>
+          )}
+
           <DialogFooter>
             <Button
               variant="ghost"

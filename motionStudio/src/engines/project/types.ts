@@ -19,6 +19,12 @@ export interface Asset {
   url: string;
   /** public https: URL in Supabase Storage — usable by Lambda on AWS */
   storageUrl?: string;
+  /* Why the upload didn't happen, when it didn't. An asset with no
+     `storageUrl` works perfectly in the editor off its blob URL and only
+     breaks in a *cloud* render, which is far too late to find out — so the
+     reason is kept on the asset and shown in the library. Absent means the
+     upload succeeded or is still in flight; `storageUrl` says which. */
+  uploadError?: string;
   width?: number;               // natural pixel size (image / video)
   height?: number;
   durationInSeconds?: number;   // media length (video / audio)

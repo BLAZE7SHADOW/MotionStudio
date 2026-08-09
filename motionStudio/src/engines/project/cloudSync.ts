@@ -45,20 +45,45 @@ export async function saveProject(project: Project, userId: string): Promise<Sav
   }
 }
 
-export async function loadProjects(userId: string): Promise<Project[]> {
-  const { data, error } = await getSupabase()
-    .from('projects')
-    .select('data')
-    .eq('user_id', userId)
-    .order('updated_at', { ascending: false });
-  if (error) {
-    console.error('[cloudSync] load failed', error.message);
-    return [];
+/**
+ * The same reasoning as `SaveResult` above, applied to the read side.
+ *
+ * Returning `[]` on failure made "we couldn't reach your projects" and "you
+ * have no projects" the same value, and the dashboard renders the onboarding
+ * empty state for the second one — so a transient outage looked exactly like
+ * an account whose work had vanished.
+ */
+export type LoadResult =
+  | { ok: true; projects: Project[] }
+  | { ok: false; message: string };
+
+export async function loadProjects(userId: string): Promise<LoadResult> {
+  try {
+    const { data, error } = await getSupabase()
+      .from('projects')
+      .select('data')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+    if (error) return { ok: false, message: error.message };
+    return { ok: true, projects: (data ?? []).map((row) => row.data as Project) };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Network request failed' };
   }
-  return (data ?? []).map((row) => row.data as Project);
 }
 
-export async function deleteCloudProject(projectId: string): Promise<void> {
-  const { error } = await getSupabase().from('projects').delete().eq('id', projectId);
-  if (error) console.error('[cloudSync] delete failed', error.message);
+export type DeleteResult = { ok: true } | { ok: false; message: string };
+
+/**
+ * A failure here used to be logged and nothing else, so the project vanished
+ * locally while its row survived — and came back at the next sign-in, after
+ * the user had been told it was deleted for good.
+ */
+export async function deleteCloudProject(projectId: string): Promise<DeleteResult> {
+  try {
+    const { error } = await getSupabase().from('projects').delete().eq('id', projectId);
+    if (error) return { ok: false, message: error.message };
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Network request failed' };
+  }
 }

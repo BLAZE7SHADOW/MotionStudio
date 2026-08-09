@@ -4,9 +4,9 @@ import { assetTypeFromFile, probeAsset } from './probe';
 import { analyzeAudioUrl } from '../audio/analyzeAudio';
 import { LOW_CONFIDENCE } from '../audio/beatDetect';
 import { showNotice } from '@/lib/noticeStore';
-import { putBlob, deleteBlob } from './blobStore';
+import { putBlob } from './blobStore';
 import { createObjectUrl } from './objectUrls';
-import { uploadAssetToStorage, deleteAssetFromStorage } from '@/lib/storage';
+import { uploadAssetToStorage } from '@/lib/storage';
 
 /**
  * Asset Engine — service layer over the project's asset library.
@@ -119,13 +119,21 @@ export function useAssetEngine() {
         // getSession() looked fresh but wasn't — getSession returns the *stored*
         // token whether or not it has expired, so a long session uploaded with a
         // dead JWT and got 401 "Invalid session".
-        const storageUrl = await uploadAssetToStorage(asset.id, file);
-        if (!storageUrl) return;
+        const result = await uploadAssetToStorage(asset.id, file);
         const latest = useProjectStore.getState().getProject(projectId);
         if (!latest) return;
+
+        /* A failure is recorded on the asset rather than dropped. It used to
+           return here silently, which left the library looking completely
+           normal — the file plays locally — until a cloud render came back
+           missing that media with no explanation. */
+        const patch = result.ok
+          ? { storageUrl: result.url, uploadError: undefined }
+          : { uploadError: result.message };
+
         updateProject(
           projectId,
-          { assets: latest.assets.map((a) => (a.id === asset.id ? { ...a, storageUrl } : a)) },
+          { assets: latest.assets.map((a) => (a.id === asset.id ? { ...a, ...patch } : a)) },
           { history: false },
         );
       }),
@@ -134,12 +142,22 @@ export function useAssetEngine() {
     return created;
   }
 
+  /**
+   * Take an asset out of the library.
+   *
+   * The record goes through `updateProject`, so this lands in undo history —
+   * which is exactly why the bytes must stay. Deleting the blob here made ⌘Z
+   * restore an asset whose object URL could never resolve again, so undo
+   * produced the amber "Re-upload needed" card instead of the user's file:
+   * worse than not undoing at all.
+   *
+   * Orphaned blobs are harmless — the asset record is the only thing that
+   * references them, and IndexedDB is device-local. Reclaiming them belongs
+   * with deleting the project, where there is no undo to contradict it.
+   */
   function removeAsset(id: string) {
     if (!project) return;
-    const asset = assets.find((a) => a.id === id);
     updateProject(project.id, { assets: assets.filter((a) => a.id !== id) });
-    void deleteBlob(id);
-    if (asset) void deleteAssetFromStorage(id, asset.name);
   }
 
   function getAsset(id: string): Asset | undefined {

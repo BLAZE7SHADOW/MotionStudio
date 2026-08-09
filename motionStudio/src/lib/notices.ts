@@ -26,6 +26,10 @@ export type NoticeId =
   | 'read-only'
   /** A project was written by a build newer than this one. */
   | 'project-from-future'
+  /** The cloud project list couldn't be fetched, so what's on screen is
+      whatever this device had saved. Not suppressible: it describes the state
+      the app is in right now, not a tip. */
+  | 'cloud-load-failed'
   /** A one-click toolbar button (text / background / block) just landed a
       new element on the canvas. These land already selected, but a click
       followed immediately by another can put two or three on the canvas
