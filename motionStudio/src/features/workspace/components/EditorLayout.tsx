@@ -30,29 +30,67 @@ export default function EditorLayout({ project }: EditorLayoutProps) {
   return (
     <TooltipProvider>
     <div className="relative h-screen w-screen overflow-hidden flex flex-col bg-studio-bg">
-      <Toolbar project={project} />
+      {/* The editor has no other heading anywhere — every panel title
+          ("Assets", "Properties", "Timeline") is a styled `<span>`, not an
+          `<h*>`, and the whole page previously had zero landmarks. A screen
+          reader user landing here had no page title to announce and no way
+          to jump between regions except tabbing through every control in
+          DOM order. Visually hidden because the toolbar's own wordmark
+          already does this job for sighted users. */}
+      <h1 className="sr-only">{project.name} — MotionStudio editor</h1>
+      <a
+        href="#editor-canvas"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:px-3 focus:py-2 focus:rounded-studio-md focus:bg-studio-accent focus:text-white focus:text-[13px] focus:font-medium"
+      >
+        Skip to canvas
+      </a>
+
+      <header>
+        <Toolbar project={project} />
+      </header>
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Assets — left panel */}
-        <div data-tour="assets" className="w-[220px] shrink-0 border-r border-studio-border overflow-hidden">
+        <aside
+          aria-label="Assets"
+          data-tour="assets"
+          className="w-[220px] shrink-0 border-r border-studio-border overflow-hidden"
+        >
           <AssetsPanel />
-        </div>
+        </aside>
 
-        {/* Canvas — center */}
-        <div data-tour="canvas" className="flex-1 flex overflow-hidden">
+        {/* Canvas — center. The skip link's target: not otherwise focusable,
+            since nothing before it in a fresh page load has typically been
+            interacted with, so this is the first purposeful jump a keyboard
+            user makes. */}
+        <main
+          id="editor-canvas"
+          tabIndex={-1}
+          aria-label="Canvas"
+          data-tour="canvas"
+          className="flex-1 flex overflow-hidden outline-none"
+        >
           <CanvasPanel project={project} />
-        </div>
+        </main>
 
         {/* Properties — right panel */}
-        <div data-tour="properties" className="w-[260px] shrink-0 border-l border-studio-border overflow-hidden">
+        <aside
+          aria-label="Properties"
+          data-tour="properties"
+          className="w-[260px] shrink-0 border-l border-studio-border overflow-hidden"
+        >
           <PropertiesPanel />
-        </div>
+        </aside>
       </div>
 
       {/* Timeline — bottom */}
-      <div data-tour="timeline" className="h-56 shrink-0 border-t border-studio-border overflow-hidden">
+      <section
+        aria-label="Timeline"
+        data-tour="timeline"
+        className="h-56 shrink-0 border-t border-studio-border overflow-hidden"
+      >
         <TimelinePanel project={project} />
-      </div>
+      </section>
 
       <ProjectLockGate
         status={lock.status}

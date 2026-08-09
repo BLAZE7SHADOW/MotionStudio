@@ -193,10 +193,16 @@ function PropRow({
    worth passing for genuinely bounded quantities — they're what draws the
    filled track, and a fill on an unbounded value like X would be a lie. */
 function NumInput({
-  value, onChange, unit, step, min, max, compact,
+  value, onChange, unit, step, min, max, compact, label,
 }: {
   value: number; onChange: (v: number) => void; unit?: string; step?: number;
   min?: number; max?: number; compact?: boolean;
+  /** The field's name for screen readers — `PropRow`'s own `label` is a plain
+      `<span>`, not a `<label htmlFor>`, so nothing associates it with the
+      input for anyone not reading it visually. Optional only because a
+      handful of call sites (Font Size, Letter Spacing, …) aren't wrapped in
+      a `PropRow` and carry their own adjacent text a different way. */
+  label?: string;
 }) {
   return (
     <ScrubInput
@@ -206,6 +212,7 @@ function NumInput({
       step={step}
       min={min}
       max={max}
+      aria-label={label}
       hideHint={compact}
     />
   );
@@ -275,6 +282,11 @@ function Section({
   instant?: boolean;
 }) {
   const [closed, setClosed] = useState(() => readClosedSections().includes(title));
+  // aria-expanded with nothing named in aria-controls describes a toggle that
+  // points at nothing — the content region needs a real id to point at, and
+  // title is unique per rendered section (Motion/Transform/Layer/…) so it's a
+  // stable source for one.
+  const contentId = `properties-section-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
   const toggle = () => {
     setClosed((prev) => {
@@ -320,6 +332,7 @@ function Section({
           type="button"
           onClick={toggle}
           aria-expanded={!closed}
+          aria-controls={contentId}
           className="flex-1 min-w-0 px-4 py-2 flex items-center gap-1.5 text-left"
         >
           <ChevronRight
@@ -343,7 +356,7 @@ function Section({
         )}
       </div>
       {instant ? (
-        !closed && children
+        !closed && <div id={contentId}>{children}</div>
       ) : (
         /* Height 0→auto has no native CSS transition, so this animates
            `grid-template-rows` instead — 0fr collapses the row to nothing,
@@ -356,6 +369,7 @@ function Section({
            see `instant` above for the one section where it deliberately
            isn't. */
         <div
+          id={contentId}
           className={`grid transition-[grid-template-rows] duration-studio-base ease-studio ${closed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'}`}
         >
           <div className="overflow-hidden min-h-0">{children}</div>
@@ -403,6 +417,7 @@ function AnimationRow({
             type="button"
             onClick={onRemove}
             title="Remove animation"
+            aria-label="Remove animation"
             className="w-6 h-6 flex items-center justify-center rounded-studio-xs text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio"
           >
             <X className="w-3 h-3" />
@@ -443,15 +458,15 @@ function TransformSection({ el, update }: { el: BaseElement; update: Update }) {
       >
       <div className="flex flex-col gap-3 px-4 py-3">
         <div className="flex gap-2">
-          <PropRow label="X" compact animated={animated.has('x')}><NumInput value={Math.round(el.x)} onChange={(v) => update({ x: v })} compact /></PropRow>
-          <PropRow label="Y" compact animated={animated.has('y')}><NumInput value={Math.round(el.y)} onChange={(v) => update({ y: v })} compact /></PropRow>
+          <PropRow label="X" compact animated={animated.has('x')}><NumInput value={Math.round(el.x)} onChange={(v) => update({ x: v })} compact label="Position X" /></PropRow>
+          <PropRow label="Y" compact animated={animated.has('y')}><NumInput value={Math.round(el.y)} onChange={(v) => update({ y: v })} compact label="Position Y" /></PropRow>
         </div>
         <div className="flex gap-2">
-          <PropRow label="W" compact><NumInput value={Math.round(el.width)} onChange={(v) => update({ width: v })} min={1} compact /></PropRow>
-          <PropRow label="H" compact><NumInput value={Math.round(el.height)} onChange={(v) => update({ height: v })} min={1} compact /></PropRow>
+          <PropRow label="W" compact><NumInput value={Math.round(el.width)} onChange={(v) => update({ width: v })} min={1} compact label="Width" /></PropRow>
+          <PropRow label="H" compact><NumInput value={Math.round(el.height)} onChange={(v) => update({ height: v })} min={1} compact label="Height" /></PropRow>
         </div>
         <PropRow label="Rotation" animated={animated.has('rotate')}>
-          <NumInput value={Math.round(el.rotation)} onChange={(v) => update({ rotation: v })} unit="°" />
+          <NumInput value={Math.round(el.rotation)} onChange={(v) => update({ rotation: v })} unit="°" label="Rotation" />
         </PropRow>
         <PropRow label="Opacity" animated={animated.has('opacity')}>
           <NumInput
@@ -460,6 +475,7 @@ function TransformSection({ el, update }: { el: BaseElement; update: Update }) {
             unit="%"
             min={0}
             max={100}
+            label="Opacity"
           />
         </PropRow>
       </div>
@@ -709,7 +725,7 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
           </div>
         )}
         <PropRow label="Font size">
-          <NumInput value={el.fontSize} onChange={(v) => update({ fontSize: v })} unit="px" />
+          <NumInput value={el.fontSize} onChange={(v) => update({ fontSize: v })} unit="px" label="Font size" />
         </PropRow>
         <PropRow label="Color">
           <div className="flex items-center gap-2 flex-1">
@@ -767,6 +783,7 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
               value={el.textEffectSpeed ?? 1}
               onChange={(v) => update({ textEffectSpeed: Math.max(0.1, v) })}
               step={0.1}
+              label="Effect speed"
             />
           </PropRow>
         )}
@@ -778,6 +795,7 @@ function TextProperties({ el, update, reorder }: { el: TextElement; update: Upda
               onChange={(v) => update({ textEffectCursorBlinkSpeed: Math.max(0.1, v) })}
               step={0.1}
               unit="/s"
+              label="Cursor blink speed"
             />
           </PropRow>
         )}
@@ -861,6 +879,7 @@ function BlockProperties({
               <NumInput
                 value={Number(value(field.key)) || 0}
                 onChange={(v) => setProp(field.key, v)}
+                label={field.label}
               />
             )}
 
@@ -971,6 +990,7 @@ function ShaderProperties({ el, update, reorder }: { el: ShaderElement; update: 
             value={el.shaderSpeed ?? 1}
             onChange={(v) => update({ shaderSpeed: Math.max(0.1, v) })}
             step={0.1}
+            label="Background speed"
           />
         </PropRow>
 
@@ -998,6 +1018,7 @@ function AudioProperties({ el, update }: { el: AudioElement; update: Update }) {
             value={Math.round((el.volume ?? 1) * 100)}
             onChange={(v) => update({ volume: Math.min(1, Math.max(0, v / 100)) })}
             unit="%"
+            label="Volume"
           />
         </PropRow>
         <p className="text-[10px] text-studio-text-faint leading-relaxed">
@@ -1035,6 +1056,7 @@ export default function PropertiesPanel() {
               setSelectedElement(null);
             }}
             title="Delete element (Del)"
+            aria-label="Delete element"
             className="ml-auto w-6 h-6 flex items-center justify-center rounded-studio-xs text-studio-text-faint hover:text-red-400 hover:bg-red-500/10 transition-colors duration-120 ease-studio"
           >
             <Trash2 className="w-3.5 h-3.5" />

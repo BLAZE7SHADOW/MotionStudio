@@ -74,6 +74,7 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
         <button
           type="button"
           title="Project settings"
+          aria-label={`Project settings — ${project.aspectRatio}, ${project.fps} fps, ${Math.round(project.durationInFrames / project.fps)} seconds`}
           className="flex items-center gap-1.5 h-7 px-2.5 rounded-studio-sm text-[12px] font-medium text-studio-text-muted hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio border border-transparent hover:border-studio-border"
         >
           <span className="font-mono">{project.aspectRatio}</span>

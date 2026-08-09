@@ -10,6 +10,7 @@ import { useEditorStore } from '@/engines/editor';
 import { textElementStyle, elementBoxStyle, MotionComposition } from '@/engines/rendering';
 import type { TextElement } from '@/engines/canvas';
 import { track } from '@/lib/analytics';
+import { clipLabel } from './timeline/clipLabel';
 
 const DOT_GRID: React.CSSProperties = {
   backgroundImage: 'radial-gradient(circle, oklch(1 0 0 / 10%) 1px, transparent 1px)',
@@ -432,11 +433,20 @@ export default function CanvasPanel({ project }: CanvasPanelProps) {
                   // Only the selected element's box needs to be findable, and
                   // this is the moment it is known to exist.
                   ref={el.id === selectedElementId ? setMoveableTarget : undefined}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${clipLabel(el)} — press Enter to select, arrow keys to move once selected`}
                   style={{
                     ...elementBoxStyle(el, scale),
                     backgroundColor: 'transparent',
                     cursor: 'pointer',
                   }}
+                  // Mouse selection has always shown the Moveable handles as
+                  // its "you picked this" feedback — this box has no visible
+                  // border of its own otherwise. Keyboard focus needed the
+                  // same signal, since Moveable only shows once, not while
+                  // merely tabbed to an unselected element.
+                  className="outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-studio-accent-text focus-visible:outline-offset-1"
                   onClick={(e) => { e.stopPropagation(); setSelectedElement(el.id); }}
                   onDoubleClick={(e) => {
                     e.stopPropagation();
@@ -444,6 +454,24 @@ export default function CanvasPanel({ project }: CanvasPanelProps) {
                       setSelectedElement(el.id);
                       setEditingId(el.id);
                     }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedElement(el.id);
+                      return;
+                    }
+                    // Arrow-key nudge — the only way to move an element without
+                    // a mouse today, since Moveable's own drag is pointer-only.
+                    // Only once this element is actually selected: focus alone
+                    // moving it would fight Tab navigation, which has to be
+                    // free to pass over elements without touching their position.
+                    if (el.id !== selectedElementId) return;
+                    const step = e.shiftKey ? 10 : 1;
+                    if (e.key === 'ArrowLeft')  { e.preventDefault(); updateElement(el.id, { x: el.x - step }); }
+                    if (e.key === 'ArrowRight') { e.preventDefault(); updateElement(el.id, { x: el.x + step }); }
+                    if (e.key === 'ArrowUp')    { e.preventDefault(); updateElement(el.id, { y: el.y - step }); }
+                    if (e.key === 'ArrowDown')  { e.preventDefault(); updateElement(el.id, { y: el.y + step }); }
                   }}
                 />
               );
@@ -497,6 +525,7 @@ export default function CanvasPanel({ project }: CanvasPanelProps) {
                 type="button"
                 onClick={toggleMuted}
                 title={muted ? 'Unmute' : 'Mute'}
+                aria-label={muted ? 'Unmute' : 'Mute'}
                 className="flex items-center justify-center w-6 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio"
               >
                 {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
@@ -507,6 +536,7 @@ export default function CanvasPanel({ project }: CanvasPanelProps) {
               type="button"
               onClick={() => playerRef.current?.requestFullscreen()}
               title="Fullscreen preview"
+              aria-label="Fullscreen preview"
               className="flex items-center justify-center w-6 h-6 rounded-studio-md bg-studio-surface/60 border border-studio-border backdrop-blur-sm text-studio-text-faint hover:text-studio-text hover:bg-studio-surface transition-colors duration-120 ease-studio"
             >
               <Maximize className="w-3.5 h-3.5" />

@@ -530,6 +530,7 @@ export default function ExportDialog({ project }: { project: Project }) {
                       onClick={handleSignOut}
                       className="text-studio-text-faint hover:text-studio-text"
                       title="Sign out"
+                      aria-label="Sign out"
                     >
                       <LogOut className="w-3.5 h-3.5" />
                     </button>

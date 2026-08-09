@@ -60,6 +60,7 @@ export default function Toolbar({ project }: ToolbarProps) {
         <Button
           variant="ghost"
           size="icon"
+          aria-label="Undo"
           onClick={() => { track.editorUndo(); undo(); }}
           disabled={!canUndo}
           className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm disabled:opacity-30 disabled:pointer-events-none"
@@ -71,6 +72,7 @@ export default function Toolbar({ project }: ToolbarProps) {
         <Button
           variant="ghost"
           size="icon"
+          aria-label="Redo"
           onClick={() => { track.editorRedo(); redo(); }}
           disabled={!canRedo}
           className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm disabled:opacity-30 disabled:pointer-events-none"
@@ -93,6 +95,7 @@ export default function Toolbar({ project }: ToolbarProps) {
           data-tour="insert"
           variant="ghost"
           size="icon"
+          aria-label="Add text"
           onClick={() => {
             track.editorTextAdded();
             const el = addText();
@@ -108,6 +111,7 @@ export default function Toolbar({ project }: ToolbarProps) {
           data-tour="shader"
           variant="ghost"
           size="icon"
+          aria-label="Add animated background"
           onClick={() => {
             track.editorShaderAdded({ shader: 'shader-mesh-gradient' });
             const el = addShader('shader-mesh-gradient');
@@ -133,6 +137,7 @@ export default function Toolbar({ project }: ToolbarProps) {
                 data-tour="blocks"
                 variant="ghost"
                 size="icon"
+                aria-label="Add a block"
                 className="w-8 h-8 text-studio-text-muted hover:text-studio-text hover:bg-studio-surface rounded-studio-sm"
               >
                 <SquareTerminal className="w-3.75 h-3.75" />

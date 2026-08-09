@@ -29,6 +29,7 @@ export default function UserMenu() {
           type="button"
           className="w-6 h-6 rounded-full bg-studio-surface border border-studio-border flex items-center justify-center text-[10px] font-bold text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong transition-colors ease-studio"
           title={isAnonymous ? 'Guest user' : (user.email ?? 'User')}
+          aria-label={`Account menu — ${isAnonymous ? 'Guest user' : (user.email ?? 'User')}`}
         >
           {initials}
         </button>

@@ -90,6 +90,7 @@ function AssetCard({
           type="button"
           onClick={(e) => { e.stopPropagation(); onRemove(); }}
           title="Remove asset"
+          aria-label="Remove asset"
           className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-studio-xs bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-opacity duration-120 ease-studio"
         >
           <X className="w-3 h-3" />
@@ -100,14 +101,20 @@ function AssetCard({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onAdd}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAdd(); }
+      }}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData('application/x-motionstudio-asset', asset.id);
         e.dataTransfer.effectAllowed = 'copy';
       }}
       title="Click or drag onto the canvas"
-      className="group relative aspect-video rounded-studio-md overflow-hidden border border-studio-border bg-studio-surface cursor-pointer hover:border-studio-border-strong transition-colors duration-120 ease-studio"
+      aria-label={`${asset.name} — add to canvas`}
+      className="group relative aspect-video rounded-studio-md overflow-hidden border border-studio-border bg-studio-surface cursor-pointer hover:border-studio-border-strong transition-colors duration-120 ease-studio focus-visible:outline focus-visible:outline-2 focus-visible:outline-studio-accent-text focus-visible:outline-offset-1"
     >
       {asset.type === 'image' && (
         <img src={asset.url} alt={asset.name} className="w-full h-full object-cover" />
@@ -152,6 +159,7 @@ function AssetCard({
         type="button"
         onClick={(e) => { e.stopPropagation(); onRemove(); }}
         title="Remove asset"
+        aria-label="Remove asset"
         className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-studio-xs bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-opacity duration-120 ease-studio"
       >
         <X className="w-3 h-3" />
@@ -278,6 +286,7 @@ function StockTab({
             type="submit"
             disabled={!token || !query.trim()}
             title="Search"
+            aria-label="Search"
             className="h-8 w-8 shrink-0 flex items-center justify-center rounded-studio-md bg-studio-surface border border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong disabled:opacity-40 transition-colors duration-120 ease-studio"
           >
             <Search className="w-3.5 h-3.5" />

@@ -86,11 +86,7 @@ export function ScrubInput({
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
     setDragging(false);
     // Never moved → the user meant to click into the field and type.
-    if (drag.current.moved < CLICK_SLOP_PX) {
-      setDraft(String(round(value, decimals)));
-      setTyping(true);
-      requestAnimationFrame(() => inputRef.current?.select());
-    }
+    if (drag.current.moved < CLICK_SLOP_PX) startTyping();
   }
 
   function commit() {
@@ -104,6 +100,26 @@ export function ScrubInput({
     setTyping(false);
   }
 
+  function startTyping() {
+    setDraft(String(round(value, decimals)));
+    setTyping(true);
+    requestAnimationFrame(() => inputRef.current?.select());
+  }
+
+  /* Every numeric property in the editor used to be reachable only by
+     clicking — the display state was a `<span>` in a plain `<div>` with
+     pointer handlers, nothing in it could take focus, and dragging has no
+     keyboard equivalent at all. Up/Down nudges by `step` (Shift for the same
+     10x coarse jump the drag gesture already uses), Enter/Space drops into
+     the same typing mode a click-without-drag reaches. */
+  function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startTyping(); return; }
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    e.preventDefault();
+    const delta = step * (e.shiftKey ? 10 : 1) * (e.key === 'ArrowUp' ? 1 : -1);
+    onChange(clamp(value + delta));
+  }
+
   /* A filled track only makes sense when the value has ends. Unbounded
      quantities like X or rotation get no fill rather than a meaningless one. */
   const hasRange = min !== undefined && max !== undefined && max > min;
@@ -111,13 +127,24 @@ export function ScrubInput({
 
   return (
     <div
+      // Not interactive while typing — the real `<input>` below already owns
+      // focus and the tab stop; leaving this at 0 too would give one control
+      // two stops in a row.
+      tabIndex={typing ? -1 : 0}
+      role="spinbutton"
+      aria-label={ariaLabel}
+      aria-valuenow={value}
+      aria-valuemin={min}
+      aria-valuemax={max}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
+      onKeyDown={onKeyDown}
       className={[
         'group relative flex-1 h-7 flex items-center rounded-studio-sm border overflow-hidden',
         'bg-studio-surface border-studio-border transition-colors duration-120 ease-studio',
+        'outline-none focus-visible:border-studio-accent-border focus-visible:ring-2 focus-visible:ring-studio-accent-text',
         typing ? 'border-studio-accent-border' : 'hover:border-studio-border-strong',
         dragging ? 'cursor-ew-resize select-none' : typing ? 'cursor-text' : 'cursor-ew-resize',
         className,
@@ -156,8 +183,12 @@ export function ScrubInput({
               DRAG
             </span>
           )}
+          {/* No aria-label here — the wrapper's role="spinbutton" already
+              carries the name and aria-valuenow already carries the value,
+              so a label here would announce both the number and its name
+              twice. */}
           <span
-            aria-label={ariaLabel}
+            aria-hidden="true"
             className="relative ml-auto mr-2 text-[12px] text-studio-text tabular-nums select-none"
           >
             {round(value, decimals)}

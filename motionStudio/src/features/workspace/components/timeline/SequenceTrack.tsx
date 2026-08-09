@@ -169,7 +169,11 @@ export default function SequenceTrack({
             onPointerUp={(e) => onBlockUp(e, scene.id, start)}
             onPointerCancel={(e) => onBlockUp(e, scene.id, start)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') { setActiveScene(scene.id); setCurrentFrame(start); }
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setActiveScene(scene.id);
+                setCurrentFrame(start);
+              }
             }}
             title={`${sceneLabel(scenes, scene.id)} — click to open, drag to reorder`}
             className={[

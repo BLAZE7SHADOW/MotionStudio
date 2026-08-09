@@ -181,6 +181,7 @@ export default function ShotStrip({ project }: { project: Project }) {
                 type="button"
                 onClick={() => requestDelete(scene.id)}
                 title={`Delete ${sceneLabel(scenes, scene.id)} and everything in it`}
+                aria-label={`Delete ${sceneLabel(scenes, scene.id)} and everything in it`}
                 className={[
                   'absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-studio-xs opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-120 ease-studio',
                   active ? 'text-white/70 hover:text-white' : 'text-studio-text-faint hover:text-red-400',
