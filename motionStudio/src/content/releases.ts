@@ -32,6 +32,16 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: '2026-08-09',
+    title: 'Added elements no longer hide behind each other',
+    changes: [
+      {
+        kind: 'fixed',
+        text: 'Adding text, a background, or a block more than once used to land every new one in the exact same spot, stacked invisibly on top of the last. Repeats now nudge into view instead, and never past the edge of your canvas.',
+      },
+    ],
+  },
+  {
     id: '2026-08-08',
     title: 'Insert confirmations no longer get lost',
     changes: [

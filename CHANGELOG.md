@@ -5,6 +5,38 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-09] — Repeated inserts cascade instead of stacking exactly
+
+Every one-click insert (`addText`, `addBlock`, and the default-position
+branch of `addImage`/`addVideo`) placed its new element at a fixed centered
+`x`/`y` derived purely from canvas size — clicking "Add text" three times
+landed three elements at the exact same spot, invisibly stacked with no
+visual cue more than one existed. Reported directly by the owner while using
+the toolbar.
+
+### Added
+- `motionStudio/src/engines/canvas/placement.ts` — `cascadePosition()`, a
+  pure function that offsets each successive insert diagonally by a fixed
+  32px step (the same "paste cascade" pattern PowerPoint/Slides/Figma use
+  for repeated paste), clamping every candidate to the canvas bounds
+  *before* it's considered — so the guarantee that an element never crosses
+  the canvas edge falls out of construction, not a follow-up check. Once the
+  clamp pins both axes, the cascade stops advancing rather than looping.
+- `motionStudio/tests/placement.test.mjs` — covers the empty-canvas case, a
+  same-size collision, a different-size element not blocking the default
+  spot, 200 successive inserts never leaving canvas bounds, and the cascade
+  correctly reusing a clamped position once it runs out of room.
+
+### Changed
+- `motionStudio/src/engines/canvas/store.ts` — `addText`, `addBlock`, and
+  the no-drop-point branch of `addImage`/`addVideo` now route their default
+  position through `cascadePosition`. The drag-and-drop drop-point path
+  (`at`) is untouched — that position is user-chosen and should stay
+  literal. `addShader` (always full-bleed) and `addAudio` (no spatial
+  presence) are untouched by design.
+
+---
+
 ## [2026-08-08] — Toolbar insert confirmations moved to react-toastify
 
 The "Text added" / "Background added" / block-added confirmations (fired by
