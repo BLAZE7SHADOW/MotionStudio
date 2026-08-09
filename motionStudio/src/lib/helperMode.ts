@@ -8,21 +8,23 @@ import { create } from 'zustand';
  * `noticeStore.ts`: this is a boolean and a storage key, the other two touch
  * the DOM and render, and the toolbar button only needs the boolean.
  *
- * **Default on.** Helper mode never blocks a click and never covers a control
- * — a card only ever appears while the cursor rests on the one thing it
- * describes — so leaving it on costs a first-time user nothing, and a mode
- * nobody discovers is a mode that doesn't exist. Only "off" is written to
- * storage: absence means on, so a cleared profile gets the helpful default
- * rather than the quiet one.
+ * **Default off.** Helper mode's proactive flash-and-card was the only way
+ * to learn a control's purpose without hunting for the toggle, which is why
+ * it used to default on. `InfoHint` (`components/InfoHint.tsx`) now covers
+ * that same "what is this" need at a much lower intrusion cost — a small,
+ * static, always-visible icon next to a control rather than a border flash
+ * and popover on every hover — so Helper Mode no longer needs to carry that
+ * job by default. Only "on" is written to storage: absence means off, so a
+ * cleared profile gets the quiet default.
  */
 
 const KEY = 'ms_helper_mode';
 
 function readStored(): boolean {
   try {
-    return localStorage.getItem(KEY) !== 'off';
+    return localStorage.getItem(KEY) === 'on';
   } catch {
-    return true; // private mode — fail towards explaining things
+    return false; // private mode — fail towards the quiet default
   }
 }
 
