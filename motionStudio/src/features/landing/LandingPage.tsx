@@ -112,7 +112,7 @@ export default function LandingPage() {
         />
 
         <div className="relative flex flex-col items-center max-w-2xl">
-          <span className="mb-6 text-[11px] font-medium text-studio-accent bg-studio-accent-subtle border border-studio-accent-border px-2.5 py-1 rounded-full">
+          <span className="mb-6 text-[11px] font-medium text-studio-accent-text bg-studio-accent-subtle border border-studio-accent-border px-2.5 py-1 rounded-full">
             Browser-based · No install needed
           </span>
 
@@ -120,7 +120,7 @@ export default function LandingPage() {
             style={{ fontFamily: 'var(--font-display)' }}
             className="text-[48px] sm:text-[68px] lg:text-[76px] leading-[0.98] font-semibold text-studio-text tracking-tight mb-4"
           >
-            Motion<span className="text-studio-accent">Studio</span>
+            Motion<span className="text-studio-accent-text">Studio</span>
             {/* Inline style, not a Tailwind class: the h1's own inline
                 `fontFamily: var(--font-display)` (Bricolage) has higher
                 specificity than any class, so a class-based reset would be
@@ -182,7 +182,7 @@ export default function LandingPage() {
               >
                 <span
                   style={{ fontFamily: 'var(--font-display)' }}
-                  className="text-[30px] leading-none font-semibold text-studio-accent tabular-nums"
+                  className="text-[30px] leading-none font-semibold text-studio-accent-text tabular-nums"
                 >
                   {value}
                 </span>
@@ -193,14 +193,14 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex gap-3 p-4 rounded-studio-lg bg-studio-panel border border-studio-border">
-              <Music className="w-4 h-4 text-studio-accent shrink-0 mt-0.5" />
+              <Music className="w-4 h-4 text-studio-accent-text shrink-0 mt-0.5" />
               <p className="text-[13px] text-studio-text-muted leading-relaxed">
                 <span className="text-studio-text font-medium">Audio mixing</span> — stack
                 tracks, rendered sample-perfectly offline.
               </p>
             </div>
             <div className="flex gap-3 p-4 rounded-studio-lg bg-studio-panel border border-studio-border">
-              <Cloud className="w-4 h-4 text-studio-accent shrink-0 mt-0.5" />
+              <Cloud className="w-4 h-4 text-studio-accent-text shrink-0 mt-0.5" />
               <p className="text-[13px] text-studio-text-muted leading-relaxed">
                 <span className="text-studio-text font-medium">Two export paths</span> — free
                 and unlimited in your browser, or 1080p on AWS Lambda.
@@ -235,7 +235,7 @@ export default function LandingPage() {
                 href={profile.portfolio}
                 target="_blank"
                 rel="noreferrer"
-                className="text-studio-text font-medium hover:text-studio-accent transition-colors inline-flex items-center gap-1"
+                className="text-studio-text font-medium hover:text-studio-accent-text transition-colors inline-flex items-center gap-1"
               >
                 {profile.name}
                 <ExternalLink className="w-3 h-3" />

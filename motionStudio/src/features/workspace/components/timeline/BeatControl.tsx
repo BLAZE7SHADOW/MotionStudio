@@ -77,7 +77,7 @@ export default function BeatControl({ project }: { project: Project }) {
               'h-7 px-2 flex items-center gap-1.5 rounded-studio-sm text-[11px] font-medium transition-colors duration-120',
               grid?.enabled
                 // Accent means live state, and a grid that is on is exactly that.
-                ? 'text-studio-accent hover:bg-studio-surface'
+                ? 'text-studio-accent-text hover:bg-studio-surface'
                 : 'text-studio-text-faint hover:text-studio-text hover:bg-studio-surface',
             ].join(' ')}
           >

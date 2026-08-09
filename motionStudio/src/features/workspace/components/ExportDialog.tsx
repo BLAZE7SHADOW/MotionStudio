@@ -281,7 +281,7 @@ export default function ExportDialog({ project }: { project: Project }) {
               className={[
                 'flex items-center gap-1.5 py-2.5 px-3 text-[11px] font-medium border-b-2 transition-colors -mb-px',
                 tab === t
-                  ? 'border-studio-accent text-studio-accent'
+                  ? 'border-studio-accent text-studio-accent-text'
                   : 'border-transparent text-studio-text-muted hover:text-studio-text',
               ].join(' ')}
             >
@@ -308,7 +308,7 @@ export default function ExportDialog({ project }: { project: Project }) {
                       className={[
                         'h-8 text-[11px] font-medium rounded-studio-md border transition-colors duration-120 disabled:opacity-40',
                         resolutionId === r.id
-                          ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent'
+                          ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent-text'
                           : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',
                       ].join(' ')}
                     >
@@ -330,7 +330,7 @@ export default function ExportDialog({ project }: { project: Project }) {
                       className={[
                         'h-8 text-[11px] font-medium rounded-studio-md border transition-colors duration-120 disabled:opacity-40',
                         qualityId === q.id
-                          ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent'
+                          ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent-text'
                           : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',
                       ].join(' ')}
                     >
@@ -550,7 +550,7 @@ export default function ExportDialog({ project }: { project: Project }) {
                     <button
                       type="button"
                       onClick={signInWithGoogle}
-                      className="text-[11px] text-studio-accent hover:underline text-left"
+                      className="text-[11px] text-studio-accent-text hover:underline text-left"
                     >
                       Sign in with Google for 5 renders/month →
                     </button>

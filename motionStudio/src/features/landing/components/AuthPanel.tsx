@@ -134,7 +134,7 @@ export default function AuthPanel() {
           <button
             type="button"
             onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}
-            className="text-studio-accent hover:underline font-medium"
+            className="text-studio-accent-text hover:underline font-medium"
           >
             {mode === 'signin' ? 'Sign up' : 'Sign in'}
           </button>
@@ -149,7 +149,7 @@ export default function AuthPanel() {
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="h-10 px-3 rounded-studio-md bg-studio-surface border border-studio-border text-[13px] text-studio-text placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent transition-colors"
+          className="h-10 px-3 rounded-studio-md bg-studio-surface border border-studio-border text-[13px] text-studio-text placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent focus:ring-2 focus:ring-studio-accent-text transition-colors"
         />
         <input
           type="password"
@@ -158,7 +158,7 @@ export default function AuthPanel() {
           placeholder="Password (min. 6 characters)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="h-10 px-3 rounded-studio-md bg-studio-surface border border-studio-border text-[13px] text-studio-text placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent transition-colors"
+          className="h-10 px-3 rounded-studio-md bg-studio-surface border border-studio-border text-[13px] text-studio-text placeholder:text-studio-text-faint focus:outline-none focus:border-studio-accent focus:ring-2 focus:ring-studio-accent-text transition-colors"
         />
 
         {error && (
@@ -191,7 +191,7 @@ export default function AuthPanel() {
         disabled={busy}
         className="h-10 text-[13px] font-medium bg-studio-surface hover:bg-studio-surface-hover border border-studio-border-strong text-studio-text rounded-studio-md gap-2 disabled:opacity-60"
       >
-        {busyAction === 'google' ? <Spinner className="w-4 h-4" /> : <LogIn className="w-4 h-4 text-studio-accent" />}
+        {busyAction === 'google' ? <Spinner className="w-4 h-4" /> : <LogIn className="w-4 h-4 text-studio-accent-text" />}
         {busyAction === 'google' ? 'Signing in…' : 'Continue with Google'}
       </Button>
 
@@ -214,7 +214,7 @@ export default function AuthPanel() {
           'Browser export always free, unlimited',
         ].map((line) => (
           <li key={line} className="flex items-start gap-2 text-[11px] text-studio-text-faint">
-            <span className="text-studio-accent mt-px">✓</span>
+            <span className="text-studio-accent-text mt-px">✓</span>
             {line}
           </li>
         ))}

@@ -70,7 +70,7 @@ export default function ContactPage() {
         />
 
         <div className="relative w-full max-w-2xl text-center">
-          <span className="mb-5 inline-block text-[11px] font-medium text-studio-accent bg-studio-accent-subtle border border-studio-accent-border px-2.5 py-1 rounded-full">
+          <span className="mb-5 inline-block text-[11px] font-medium text-studio-accent-text bg-studio-accent-subtle border border-studio-accent-border px-2.5 py-1 rounded-full">
             Made by a solo engineer
           </span>
 

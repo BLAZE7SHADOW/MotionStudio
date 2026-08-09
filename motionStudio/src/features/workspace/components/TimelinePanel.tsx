@@ -210,7 +210,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                   className={[
                     'w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs transition-all duration-120',
                     spansAllShots(el)
-                      ? 'text-studio-accent'
+                      ? 'text-studio-accent-text'
                       : 'text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-studio-text',
                   ].join(' ')}
                 >

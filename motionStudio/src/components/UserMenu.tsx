@@ -55,7 +55,7 @@ export default function UserMenu() {
           <button
             type="button"
             onClick={() => { track.authUpgradeClicked(); signInWithGoogle(); }}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-studio-accent hover:bg-studio-accent-subtle rounded-studio-sm transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-studio-accent-text hover:bg-studio-accent-subtle rounded-studio-sm transition-colors"
           >
             <LogIn className="w-3.5 h-3.5" />
             Sign in with Google

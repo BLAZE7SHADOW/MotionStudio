@@ -138,7 +138,7 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
                   className={[
                     'flex-1 h-8 text-[12px] font-medium rounded-studio-md border transition-colors duration-120',
                     fps === f
-                      ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent'
+                      ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent-text'
                       : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',
                   ].join(' ')}
                 >
@@ -163,7 +163,7 @@ export default function ProjectSettingsPopover({ project }: ProjectSettingsPopov
                   className={[
                     'h-8 text-[12px] font-medium rounded-studio-md border transition-colors duration-120',
                     seconds === s
-                      ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent'
+                      ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent-text'
                       : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',
                   ].join(' ')}
                 >

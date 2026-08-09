@@ -39,7 +39,7 @@ function Row({
         <span
           className={[
             'text-[13px] font-medium truncate',
-            active ? 'text-studio-accent' : 'text-studio-text',
+            active ? 'text-studio-accent-text' : 'text-studio-text',
           ].join(' ')}
         >
           {label}

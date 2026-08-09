@@ -52,7 +52,7 @@ export default function ContactForm() {
   };
 
   const inputCls =
-    'w-full rounded-studio-md border border-studio-border bg-studio-panel px-4 py-3 text-[13px] text-studio-text placeholder:text-studio-text-faint outline-none transition-colors focus:border-studio-accent';
+    'w-full rounded-studio-md border border-studio-border bg-studio-panel px-4 py-3 text-[13px] text-studio-text placeholder:text-studio-text-faint outline-none transition-colors focus:border-studio-accent focus:ring-2 focus:ring-studio-accent-text';
 
   return (
     <form onSubmit={submit} className="grid gap-4">
@@ -93,7 +93,7 @@ export default function ContactForm() {
         )}
       </button>
       {state === 'sent' && (
-        <p className="text-center text-[12px] text-studio-accent">Thanks — I&apos;ll get back to you soon.</p>
+        <p className="text-center text-[12px] text-studio-accent-text">Thanks — I&apos;ll get back to you soon.</p>
       )}
       {state === 'rate-limited' && (
         <p className="text-center text-[12px] text-red-400">

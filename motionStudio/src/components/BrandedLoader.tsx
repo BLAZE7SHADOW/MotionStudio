@@ -17,7 +17,7 @@ export function BrandedLoader({ label }: { label?: string }) {
         style={{ fontFamily: 'var(--font-display)' }}
         className="text-[22px] font-semibold tracking-tight text-studio-text"
       >
-        Motion<span className="text-studio-accent">Studio</span>
+        Motion<span className="text-studio-accent-text">Studio</span>
       </span>
       {label && (
         <span className="flex items-center gap-2 text-[13px] text-studio-text-muted">

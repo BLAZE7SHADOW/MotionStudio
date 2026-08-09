@@ -152,7 +152,7 @@ export default function FeedbackDialog() {
         {sent ? (
           <div className="px-5 py-8 flex flex-col items-center gap-2.5 text-center">
             <div className="w-9 h-9 rounded-full bg-studio-accent-subtle border border-studio-accent-border flex items-center justify-center">
-              <Check className="w-4 h-4 text-studio-accent" />
+              <Check className="w-4 h-4 text-studio-accent-text" />
             </div>
             <p className="text-[13px] font-medium text-studio-text">Sent — thank you</p>
             <p className="text-[12px] text-studio-text-muted max-w-80 leading-relaxed">
@@ -176,7 +176,7 @@ export default function FeedbackDialog() {
                     className={[
                       'h-8 text-[12px] font-medium rounded-studio-md border transition-colors duration-120',
                       category === c.value
-                        ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent'
+                        ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent-text'
                         : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',
                     ].join(' ')}
                   >

@@ -207,7 +207,7 @@ export default function ShotStrip({ project }: { project: Project }) {
               className={[
                 'shrink-0 h-6 pl-1.5 pr-2.5 flex items-center gap-1 rounded-studio-sm text-[11px] font-medium transition-colors duration-120',
                 activeShot.transition
-                  ? 'text-studio-accent hover:bg-studio-surface'
+                  ? 'text-studio-accent-text hover:bg-studio-surface'
                   : 'text-studio-text-faint hover:text-studio-text hover:bg-studio-surface',
               ].join(' ')}
             >
@@ -231,7 +231,7 @@ export default function ShotStrip({ project }: { project: Project }) {
                     on ? 'bg-studio-accent-subtle' : 'hover:bg-studio-surface',
                   ].join(' ')}
                 >
-                  <span className={`block text-[12px] font-medium ${on ? 'text-studio-accent' : 'text-studio-text'}`}>
+                  <span className={`block text-[12px] font-medium ${on ? 'text-studio-accent-text' : 'text-studio-text'}`}>
                     {t.label}
                   </span>
                   <span className="block text-[10px] text-studio-text-faint leading-snug mt-0.5">

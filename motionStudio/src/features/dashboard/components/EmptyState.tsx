@@ -40,7 +40,7 @@ export default function EmptyState({ onNewProject }: EmptyStateProps) {
           <div className="flex flex-col gap-3">
             <div className="rounded-studio-lg border border-studio-accent-border bg-studio-accent-subtle p-4 flex flex-col gap-2.5">
               <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-studio-accent" />
+                <Zap className="w-4 h-4 text-studio-accent-text" />
                 <p className="text-[13px] font-medium text-studio-text">Fastest way in</p>
               </div>
               <p className="text-[12px] text-studio-text-muted leading-relaxed">

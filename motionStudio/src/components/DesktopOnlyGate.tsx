@@ -39,7 +39,7 @@ export default function DesktopOnlyGate({ children, title, description }: Deskto
       </div>
 
       <div className="w-14 h-14 rounded-studio-lg bg-studio-accent-subtle border border-studio-accent-border flex items-center justify-center mb-5">
-        <MonitorSmartphone className="w-6 h-6 text-studio-accent" />
+        <MonitorSmartphone className="w-6 h-6 text-studio-accent-text" />
       </div>
 
       <h1 className="text-[20px] font-bold text-studio-text tracking-tight mb-2">

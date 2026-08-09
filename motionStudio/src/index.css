@@ -23,11 +23,27 @@
   --studio-border:         oklch(1 0 0 / 8%);
   --studio-border-strong:  oklch(1 0 0 / 14%);
 
-  /* Text hierarchy — 4 levels */
-  --studio-text:           oklch(0.985 0.002 286.073);   /* zinc-50   primary */
-  --studio-text-secondary: oklch(0.839 0.009 286.068);   /* zinc-300  secondary */
-  --studio-text-muted:     oklch(0.705 0.015 286.006);   /* zinc-400  muted */
-  --studio-text-faint:     oklch(0.552 0.014 285.938);   /* zinc-500  placeholder */
+  /* Text hierarchy — 4 levels, every one of them WCAG AA (>= 4.5:1) against
+     bg, panel and surface. Verified by `tests/contrast.test.mjs`, which is
+     what these numbers came from; do not nudge them by eye.
+
+     The ramp used to bottom out at zinc-500, which measured 4.10 / 3.67 / 3.09
+     — failing on every surface in the system, while being the most-used text
+     colour in the editor and almost always at 9-11px. Lifting only the bottom
+     step would have parked it on top of `muted`, so the whole lower half of
+     the ramp moved to keep the steps apart. Spacing is even in oklch, which is
+     perceptually uniform, so the four levels still read as four levels. */
+  --studio-text:           oklch(0.985 0.002 286.073);   /* 14.3:1 on surface */
+  --studio-text-secondary: oklch(0.839 0.009 286.068);   /*  9.1:1 on surface */
+  --studio-text-muted:     oklch(0.760 0.015 286.006);   /*  6.9:1 on surface */
+  --studio-text-faint:     oklch(0.660 0.014 285.938);   /*  4.8:1 on surface */
+
+  /* Non-text decoration only — hairlines, icon fills, and marks that carry no
+     information on their own. This is the old `text-faint` value, kept because
+     it was the right weight for decoration and only ever wrong for text.
+     Anything a user has to *read* belongs on the ramp above; anything that
+     identifies a control needs 3:1 and belongs on `text-faint` at least. */
+  --studio-decor:          oklch(0.552 0.014 285.938);
 
   /* Accent — violet.
      Two uses only, and "sparingly" is not a strong enough rule to hold:
@@ -45,6 +61,11 @@
      for anything that is a caution rather than a brand moment. */
   --studio-accent:         oklch(0.627 0.265 298.232);   /* violet-500 */
   --studio-accent-hover:   oklch(0.702 0.227 298.587);   /* violet-400 */
+  /* The accent as *text*. violet-500 measures 3.56:1 on surface — it is a fine
+     fill and a failing label, and it was being used for both. Same accent, one
+     step lighter, 4.9:1. Use this whenever the accent is carrying words;
+     `--studio-accent` stays for fills, borders and button backgrounds. */
+  --studio-accent-text:    oklch(0.702 0.227 298.587);   /* violet-400 */
   --studio-accent-deep:    oklch(0.541 0.281 293.009);   /* violet-600 */
   --studio-accent-subtle:  oklch(0.627 0.265 298.232 / 12%);
   --studio-accent-border:  oklch(0.627 0.265 298.232 / 28%);
@@ -93,7 +114,12 @@
   --destructive:          var(--studio-destructive);
   --border:               var(--studio-border);
   --input:                var(--studio-border-strong);
-  --ring:                 var(--studio-accent-border);
+  /* Solid, not the 28%-alpha accent border this used to point at. Composited
+     over a panel that measured 1.39:1 — a focus indicator you cannot see is
+     the same as not having one, and `outline-ring/50` below halves it again.
+     Solid violet-400 is 5.8:1 on panel, comfortably past the 3:1 WCAG asks of
+     a focus indicator even after that /50. */
+  --ring:                 var(--studio-accent-text);
   --radius:               0.5rem;
 
   /* Sidebar */
@@ -151,7 +177,9 @@
   --color-studio-text-secondary: var(--studio-text-secondary);
   --color-studio-text-muted:     var(--studio-text-muted);
   --color-studio-text-faint:     var(--studio-text-faint);
+  --color-studio-decor:          var(--studio-decor);
   --color-studio-accent:         var(--studio-accent);
+  --color-studio-accent-text:    var(--studio-accent-text);
   --color-studio-accent-hover:   var(--studio-accent-hover);
   --color-studio-accent-deep:    var(--studio-accent-deep);
   --color-studio-accent-subtle:  var(--studio-accent-subtle);
@@ -212,7 +240,12 @@
    ═══════════════════════════════════════════════════ */
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    /* Full opacity, not the stock shadcn `outline-ring/50`. Halving the ring
+       took an already-weak indicator down to 2.25:1 — under the 3:1 WCAG asks
+       of a focus indicator, and on a dark UI the difference between "focused"
+       and "not focused" was close to invisible. Asserted in
+       `tests/contrast.test.mjs`. */
+    @apply border-border outline-ring;
   }
   body {
     @apply bg-background text-foreground;

@@ -101,7 +101,7 @@ function TourStepRow({ step, index }: { step: TourStep; index: number }) {
         <TourMedia mediaPath={step.mediaPath} alt={step.title} />
       </div>
       <div className={reversed ? 'md:order-1 md:text-right' : ''}>
-        <span className="font-mono text-[10px] text-studio-accent tracking-widest uppercase">{step.tag}</span>
+        <span className="font-mono text-[10px] text-studio-accent-text tracking-widest uppercase">{step.tag}</span>
         <h3 className="text-[20px] font-semibold text-studio-text mt-1.5 mb-2">{step.title}</h3>
         <p className="text-[13px] text-studio-text-muted leading-relaxed">{step.desc}</p>
       </div>

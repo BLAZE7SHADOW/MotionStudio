@@ -45,7 +45,7 @@ export default function EditorPage() {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="text-[13px] text-studio-accent hover:text-studio-accent-hover underline underline-offset-2 transition-colors"
+            className="text-[13px] text-studio-accent-text hover:text-studio-accent-hover underline underline-offset-2 transition-colors"
           >
             Back to Dashboard
           </button>

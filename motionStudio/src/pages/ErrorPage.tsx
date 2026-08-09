@@ -18,7 +18,7 @@ export default function ErrorPage() {
       <div className="max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="w-16 h-16 rounded-full bg-studio-accent-subtle border border-studio-accent-border flex items-center justify-center">
-            <AlertTriangle className="w-8 h-8 text-studio-accent" />
+            <AlertTriangle className="w-8 h-8 text-studio-accent-text" />
           </div>
         </div>
 

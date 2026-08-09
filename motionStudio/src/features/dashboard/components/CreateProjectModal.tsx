@@ -163,7 +163,7 @@ export default function CreateProjectModal({ open, onClose }: CreateProjectModal
                         className={[
                           'flex-1 h-9 text-[13px] font-medium rounded-studio-md border transition-colors duration-[120ms]',
                           fps === f
-                            ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent'
+                            ? 'bg-studio-accent-subtle border-studio-accent-border text-studio-accent-text'
                             : 'bg-studio-surface border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong',
                         ].join(' ')}
                       >

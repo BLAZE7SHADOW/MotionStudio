@@ -3,7 +3,7 @@ import { RELEASES } from '@/content/releases';
 import type { ReleaseChangeKind } from '@/content/releases';
 
 const KIND_STYLE: Record<ReleaseChangeKind, string> = {
-  new: 'bg-studio-accent-subtle text-studio-accent border-studio-accent-border',
+  new: 'bg-studio-accent-subtle text-studio-accent-text border-studio-accent-border',
   improved: 'bg-sky-500/10 text-sky-300 border-sky-500/30',
   fixed: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
 };

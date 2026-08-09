@@ -38,7 +38,7 @@ export default function HelperToggle() {
   return (
     <div className="flex items-center gap-1.5 h-7 px-1.5">
       <label htmlFor={id} className="flex items-center gap-1.5 cursor-pointer select-none">
-        <Lightbulb className={`w-3.5 h-3.5 ${on ? 'text-studio-accent' : 'text-studio-text-faint'}`} />
+        <Lightbulb className={`w-3.5 h-3.5 ${on ? 'text-studio-accent-text' : 'text-studio-text-faint'}`} />
         <span className={`text-[11px] font-medium ${on ? 'text-studio-text' : 'text-studio-text-muted'}`}>
           Helper mode
         </span>
