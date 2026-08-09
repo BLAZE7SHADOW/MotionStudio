@@ -5,6 +5,57 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-09] — Loading feedback, Helper Mode default, and a lighter info hint
+
+Three related polish items ahead of a bigger "hide unrelated features per
+task" UI redesign (not started yet). Audited `AuthPanel.tsx`: the email form
+already had a proper busy state, but "Continue with Google" had no loading
+indicator or error handling at all (a network failure before the OAuth
+redirect silently vanished), and "Try as guest" disabled its button with no
+visual busy cue. Separately, `CloudSync` (`App.tsx`) pulled a logged-in
+user's cloud projects with zero loading UI — the dashboard just showed
+whatever local state happened to be there until the fetch resolved.
+
+### Added
+- `motionStudio/src/components/BrandedLoader.tsx` — the full-page loading
+  screen (account resolving, cloud projects fetching) now shows the actual
+  MotionStudio logo mark and wordmark, sized up, with a status message
+  underneath, instead of a bare spinner icon.
+- `motionStudio/src/components/ui/spinner.tsx` — a shared `Spinner`
+  (`Loader2` + optional label) so inline busy states (auth buttons) don't
+  each hand-roll `animate-spin` independently.
+- `cloudSyncing` field on `useProjectStore` (`engines/project/store.ts`),
+  set around `CloudSync`'s `loadProjects` call in `App.tsx`. `DashboardPage`
+  shows `BrandedLoader` while it's true and local projects are still empty,
+  rather than flashing an empty-state before real cloud projects arrive.
+- `motionStudio/src/components/InfoHint.tsx` — a small, static ⓘ icon that
+  shows a compact title+line explanation on hover, reading from the existing
+  `content/help.ts` catalog. Deliberately lighter than Helper Mode's
+  `HelperCard`: no border flash on the control, no chips, no "more", always
+  visible rather than proactive-on-hover-of-the-control. Wired into
+  `PropertiesPanel.tsx`, `TimelinePanel.tsx`, and `timeline/BeatControl.tsx`
+  as the representative rollout; the rest of `HELP`'s labeled-section ids
+  follow the same one-line pattern.
+
+### Changed
+- `AuthPanel.tsx` — Google sign-in now tracks its own busy state and catches
+  errors into the same `error` UI the email/guest paths already use (it's
+  still a full-page OAuth redirect on success, so this mainly closes the
+  silent-failure gap). Guest and email buttons swap their label to "Signing
+  in…"/"Creating account…" while busy, not just the icon.
+- `motionStudio/src/lib/helperMode.ts` — default flipped from on to off.
+  `InfoHint` now covers the everyday "what is this" case at a much lower
+  intrusion cost, so Helper Mode's proactive flash-and-card no longer needs
+  to carry that alone by default.
+- `EditorLayout.tsx` now mounts the single `TooltipProvider` for the whole
+  editor (previously only `Toolbar.tsx` had its own, scoped just to itself)
+  — required once `InfoHint` needed a `Tooltip` outside the toolbar; without
+  it those panels crashed with "`Tooltip` must be used within
+  `TooltipProvider`", caught in browser verification before this shipped.
+  `Toolbar.tsx`'s now-redundant local provider was removed.
+
+---
+
 ## [2026-08-09] — Repeated inserts cascade instead of stacking exactly
 
 Every one-click insert (`addText`, `addBlock`, and the default-position

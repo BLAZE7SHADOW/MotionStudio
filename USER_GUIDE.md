@@ -53,9 +53,16 @@ back. Any step can be passed with **Skip**, and the ✕ closes the whole thing.
 Replay it any time from the **?** menu in the toolbar → **Quick start**; that
 also brings back any hint you dismissed with "don't show again".
 
+### Info icons
+
+The small ⓘ next to a few section labels — Properties, Timeline, Beat — is
+the lightest way to ask "what is this": hover it and a short answer appears,
+nothing else on screen changes. No mode to turn on, nothing to dismiss, just
+there when you want it.
+
 ### Helper mode
 
-Everything the quick start *doesn't* cover is one hover away instead. Rest the
+Everything the info icons *don't* cover is one hover away instead. Rest the
 pointer on any of the 21 controls that has something to say — across the
 toolbar, both side panels, the canvas and the timeline — and its border
 flashes gently while a card opens beside it: what it is, the one thing worth
@@ -72,8 +79,9 @@ second shot and the transition picker joins them. The Properties panel itself
 only responds once something is selected — before that there's nothing there
 for it to describe.
 
-It's **on to begin with**. Turn it off with the 💡 in the toolbar, or under
-**?** → **Helper mode**, and it stays off until you ask for it back.
+It's **off to begin with** — the info icons above cover the everyday "what is
+this" case at a lower cost, so this stays off until asked for. Turn it on with
+the 💡 in the toolbar, or under **?** → **Helper mode**.
 
 **Hints.** When something changes on its own — a tempo detected, another tab
 taking over the project, a title/background/block landing on the canvas from
@@ -664,7 +672,8 @@ the problem already described, so you only add what happened from your side.
 - **What's new** — a short list of what changed recently, in plain terms. It
   opens by itself once per release, and a dot sits on the **?** button until
   you've read it. Brand-new accounts never see it: a changelog needs a "before".
-- **Quick start** and **Helper mode** — the two ways the app explains itself, both
+- **Quick start** and **Helper mode** — two of the three ways the app explains
+  itself (the third, the ⓘ info icons, needs no menu — it's just there), both
   covered in §1. The menu row shows whether helper mode is on, so it matches
   the 💡 in the toolbar whichever one you used last.
 

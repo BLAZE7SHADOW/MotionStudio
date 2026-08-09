@@ -39,6 +39,18 @@ export const RELEASES: Release[] = [
         kind: 'fixed',
         text: 'Adding text, a background, or a block more than once used to land every new one in the exact same spot, stacked invisibly on top of the last. Repeats now nudge into view instead, and never past the edge of your canvas.',
       },
+      {
+        kind: 'new',
+        text: 'A small ⓘ next to Properties, Timeline, and Beat now explains what each one is on hover — no mode to turn on, just there when you want it.',
+      },
+      {
+        kind: 'improved',
+        text: 'Signing in now shows what\'s actually happening — a spinner and "Signing in…" on every button, including Google, which used to give no feedback at all if something went wrong.',
+      },
+      {
+        kind: 'improved',
+        text: 'Helper mode — the hover-and-flash tour of every control — now starts off instead of on, since the new ⓘ icons cover the everyday case. Turn it back on anytime from the 💡 in the toolbar.',
+      },
     ],
   },
   {
