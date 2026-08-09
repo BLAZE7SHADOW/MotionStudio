@@ -11,6 +11,7 @@ import ShotStrip from './timeline/ShotStrip';
 import SequenceTrack from './timeline/SequenceTrack';
 import BeatControl from './timeline/BeatControl';
 import { clipLabel } from './timeline/clipLabel';
+import InfoHint from '@/components/InfoHint';
 
 const TRACK_HEADER_W = 140;
 const RULER_H = 28;
@@ -152,6 +153,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
           <span className="ml-2 text-[11px] font-semibold text-studio-text-faint uppercase tracking-widest">
             Timeline
           </span>
+          <InfoHint id="timeline" className="ml-1.5" />
           <span className="w-px h-3.5 bg-studio-border-strong mx-2" />
           <BeatControl project={project} />
         </div>

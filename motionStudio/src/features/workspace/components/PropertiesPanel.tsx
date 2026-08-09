@@ -12,6 +12,7 @@ import { ScrubInput } from '@/components/ui/scrub-input';
 import ShaderPreview from './ShaderPreview';
 import TextEffectPreview from './TextEffectPreview';
 import AnimationPreview from './AnimationPreview';
+import InfoHint from '@/components/InfoHint';
 
 /**
  * Precomputed once at module load, not per-render — each entry is a stable
@@ -994,6 +995,7 @@ export default function PropertiesPanel() {
         <span className="text-[11px] font-semibold text-studio-text-faint uppercase tracking-widest">
           Properties
         </span>
+        <InfoHint id="properties" className="ml-1.5" />
 
         {/* Deleting used to be Delete/Backspace only — and that key is ignored
             whenever focus sits in a field, which in this panel is almost

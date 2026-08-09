@@ -1,4 +1,5 @@
 import type { Project } from '@/engines/project';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import Toolbar from './Toolbar';
 import AssetsPanel from './AssetsPanel';
 import CanvasPanel from './CanvasPanel';
@@ -27,6 +28,7 @@ export default function EditorLayout({ project }: EditorLayoutProps) {
   const lock = useProjectLock(project.id);
 
   return (
+    <TooltipProvider>
     <div className="relative h-screen w-screen overflow-hidden flex flex-col bg-studio-bg">
       <Toolbar project={project} />
 
@@ -68,5 +70,6 @@ export default function EditorLayout({ project }: EditorLayoutProps) {
         />
       )}
     </div>
+    </TooltipProvider>
   );
 }

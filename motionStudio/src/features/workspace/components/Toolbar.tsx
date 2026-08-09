@@ -3,7 +3,7 @@ import { Undo2, Redo2, Clapperboard, Type, Sparkles, Play, Pause, SquareTerminal
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { TooltipProvider, TooltipHint, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { TooltipHint, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { BLOCK_PRESETS } from '@/engines/project';
 import { getBlock } from '@/content/blocks/registry';
 import type { Project } from '@/engines/project';
@@ -35,7 +35,6 @@ export default function Toolbar({ project }: ToolbarProps) {
   const canRedo = useProjectStore((s) => s.future.length > 0);
 
   return (
-    <TooltipProvider>
     <div className="h-11 border-b border-studio-border bg-studio-panel flex items-center px-3 gap-0.5 shrink-0">
       {/* One way back, not two — this and the logo were separate controls
           doing the identical thing, side by side. The logo carries the arrow
@@ -206,6 +205,5 @@ export default function Toolbar({ project }: ToolbarProps) {
         <UserMenu />
       </div>
     </div>
-    </TooltipProvider>
   );
 }

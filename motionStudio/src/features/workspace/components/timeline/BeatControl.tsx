@@ -5,6 +5,7 @@ import { ScrubInput } from '@/components/ui/scrub-input';
 import { useProjectStore } from '@/engines/project';
 import type { Project } from '@/engines/project';
 import { LOW_CONFIDENCE } from '@/engines/audio/beatDetect';
+import InfoHint from '@/components/InfoHint';
 
 /** Taps further apart than this start a new count rather than extending one. */
 const TAP_TIMEOUT_MS = 2500;
@@ -63,23 +64,29 @@ export default function BeatControl({ project }: { project: Project }) {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          data-tour="beat"
-          title={grid?.enabled ? `Beat grid — ${grid.bpm} BPM` : 'Beat grid'}
-          className={[
-            'h-7 px-2 flex items-center gap-1.5 rounded-studio-sm text-[11px] font-medium transition-colors duration-120',
-            grid?.enabled
-              // Accent means live state, and a grid that is on is exactly that.
-              ? 'text-studio-accent hover:bg-studio-surface'
-              : 'text-studio-text-faint hover:text-studio-text hover:bg-studio-surface',
-          ].join(' ')}
-        >
-          <Music4 className="w-3.5 h-3.5" />
-          {grid?.enabled ? <span className="tabular-nums">{Math.round(grid.bpm)}</span> : 'Beat'}
-        </button>
-      </PopoverTrigger>
+      {/* InfoHint sits outside the trigger, not wrapping it — nesting it
+          inside would fight `asChild`'s single-clone contract the same way
+          `TooltipHint` can't be nested in another `asChild` trigger. */}
+      <div className="flex items-center gap-0.5">
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            data-tour="beat"
+            title={grid?.enabled ? `Beat grid — ${grid.bpm} BPM` : 'Beat grid'}
+            className={[
+              'h-7 px-2 flex items-center gap-1.5 rounded-studio-sm text-[11px] font-medium transition-colors duration-120',
+              grid?.enabled
+                // Accent means live state, and a grid that is on is exactly that.
+                ? 'text-studio-accent hover:bg-studio-surface'
+                : 'text-studio-text-faint hover:text-studio-text hover:bg-studio-surface',
+            ].join(' ')}
+          >
+            <Music4 className="w-3.5 h-3.5" />
+            {grid?.enabled ? <span className="tabular-nums">{Math.round(grid.bpm)}</span> : 'Beat'}
+          </button>
+        </PopoverTrigger>
+        <InfoHint id="beat" />
+      </div>
 
       <PopoverContent
         align="start"
