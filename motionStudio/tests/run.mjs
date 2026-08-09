@@ -28,6 +28,8 @@ const TARGETS = [
   { test: 'transitions.test.mjs', src: 'src/engines/animation/transitions.ts', bundle: 'transitions.bundle.js' },
   { test: 'projectLock.test.mjs', src: 'src/lib/projectLock.ts', bundle: 'lock.cjs.js' },
   { test: 'notices.test.mjs', src: 'src/lib/notices.ts', bundle: 'notices.bundle.js' },
+  { test: 'projectOwner.test.mjs', src: 'src/lib/projectOwner.ts', bundle: 'projectOwner.bundle.js' },
+  { test: 'contrast.test.mjs', src: 'src/lib/contrast.ts', bundle: 'contrast.bundle.js' },
   { test: 'placement.test.mjs', src: 'src/engines/canvas/placement.ts', bundle: 'placement.bundle.js' },
   { test: 'migrations.test.mjs', src: 'src/engines/project/migrations.ts', bundle: 'migrations.bundle.js' },
   { test: 'forStorage.test.mjs', src: 'src/engines/project/forStorage.ts', bundle: 'forStorage.bundle.js' },
@@ -54,7 +56,14 @@ try {
     );
     copyFileSync(join(here, test), join(work, test));
     try {
-      execFileSync('node', [join(work, test)], { stdio: 'inherit' });
+      /* Tests run from a temp dir, so a relative path back to the source tree
+         doesn't resolve. `contrast.test.mjs` reads `index.css` directly —
+         asserting against a copy of the palette would keep passing after
+         someone edited the real one. */
+      execFileSync('node', [join(work, test)], {
+        stdio: 'inherit',
+        env: { ...process.env, MS_SRC: join(here, '..', 'src') },
+      });
     } catch {
       failed++;
     }
