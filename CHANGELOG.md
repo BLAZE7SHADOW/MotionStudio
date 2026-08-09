@@ -5,6 +5,62 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-10] — Keyboard and screen-reader access beyond contrast
+
+Third pass off the same finish audit: contrast was fixed first, motion
+second, this closes the rest of what it found under accessibility. The
+editor's primary surfaces — the canvas and every numeric property — were
+mouse-only; 5 toolbar buttons had no accessible name at all and ~19 more
+were named only by `title`; the editor page had zero landmarks, no `<h1>`,
+no skip link.
+
+### Added
+- Canvas elements are keyboard-selectable (`role="button" tabIndex={0}`,
+  `Enter`/`Space`) and, once selected, nudgeable with arrow keys — 1px per
+  press, 10px with Shift, matching the drag gesture's own coarse modifier.
+  This was the single biggest gap: there was no keyboard path to move an
+  element at all.
+- `ScrubInput` (`components/ui/scrub-input.tsx`) — every numeric field in
+  Properties — is now `role="spinbutton"` with `aria-valuenow`/`-min`/`-max`,
+  reachable by Tab, adjustable with Up/Down (Shift for the ×10 step), and
+  Enter/Space drops into the same typing mode a click already reached. It was
+  a plain `<span>` in a `<div>` with only pointer handlers; nothing in it
+  could take focus.
+- `aria-label` on every `NumInput` in `PropertiesPanel.tsx` (Position X/Y,
+  Width, Height, Rotation, Opacity, Font size, block fields, …) — the visible
+  label next to each field is a `<span>`, not a `<label htmlFor>`, so none of
+  it was ever associated with the input for anyone not reading it visually.
+- Accessible names on the 5 toolbar buttons that had none (Undo, Redo, Add
+  text, Add animated background, Add a block) and ~19 more that relied on
+  `title` alone (delete/remove/mute/fullscreen/sign-out controls across
+  Toolbar, TimelinePanel, ShotStrip, CanvasPanel, AssetsPanel, ExportDialog,
+  PropertiesPanel, ProjectCard) — `title` computes as an accessible name in
+  principle, but only on hover, never on touch, and inconsistently across
+  screen-reader/browser pairs; `aria-label` doesn't have those gaps.
+- Landmarks, a visually-hidden `<h1>`, and a skip-to-canvas link in
+  `EditorLayout.tsx` — `<header>`/`<main>`/`<aside>`/`<section>` with
+  `aria-label`s, replacing six bare `<div>`s. The editor page had no heading
+  and no way to jump between regions except tabbing through every control in
+  DOM order.
+- `aria-controls` on Properties panel section toggles, pointing at the
+  content region's new `id` — `aria-expanded` was already there, describing a
+  toggle that named nothing.
+
+### Fixed
+- Three `role="button"` divs (a timeline track header, a sequence block, a
+  project card) handled `Enter` but not `Space`, breaking the contract
+  `role="button"` makes to assistive tech. AssetsPanel's asset-card `<div>`
+  had neither — the primary way to add media to the canvas was mouse-only.
+
+### Not touched, on purpose
+- The structural nested-interactive-element issues the audit also flagged
+  (a delete button inside a `role="button"` card, a track header) — fixing
+  those means restructuring the wrapping element, not adding an attribute,
+  and risks changing click/drag behavior that's already relied on. Left as a
+  follow-up.
+
+---
+
 ## [2026-08-09] — One motion system instead of two
 
 Follow-up to the same finish audit, targeting what it called "jerkiness": the

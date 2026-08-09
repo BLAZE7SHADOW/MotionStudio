@@ -32,6 +32,20 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: '2026-08-10',
+    title: 'You can now edit entirely from the keyboard',
+    changes: [
+      {
+        kind: 'new',
+        text: 'Select an element on the canvas with Tab and Enter, then nudge it with the arrow keys — 1px a press, 10px with Shift. Every position, size, and other number field in the Properties panel now works the same way: Tab to it, arrow keys to adjust, Enter to type an exact value.',
+      },
+      {
+        kind: 'improved',
+        text: 'Buttons across the toolbar and panels now have proper names for screen readers, not just a tooltip that only shows on hover.',
+      },
+    ],
+  },
+  {
     id: '2026-08-09',
     title: 'Added elements no longer hide behind each other',
     changes: [
