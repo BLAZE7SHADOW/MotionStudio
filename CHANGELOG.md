@@ -5,6 +5,89 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-09] — Data-loss fixes, silent failures, and WCAG AA contrast
+
+An audit prompted by "is this actually high finish?" turned up things that
+outrank polish: several ways to lose a user's work, several failures the user
+was never told about, and a text colour that failed WCAG AA against every
+surface in the design system while being the most-used one in the editor.
+
+### Fixed — data loss
+- **A guest's work was destroyed the moment they signed up.** `AuthBridge`
+  wiped local projects on any change of user id, and an anonymous session has
+  a real id, so signing in with Google counted as a different person.
+  `clearAll` clears IndexedDB too, and the anonymous Supabase account holding
+  the cloud copy becomes permanently unreachable once that session ends — so
+  the local copy really was the last one they could get back to. Ownership is
+  now decided by `src/lib/projectOwner.ts`: a permanent account's data is
+  protected from the *next* person (safe to clear — it's in Supabase under an
+  identity they can sign back into), and a guest's data is never cleared at
+  all, it's adopted by the incoming account and merged into the next cloud
+  pull rather than replaced by it. 26 cases covered in
+  `tests/projectOwner.test.mjs`.
+- **The wipe was unreliable in the other direction too.** `persist` rehydrates
+  asynchronously, so `clearAll()` could empty a store that hydration then
+  refilled from the copy it had already read. Pre-existing, found while
+  testing the above; `AuthBridge` now waits for hydration before deciding.
+- **Undo after deleting an asset produced a corrupt state.** `removeAsset` put
+  the record into undo history but destroyed the IndexedDB bytes outright, so
+  ⌘Z restored an asset whose object URL could never resolve — the amber
+  "Re-upload needed" card instead of the file. Blobs are left alone now;
+  `deleteProject.ts` already reclaims them where there is no undo to
+  contradict it.
+- **`Infinity` could be committed and corrupted the project.**
+  `scrub-input.tsx` guarded with `!Number.isNaN`, and `parseFloat('1e400')` is
+  `Infinity`, which passed — then `JSON.stringify(Infinity)` is `null`, through
+  both persistence paths. Now `Number.isFinite`.
+- **The delete-project dialog made a false promise.** It said assets were
+  removed "everywhere — this device, the cloud"; `deleteAssetFromStorage` is a
+  no-op stub and the S3 originals are retained. Copy now matches what actually
+  happens. The delete endpoint is still outstanding.
+
+### Fixed — silent failures
+- **Asset upload to S3 failed silently.** All three paths `console.warn`'d and
+  returned `null`, which the caller dropped. The file worked locally, so
+  nothing looked wrong until a cloud render came back missing that media.
+  `uploadAssetToStorage` now returns a reason, it's recorded on the asset, and
+  the library shows a "Not uploaded" badge explaining that Cloud Render won't
+  include it. The API's own messages ("File exceeds 500 MB limit") were being
+  parsed and thrown away one line later.
+- **A failed cloud load looked like an empty account.** `loadProjects` returned
+  `[]` on error, so an outage rendered the "make your first video" onboarding
+  to someone whose projects were fine and simply out of reach. It returns a
+  result now; local projects stay on screen and a notice says what happened.
+- **A failed cloud delete resurrected the project.** Deletion happened locally
+  first, so a failed row delete meant the project came back at the next
+  sign-in after the user had been told it was gone for good. The cloud delete
+  is authoritative now, and the dialog stays open and explains the failure.
+- **Closing the tab mid-edit lost the last edits from the cloud copy.** A
+  `beforeunload` guard now warns while `pushedRef` shows work that hasn't
+  reached the server. Guests are deliberately never warned.
+
+### Changed — contrast
+- `--studio-text-faint` measured 4.10 / 3.67 / 3.09 against bg / panel /
+  surface, at 9–11px throughout the editor — including `SaveIndicator`'s
+  "Saving…" and blocking export errors. The lower half of the text ramp moved
+  so all four levels clear 4.5:1 while staying four distinguishable levels;
+  the old value lives on as `--studio-decor` for non-text decoration.
+- Accent-as-text was 3.56:1 on surface. New `--studio-accent-text`
+  (violet-400, 4.9:1) for the 36 call sites where the accent carries words;
+  `--studio-accent` keeps its fill and border role.
+- The focus ring was `--studio-accent-border` at 28% alpha, halved again by
+  `outline-ring/50` — 1.39:1, effectively invisible. Solid and full-opacity
+  now, 4.9:1, plus real rings on the sign-in and contact inputs, which had
+  been stripping the outline and replacing it with a border-colour change.
+- `src/lib/contrast.ts` + `tests/contrast.test.mjs` derive and enforce all of
+  the above by parsing `index.css` itself, so the palette can't regress. The
+  numbers above came out of it rather than being eyeballed.
+
+### Known, deliberately still open
+- A white label on a violet-500 button is 4.01:1, short of 4.5. Fixing it
+  means darkening the brand violet, which is an identity decision — the test
+  asserts the current floor so it can only improve.
+
+---
+
 ## [2026-08-09] — Loading feedback, Helper Mode default, and a lighter info hint
 
 Three related polish items ahead of a bigger "hide unrelated features per

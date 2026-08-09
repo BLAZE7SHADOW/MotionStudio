@@ -51,6 +51,26 @@ export const RELEASES: Release[] = [
         kind: 'improved',
         text: 'Helper mode — the hover-and-flash tour of every control — now starts off instead of on, since the new ⓘ icons cover the everyday case. Turn it back on anytime from the 💡 in the toolbar.',
       },
+      {
+        kind: 'fixed',
+        text: 'Starting out as a guest and then creating an account used to wipe everything you had made. Your projects now come with you.',
+      },
+      {
+        kind: 'fixed',
+        text: 'Undo after deleting a file from your library used to bring the file back broken. It comes back properly now.',
+      },
+      {
+        kind: 'fixed',
+        text: 'If a file can’t be uploaded, the library now says so and warns that Cloud Render won’t include it — before, it looked like it had worked and the file quietly went missing from the finished video.',
+      },
+      {
+        kind: 'fixed',
+        text: 'When we can’t reach your projects, you now see what’s saved on this device and a note explaining why — instead of an empty screen that looked like your work had vanished.',
+      },
+      {
+        kind: 'improved',
+        text: 'Text throughout the app is easier to read, and keyboard focus is now clearly visible wherever you tab.',
+      },
     ],
   },
   {

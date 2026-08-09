@@ -157,6 +157,43 @@ pushes every project as a JSONB row (RLS-scoped per user). Work survives session
 expiry, `localStorage` wipes, and device switches — because everything is one
 `Project` object, cloud sync was one table and ~40 lines.
 
+### Who local projects belong to (`lib/projectOwner.ts`)
+
+Local storage holds one user's projects at a time, so signing in as someone
+else on a shared device has to clear them. The obvious rule — *any change of
+user id wipes* — destroyed work instead, because **an anonymous guest session
+is a real Supabase user with a real id**, so a guest signing up looked exactly
+like a different person arriving.
+
+The invariant, and it is not obvious enough to leave implicit:
+
+> Clear local projects only when the outgoing owner is a **permanent** account
+> and a different account arrives.
+
+The reasoning is *reachability*, not whether a cloud copy exists. Guests do
+sync — `CloudSync` pushes for any `user` — but that row lives under an identity
+nobody can sign back into, so once the anonymous session ends its projects are
+gone. Wiping the local copy therefore destroys the last one the user can reach.
+A permanent account is the reverse: its projects sit in Supabase under an
+identity they can return to, so clearing locally costs nothing.
+
+Two consequences worth keeping:
+
+- **Signing out never wipes.** The owner marker outlives the session so the
+  wipe can still fire if a *different* person signs in next. Wiping at sign-out
+  would lose work every time a session merely expired.
+- **Adoption must merge, not replace.** Projects carried across an account
+  change have no row under the new account, so `CloudSync`'s pull would delete
+  exactly what was just rescued. `takePendingMerge()` makes that one pull
+  additive.
+
+The decision is a pure function so every path is cheap to test
+(`tests/projectOwner.test.mjs`) — this is the one place in the app that can
+permanently destroy a user's work. `AuthBridge` also waits for Zustand's
+`persist` hydration before deciding: rehydration is async, and a `clearAll()`
+that wins that race gets silently refilled by the copy hydration had already
+read.
+
 ### Undo/redo — immutable snapshots + coalescing
 History is snapshots of the `projects` array. Because edits build new objects
 immutably, snapshots **share unchanged sub-objects** (cheap — no deep copies). Rapid
