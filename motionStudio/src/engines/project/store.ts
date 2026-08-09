@@ -25,6 +25,11 @@ interface ProjectStore {
   /** undo/redo stacks — snapshots of the whole projects array (not persisted) */
   past: Project[][];
   future: Project[][];
+  /** True while `CloudSync` (`App.tsx`) is pulling a just-logged-in user's
+      cloud projects. Not persisted — `partialize` below only keeps
+      `projects` — so a reload never starts "stuck" true. */
+  cloudSyncing: boolean;
+  setCloudSyncing: (syncing: boolean) => void;
   setActiveProjectId: (id: string | null) => void;
   createProject: (input: CreateProjectInput) => Project;
   getProject: (id: string) => Project | undefined;
@@ -65,7 +70,9 @@ export const useProjectStore = create<ProjectStore>()(
       activeProjectId: null,
       past: [],
       future: [],
+      cloudSyncing: false,
 
+      setCloudSyncing: (syncing) => set({ cloudSyncing: syncing }),
       setActiveProjectId: (id) => set({ activeProjectId: id }),
 
       createProject: (input) => {

@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, User2, Loader2, Mail } from 'lucide-react';
+import { LogIn, User2, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/hooks/useAuth';
 import posthog from 'posthog-js';
 import { track } from '@/lib/analytics';
 
 type Mode = 'signin' | 'signup';
+type BusyAction = 'email' | 'google' | 'guest' | null;
 
 function humanizeError(message: string): string {
   if (message.includes('Invalid login credentials')) return 'Wrong email or password.';
@@ -27,7 +29,11 @@ export default function AuthPanel() {
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
+  // Which specific action is in flight, not just whether one is — so only
+  // the clicked button swaps its icon/label; the other two stay disabled
+  // but visually unchanged rather than all three looking busy at once.
+  const [busyAction, setBusyAction] = useState<BusyAction>(null);
+  const busy = busyAction !== null;
   const [error, setError] = useState<string | null>(null);
   // shown after successful sign-up so user knows to check their inbox
   const [confirming, setConfirming] = useState(false);
@@ -42,7 +48,7 @@ export default function AuthPanel() {
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setBusy(true);
+    setBusyAction('email');
     track.authEmailSubmitted(mode);
     try {
       if (mode === 'signup') {
@@ -57,13 +63,29 @@ export default function AuthPanel() {
     } catch (err) {
       setError(humanizeError((err as Error).message));
     } finally {
-      setBusy(false);
+      setBusyAction(null);
+    }
+  }
+
+  async function handleGoogle() {
+    setError(null);
+    setBusyAction('google');
+    track.authGoogleClicked();
+    try {
+      await signInWithGoogle();
+      // signInWithGoogle redirects the whole page on success, so this line
+      // is normally never reached — it only runs if Supabase resolves
+      // without actually navigating, which the catch below can't see.
+    } catch (err) {
+      setError(humanizeError((err as Error).message));
+    } finally {
+      setBusyAction(null);
     }
   }
 
   async function handleGuest() {
     setError(null);
-    setBusy(true);
+    setBusyAction('guest');
     track.authGuestClicked();
     try {
       await signInAsGuest();
@@ -72,7 +94,7 @@ export default function AuthPanel() {
     } catch (err) {
       setError(humanizeError((err as Error).message));
     } finally {
-      setBusy(false);
+      setBusyAction(null);
     }
   }
 
@@ -148,12 +170,10 @@ export default function AuthPanel() {
           disabled={busy}
           className="h-10 text-[13px] font-medium bg-studio-accent hover:bg-studio-accent-hover text-white rounded-studio-md gap-2 disabled:opacity-60"
         >
-          {busy ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Mail className="w-4 h-4" />
-          )}
-          {mode === 'signin' ? 'Sign in' : 'Create account'}
+          {busyAction === 'email' ? <Spinner className="w-4 h-4" /> : <Mail className="w-4 h-4" />}
+          {busyAction === 'email'
+            ? (mode === 'signin' ? 'Signing in…' : 'Creating account…')
+            : (mode === 'signin' ? 'Sign in' : 'Create account')}
         </Button>
       </form>
 
@@ -167,12 +187,12 @@ export default function AuthPanel() {
       {/* Google */}
       <Button
         type="button"
-        onClick={() => { track.authGoogleClicked(); signInWithGoogle(); }}
+        onClick={handleGoogle}
         disabled={busy}
         className="h-10 text-[13px] font-medium bg-studio-surface hover:bg-studio-surface-hover border border-studio-border-strong text-studio-text rounded-studio-md gap-2 disabled:opacity-60"
       >
-        <LogIn className="w-4 h-4 text-studio-accent" />
-        Continue with Google
+        {busyAction === 'google' ? <Spinner className="w-4 h-4" /> : <LogIn className="w-4 h-4 text-studio-accent" />}
+        {busyAction === 'google' ? 'Signing in…' : 'Continue with Google'}
       </Button>
 
       {/* Guest */}
@@ -182,8 +202,8 @@ export default function AuthPanel() {
         disabled={busy}
         className="flex items-center justify-center gap-2 text-[12px] text-studio-text-faint hover:text-studio-text-muted transition-colors disabled:opacity-50"
       >
-        <User2 className="w-3.5 h-3.5" />
-        Try as guest · 1 free render, no sign-up
+        {busyAction === 'guest' ? <Spinner className="w-3.5 h-3.5" /> : <User2 className="w-3.5 h-3.5" />}
+        {busyAction === 'guest' ? 'Signing in…' : 'Try as guest · 1 free render, no sign-up'}
       </button>
 
       {/* Feature list */}

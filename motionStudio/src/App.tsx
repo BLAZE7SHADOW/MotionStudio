@@ -110,6 +110,7 @@ function CloudSync() {
   const { user } = useAuth();
   const projects  = useProjectStore((s) => s.projects);
   const setProjects = useProjectStore((s) => s.setProjects);
+  const setCloudSyncing = useProjectStore((s) => s.setCloudSyncing);
   // Track whether we are mid-load so we skip the immediate post-load save
   const loadingRef = useRef(false);
 
@@ -117,6 +118,7 @@ function CloudSync() {
   useEffect(() => {
     if (!user) return;
     loadingRef.current = true;
+    setCloudSyncing(true);
     void loadProjects(user.id).then((cloud) => {
       if (cloud.length > 0) {
         setProjects(cloud);
@@ -135,6 +137,7 @@ function CloudSync() {
         if (openId) void rehydrateAssets(openId);
       }
       loadingRef.current = false;
+      setCloudSyncing(false);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
