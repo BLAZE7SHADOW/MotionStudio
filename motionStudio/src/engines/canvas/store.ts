@@ -5,6 +5,7 @@ import { ALL_SHOTS, sceneAtFrame, sceneSpan, scenesOf } from '../project/scenes'
 import type { CanvasElement, TextElement, ImageElement, VideoElement, AudioElement, ShaderElement, ShaderPreset, BlockElement, BlockPreset } from './types';
 import type { AddTextInput } from './types';
 import { getBlock } from '@/content/blocks/registry';
+import { cascadePosition } from './placement';
 
 /**
  * A patch for any element. Because CanvasElement is a union, `Omit<union, K>`
@@ -59,12 +60,15 @@ export function useCanvasEngine() {
     const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
     const w = input.width  ?? 1000;
     const h = input.height ?? 160;
+    const defaultX = Math.round((compW - w) / 2);
+    const defaultY = Math.round((compH - h) / 2);
+    const cascaded = cascadePosition(elements, defaultX, defaultY, w, h, compW, compH);
 
     const element: CanvasElement = {
       id:               crypto.randomUUID(),
       type:             'text',
-      x:                input.x ?? Math.round((compW - w) / 2),
-      y:                input.y ?? Math.round((compH - h) / 2),
+      x:                input.x ?? cascaded.x,
+      y:                input.y ?? cascaded.y,
       width:            w,
       height:           h,
       rotation:         0,
@@ -112,13 +116,14 @@ export function useCanvasEngine() {
     const fit = Math.min((compW * 0.6) / natW, (compH * 0.6) / natH);
     const w = Math.round(natW * fit);
     const h = Math.round(natH * fit);
+    const defaultPos = cascadePosition(elements, Math.round((compW - w) / 2), Math.round((compH - h) / 2), w, h, compW, compH);
 
     const element: ImageElement = {
       id:               crypto.randomUUID(),
       type:             'image',
       assetId,
-      x:                at ? Math.round(at.x - w / 2) : Math.round((compW - w) / 2),
-      y:                at ? Math.round(at.y - h / 2) : Math.round((compH - h) / 2),
+      x:                at ? Math.round(at.x - w / 2) : defaultPos.x,
+      y:                at ? Math.round(at.y - h / 2) : defaultPos.y,
       width:            w,
       height:           h,
       rotation:         0,
@@ -145,6 +150,7 @@ export function useCanvasEngine() {
     const fit = Math.min((compW * 0.8) / natW, (compH * 0.8) / natH);
     const w = Math.round(natW * fit);
     const h = Math.round(natH * fit);
+    const defaultPos = cascadePosition(elements, Math.round((compW - w) / 2), Math.round((compH - h) / 2), w, h, compW, compH);
 
     /* the clip can't be longer than the source video */
     const sourceFrames = asset.durationInSeconds
@@ -156,8 +162,8 @@ export function useCanvasEngine() {
       id:               crypto.randomUUID(),
       type:             'video',
       assetId,
-      x:                at ? Math.round(at.x - w / 2) : Math.round((compW - w) / 2),
-      y:                at ? Math.round(at.y - h / 2) : Math.round((compH - h) / 2),
+      x:                at ? Math.round(at.x - w / 2) : defaultPos.x,
+      y:                at ? Math.round(at.y - h / 2) : defaultPos.y,
       width:            w,
       height:           h,
       rotation:         0,
@@ -252,14 +258,15 @@ export function useCanvasEngine() {
     const { width: compW, height: compH } = getCompositionDimensions(project.aspectRatio);
     const w = Math.min(def.defaultSize.width, compW);
     const h = Math.min(def.defaultSize.height, compH);
+    const cascaded = cascadePosition(elements, Math.round((compW - w) / 2), Math.round((compH - h) / 2), w, h, compW, compH);
 
     const element: BlockElement = {
       id:               crypto.randomUUID(),
       type:             'block',
       block:            preset,
       blockProps:       { ...def.defaults },
-      x:                Math.round((compW - w) / 2),
-      y:                Math.round((compH - h) / 2),
+      x:                cascaded.x,
+      y:                cascaded.y,
       width:            w,
       height:           h,
       rotation:         0,
