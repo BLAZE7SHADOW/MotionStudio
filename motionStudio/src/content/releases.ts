@@ -71,6 +71,10 @@ export const RELEASES: Release[] = [
         kind: 'improved',
         text: 'Text throughout the app is easier to read, and keyboard focus is now clearly visible wherever you tab.',
       },
+      {
+        kind: 'improved',
+        text: 'Hover and click feedback across the toolbar, timeline and panels now moves consistently instead of a mix of speeds. The save status in the toolbar no longer nudges the buttons next to it as its message changes length, and expanding a Properties section now animates instead of snapping open.',
+      },
     ],
   },
   {

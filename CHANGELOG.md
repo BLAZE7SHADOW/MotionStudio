@@ -5,6 +5,65 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-08-09] — One motion system instead of two
+
+Follow-up to the same finish audit, targeting what it called "jerkiness": the
+app defined a real motion system (`--studio-duration-*`, `--studio-ease*` in
+`index.css`) and then never used it. Zero references anywhere outside the
+declaration. ~110 transition call sites ran on 7 different effective
+durations, 43 of them (39%) silently falling through to Tailwind's own
+150ms/ease-in-out default instead of the stated 180ms/`cubic-bezier(0.16,1,
+0.3,1)`. Exactly one `ease-*` class existed in the whole app.
+
+### Added
+- `--ease-studio` / `--ease-studio-smooth` — real Tailwind v4 utilities now,
+  via the `--ease-*` theme namespace. An earlier attempt also declared
+  `--duration-studio-fast` etc.; Tailwind v4 has no equivalent namespace for
+  duration — only bare-number `duration-<N>` (a dynamic ms utility) and a
+  single `--default-transition-duration` override — so those compiled to
+  nothing and every site using them silently lost its explicit duration. Kept
+  only what actually works: numeric `duration-120`/`150`/`260` + `ease-studio`
+  at explicit sites, `--default-transition-duration`/
+  `-timing-function` for everything that doesn't specify its own.
+- Global `prefers-reduced-motion` override in `index.css`. Previously 3 call
+  sites, none in the editor — the actual volume of motion in the app.
+- A 1px `active:` press state on every plain `<button>` (`index.css` base
+  layer), matching what the shadcn `Button` component already had. ~78
+  hand-written buttons across the toolbar, timeline and panels had none.
+- `[scrollbar-gutter:stable]` on the 9 panel/dialog scroll containers whose
+  content length changes at runtime (Properties, Assets, Timeline tracks,
+  dialogs), so a scrollbar appearing doesn't reflow the content next to it.
+
+### Changed
+- `--default-transition-duration`/`-timing-function` (real Tailwind v4 theme
+  keys) now point at the studio tokens — the actual fix for the 43 sites that
+  had no explicit duration, no per-site class needed.
+- The 56 sites using literal `duration-120` now pair it with `ease-studio`
+  (previously no easing at all beyond the browser default).
+- Dialog, popover, select and tooltip (`components/ui/*`) now use
+  `data-open:duration-260`/`data-closed:duration-150`, both with
+  `ease-studio` — the token file already stated "enter 260ms, exit is always
+  faster (150ms)"; every overlay ran a flat 100ms both directions instead.
+- `SaveIndicator` has a fixed minimum width. It sits first in the toolbar's
+  right-aligned row ahead of Helper Mode, the `?` menu, Preview and Export —
+  every one of those shifted sideways whenever its own label changed length,
+  including on the 60-second timer that only redraws a relative timestamp.
+- Properties panel's Transform/Layer sections animate open/closed (CSS
+  `grid-template-rows`, 0fr↔1fr) instead of snapping. Motion/Animation stays
+  instant on purpose — its content is up to seven looping Remotion
+  `<AnimationPreview>` players, and animating the collapse means keeping them
+  mounted for the transition's duration.
+
+### Not touched, on purpose
+- shadcn/ui's own bundled primitives (`switch.tsx`'s `duration-150`, the
+  numeric transition classes in vendored component internals) — vendored
+  boilerplate, not app-authored call sites.
+- Landing-page-specific one-off durations (a 700ms scroll reveal, a 300ms
+  hover) — deliberate marketing-page choices, not part of the app-chrome
+  system this pass targeted.
+
+---
+
 ## [2026-08-09] — Data-loss fixes, silent failures, and WCAG AA contrast
 
 An audit prompted by "is this actually high finish?" turned up things that
