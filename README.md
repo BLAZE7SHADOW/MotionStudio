@@ -14,17 +14,18 @@ Built by [Shivam Govind Rao](https://shivamgovindrao.com/) · [get in touch](htt
 
 MotionStudio is a full video compositor that runs in the browser. You place elements on a canvas, arrange them on a timeline, animate them per-property, and export real video. The editor preview and the AWS Lambda cloud render run the **same React composition** — what you see while editing is exactly what renders. (The free in-browser export draws to a 2D canvas instead, so it omits text effects, shader backgrounds and blocks; the export dialog says so when it applies.)
 
-~21K lines of strict TypeScript · 9 engines · 220+ logically-grouped commits · 6 element types · 21 templates.
+~24K lines of strict TypeScript · 9 engines · 270+ logically-grouped commits · 6 element types · 21 templates.
 
 ## Features
 
 - **In-app feedback + release notes** — a feedback form that auto-attaches build, browser and project context, and a "What's new" dialog shown once per release
-- **Hands-on quick start** — a six-step first run that waits for you to *do* each thing (add text, drag it, animate it, press play, add a shot) and advances off live store state rather than a Next button; the completion predicates are pure functions over plain data, unit-tested headlessly
-- **Helper mode** — an opt-out mode where any of the 21 explainable controls flashes and opens a card while the cursor rests on it, closes the instant it doesn't, and never intercepts a click; built on the same `data-tour` anchors as the quick start, positioned with `@radix-ui/react-popper`
-- **One copy registry** — both surfaces read `content/help.ts`, so a control cannot be described two different ways; a test enforces the shape of the writing (5-word titles, one-sentence bodies, ≤2 chips) so it can't drift back into prose
+- **Hands-on quick start** — a six-step first run (driver.js) that waits for you to *do* each thing (add text, drag it, animate it, press play, add a shot) and advances off live store state rather than a Next button; the completion predicates are pure functions over plain data, unit-tested headlessly
+- **Three levels of "what is this?"** — a small ⓘ next to a control shows its name and one line on hover, always on and never in the way; **Helper mode** (opt-in, off by default) escalates that to a flashing border and a full card on any of the 21 explainable controls; the quick start covers the rest. Built on the same `data-tour` anchors, positioned with `@radix-ui/react-popper`, and none of them ever intercepts a click
+- **One copy registry** — all three surfaces read `content/help.ts`, so a control cannot be described three different ways; a test enforces the shape of the writing (5-word titles, one-sentence bodies, ≤2 chips) so it can't drift back into prose
 - **Contextual hints** — the app says what just changed on its own (tempo detected, another tab taking over), each dismissable for good and restored by replaying the quick start
 - **21 ready-made templates** — announcement clips, dev/product demos, hooks, offers, title cards; pick one and you have an animated composition in three clicks instead of twenty
 - **Canvas editing** — drag / resize / rotate / inline text edit, layer ordering, drag-and-drop asset placement
+- **Editable from the keyboard** — Tab to a canvas element and nudge it with the arrow keys (10× with Shift); every numeric field is a real `spinbutton` you can Tab to, arrow, or type into; landmarks, a skip link, and accessible names on the icon-only controls
 - **Frame-accurate timeline** — per-element clips (move/trim), scrubbing, time-based playback clock
 - **Keyframe animation** — opacity, position, scale, rotation via `interpolate`/`spring`, with presets and a draggable keyframe strip
 - **34 text effects** — Remocn animation components (per-character rise, typewriter, glitch, shimmer, odometers, value swaps, marquees…), lazy-loaded per effect
@@ -37,6 +38,7 @@ MotionStudio is a full video compositor that runs in the browser. You place elem
 - **Accounts & sync** — Google OAuth / email / guest; projects auto-save to Supabase, restore on any device, delete anytime from the Dashboard
 - **Persistence** — project JSON in localStorage + cloud, asset bytes in IndexedDB, S3 for cloud renders
 - **Responsive landing + auth, desktop-only editor** — sign up from any device; the dashboard and editor gate below 1024px with a "use a bigger screen" message
+- **A design system that's checked, not claimed** — one duration/easing scale behind every transition, a four-level text ramp that clears WCAG AA on every surface it sits on, a focus ring you can actually see, and `prefers-reduced-motion` honoured app-wide; `tests/contrast.test.mjs` parses the real `index.css` and fails CI if a colour drops below its ratio
 
 ## Architecture
 
@@ -67,6 +69,7 @@ Deep dives: [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/adrs/](docs/adrs/) · [U
 | Frontend | React 19 · TypeScript (strict) · Vite | Fast, typed, modern |
 | State | Zustand (+ persist) | One `create()` → hook + selectors; zero boilerplate |
 | Styling | Tailwind v4 + shadcn/ui | Token-driven dark UI, accessible primitives |
+| Design system | oklch tokens in one `index.css`, contrast-tested | Colour and motion decided once; a test parses the stylesheet so WCAG AA can't silently regress |
 | Canvas interactions | react-moveable | Solved drag/resize/rotate handles |
 | Browser export | WebCodecs + Mediabunny | Frame-perfect encode + MP4 mux, no server |
 | Text effects & shaders | Remocn (+ `@paper-design/shaders-react`) | Copy-paste Remotion animation components and frame-synced WebGL backgrounds |
@@ -76,7 +79,7 @@ Deep dives: [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/adrs/](docs/adrs/) · [U
 
 ## Backend
 
-- **Auth (Supabase)** — Google OAuth, email/password, anonymous guest (1 free cloud render); device-ID cookie prevents guest abuse; account switches wipe local state for isolation
+- **Auth (Supabase)** — Google OAuth, email/password, anonymous guest (1 free cloud render); device-ID cookie prevents guest abuse. Local projects are cleared only when a **permanent** account hands off to a *different* one — a guest signing up keeps their work, since the anonymous account holding its cloud copy is unreachable the moment they do (`lib/projectOwner.ts`, 26 assertions)
 - **API (Vercel Functions)** — `/api/render` runs a 4-gate guard: JWT → device → monthly quota → Lambda; `/api/quota` reports usage; `/api/upload-url` issues presigned S3 PUTs; `/api/contact` sends messages via Resend
 - **Cloud render (Remotion Lambda)** — headless render on AWS, returns an S3 URL. **Two separate deploy targets:** pushing to Vercel never rebuilds this — after any change reachable from `src/remotion/index.ts`, run `npm run deploy:lambda-site` to re-upload the bundle Lambda actually executes
 - **Cloud sync (Supabase)** — projects upsert as JSONB rows (RLS per user), auto-saved 2 s after any edit
@@ -87,7 +90,9 @@ Deep dives: [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/adrs/](docs/adrs/) · [U
 git clone <repo-url> && cd MotionStudio/motionStudio
 npm install
 npm run dev          # http://localhost:5173
-npm test             # headless unit tests for the pure engine modules
+npm test             # 13 headless suites, ~285 assertions — every module pure
+                     # enough to bundle and run on its own, engines and lib
+                     # alike (one of them reads index.css and checks contrast)
 npm run lint         # zero problems is the gate — CI runs with --max-warnings=0
 ```
 
@@ -120,13 +125,14 @@ The editor, timeline, animation, and browser export work fully offline/local —
 ## Project structure
 
 ```
-api/                    Vercel serverless functions (render, quota, upload-url, _lib guards)
+api/                    Vercel serverless functions (render, render-status, quota,
+                        upload-url, stock-search, contact, _lib guards)
 motionStudio/
   src/
     engines/            data + logic: project, editor, canvas, rendering, timeline,
                         animation, asset, audio, export
     features/           UI: landing, dashboard, workspace (canvas/timeline/panels)
-    content/            templates + block registry
+    content/            templates, block registry, help copy, release notes
     components/remocn/  57 Remocn components (text effects, shaders, UI blocks)
     remotion/           composition entry for Lambda/CLI rendering
 docs/adrs/              architecture decision records
