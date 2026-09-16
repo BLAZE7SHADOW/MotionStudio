@@ -5,6 +5,48 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-09-16] — No more buttons inside buttons
+
+### Fixed
+- **Three surfaces nested a real `<button>` inside a `role="button"` container**,
+  which ARIA forbids: a button must not contain another interactive control.
+  Screen readers flatten or mis-announce the nesting, folding the inner
+  control's name into the outer one's. The three: `ProjectCard` (card + delete),
+  `TimelinePanel` rows (row + span-toggle + delete), `AssetsPanel` tiles
+  (tile + remove).
+- Each container is now a plain `div`, with the **label** as its one real
+  control and that label's `::after` stretched across the card/row/tile. Click
+  targets are unchanged — verified in the browser that clicking a project card's
+  thumbnail or metadata resolves to the title button while the delete corner
+  resolves to the delete button — but the accessibility tree gets siblings
+  instead of nesting. Focus rings moved onto the same pseudo-element, so
+  keyboard focus still outlines the whole card rather than just its title.
+- Every `stopPropagation` that existed only to escape the outer click handler is
+  gone with the handler.
+- **`ProjectCard`'s delete button moved to last in the DOM.** Ahead of the title
+  it took focus first on every card, so tabbing across the dashboard landed on a
+  destructive action before the thing it destroys. It is positioned visually, so
+  reading order and visual order still agree.
+- **Destructive controls now name their subject** — "Delete *My first video*",
+  "Remove *clip.mp4*", "Delete *<clip>*" — rather than a generic "Delete
+  project" / "Remove asset" / "Delete element". A column of twenty identical
+  labels tells a screen-reader user nothing about which one they are on.
+- The timeline row's selected state is exposed as `aria-current` rather than
+  `aria-pressed`: clicking again does not deselect, so it marks the current item
+  in a set rather than a toggle that happens to be on.
+- `AssetsPanel` keeps `draggable` on the tile container — that is what the user
+  grabs; only click handling moved.
+
+### Notes
+- `CanvasPanel` and `SequenceTrack` also use `role="button"`, but contain no
+  interactive descendants, so they are valid and were left alone.
+- The white-on-violet-500 primary button still measures 4.01:1 against the 4.5
+  AA needs. Unchanged deliberately: closing it means darkening the brand violet,
+  which is an identity decision. `tests/contrast.test.mjs` already asserts the
+  known floor so the gap can only close, never widen.
+
+---
+
 ## [2026-09-16] — Dashboard previews mount only when they're on screen
 
 ### Added

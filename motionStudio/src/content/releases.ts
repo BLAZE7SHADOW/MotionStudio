@@ -63,6 +63,10 @@ export const RELEASES: Release[] = [
         kind: 'improved',
         text: 'When a cloud render fails, you now get a plain explanation and what to try next, instead of a wall of technical error text.',
       },
+      {
+        kind: 'improved',
+        text: 'Keyboard and screen-reader users get a cleaner pass through project cards, timeline rows and asset tiles \u2014 and delete buttons now say what they delete, so you always know which one you are on.',
+      },
     ],
   },
   {
