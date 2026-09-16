@@ -16,7 +16,7 @@ import { useAuth } from './hooks/useAuth';
 import { useProjectStore, saveProject, loadProjects, isFromFuture } from './engines/project';
 import { rehydrateAssets } from './engines/asset';
 import { isReadOnly } from './lib/projectLock';
-import { setSaveStatus } from './lib/saveState';
+import { setSaveStatus, useSaveState } from './lib/saveState';
 import { showNotice } from './lib/noticeStore';
 import {
   decideTransition,
@@ -196,6 +196,9 @@ function CloudSync() {
      open five projects, edit one, and four untouched blobs went over the wire
      every two seconds. */
   const pushedRef = useRef(new Map<string, number>());
+  /** Whether the last flush failed in a way that asking again could fix. */
+  const retryableRef = useRef(false);
+  const saveStatus = useSaveState((s) => s.status);
 
   const flush = useCallback(async () => {
     if (!user) return;
@@ -221,13 +224,21 @@ function CloudSync() {
 
     const failures = results.filter((r) => !r.result.ok);
     if (failures.length === 0) {
+      retryableRef.current = false;
       setSaveStatus('saved');
       return;
     }
     // One failure is enough to stop claiming everything is saved. Offline wins
     // over a server error when both happen: it is the one the user can act on.
     const first = failures.find((f) => !f.result.ok && f.result.offline) ?? failures[0];
-    const r = first.result as { ok: false; offline: boolean; message: string };
+    const r = first.result as {
+      ok: false; offline: boolean; retryable: boolean; message: string;
+    };
+    /* Remembered so the retry effect below knows whether asking again could
+       possibly help. An offline failure is already covered by the `online`
+       listener; this is for the server that returned a 5xx while the
+       connection was fine, where no browser event will ever fire. */
+    retryableRef.current = r.retryable;
     setSaveStatus(r.offline ? 'offline' : 'failed', r.message);
   }, [user]);
 
@@ -278,6 +289,19 @@ function CloudSync() {
       window.removeEventListener('offline', onOffline);
     };
   }, [flush]);
+
+  /* The server refusing is not always the server refusing.
+     `online` covers a dropped connection, but a 5xx arrives over a perfectly
+     good connection and fires no browser event, so nothing would ever ask
+     again — the user's work sat unsynced until they happened to make another
+     edit. Slow on purpose: the cost of one request every 30 s is nothing
+     against work not reaching the cloud, and it stops the moment a save
+     succeeds or turns out to be a genuine refusal. */
+  useEffect(() => {
+    if (!user || saveStatus !== 'failed' || !retryableRef.current) return;
+    const timer = setInterval(() => void flush(), 30_000);
+    return () => clearInterval(timer);
+  }, [saveStatus, user, flush]);
 
   /* A project written by a newer build is displayed but never overwritten.
      Say so, or the user just sees edits that never stick. */

@@ -16,7 +16,10 @@ export type SaveStatus =
   | 'saved'
   /** The browser or a thrown request says there is no connection. */
   | 'offline'
-  /** The server refused. Not automatically retried — it would just refuse again. */
+  /** The server refused. Retried on a slow timer only when the refusal was a
+      5xx or a rate limit — this used to mean "never retried, it would just
+      refuse again", which is true of a rejection and false of a server having
+      a bad moment. See the retry effect in App.tsx. */
   | 'failed';
 
 interface SaveState {

@@ -14,15 +14,19 @@ import { forStorage } from './forStorage';
 export type SaveResult =
   | { ok: true }
   /** The request failed. `offline` distinguishes "no network" from "the server
-      said no", because only one of those is worth retrying automatically. */
-  | { ok: false; offline: boolean; message: string };
+      said no", because only one of those is worth retrying automatically.
+      `retryable` splits that second case further: a 5xx or a rate limit is the
+      server having a bad moment, not a refusal, and it had been lumped in with
+      genuine rejections and left unsynced until the user happened to edit
+      again. */
+  | { ok: false; offline: boolean; retryable: boolean; message: string };
 
 export async function saveProject(project: Project, userId: string): Promise<SaveResult> {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-    return { ok: false, offline: true, message: 'No internet connection' };
+    return { ok: false, offline: true, retryable: true, message: 'No internet connection' };
   }
   try {
-    const { error } = await getSupabase().from('projects').upsert({
+    const { error, status } = await getSupabase().from('projects').upsert({
       id: project.id,
       user_id: userId,
       // Session-scoped `blob:` urls are stripped on the way out — a row that
@@ -31,7 +35,12 @@ export async function saveProject(project: Project, userId: string): Promise<Sav
       data: forStorage(project),
       updated_at: new Date().toISOString(),
     });
-    if (error) return { ok: false, offline: false, message: error.message };
+    if (error) {
+      /* A 5xx or a 429 is the server having a bad moment; anything else is it
+         telling us no, and asking again would get the same answer. */
+      const retryable = status >= 500 || status === 429;
+      return { ok: false, offline: false, retryable, message: error.message };
+    }
     return { ok: true };
   } catch (err) {
     // A thrown fetch is what a dropped connection actually looks like — the
@@ -40,6 +49,7 @@ export async function saveProject(project: Project, userId: string): Promise<Sav
     return {
       ok: false,
       offline: true,
+      retryable: true,
       message: err instanceof Error ? err.message : 'Network request failed',
     };
   }
