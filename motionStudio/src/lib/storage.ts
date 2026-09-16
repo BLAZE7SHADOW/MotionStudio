@@ -127,6 +127,31 @@ async function attemptUpload(assetId: string, file: File): Promise<Attempt> {
     return { ok: false, message: reason(err), retryable: true };
   }
 
+  /* A 200 on the PUT says S3 accepted the bytes, not that the app can read them
+     back. Public-read comes from a bucket policy that can be absent or wrong,
+     and the URL the app will actually use is built client-side from a different
+     env var than the one that signed the write — so "uploaded" and "readable"
+     are genuinely separate claims.
+
+     They have to be checked separately, because an asset that claims a cloud
+     copy it does not have is worse than one that admits it has none: the first
+     silently drops media from a render, the second shows a badge and gets
+     retried. Verify before writing storageKey, and let a failure fall into the
+     retry path like any other. */
+  const readUrl = ASSET_BASE ? `${ASSET_BASE}/${key}` : publicUrl;
+  try {
+    const head = await fetch(readUrl, { method: 'HEAD' });
+    if (!head.ok) {
+      return {
+        ok: false,
+        message: `Uploaded but not readable (${head.status})${describeTarget(readUrl)}`,
+        retryable: head.status >= 500,
+      };
+    }
+  } catch (err) {
+    return { ok: false, message: reason(err), retryable: true };
+  }
+
   return { ok: true, url: publicUrl, key };
 }
 
