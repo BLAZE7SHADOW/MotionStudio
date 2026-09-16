@@ -329,9 +329,9 @@ Safari falls back to a "not supported" message.
 **Path 2: cloud render (Remotion Lambda)** — quota-based, works on any device:
 the browser POSTs the project to `/api/render`; the API invokes a Remotion Lambda
 function that renders the same `MotionComposition` in headless Chrome on AWS and
-returns an S3 URL. Media is remapped from `blob:` URLs to public S3 `storageUrl`s
-before invoking (uploaded in the background at import time via presigned PUTs from
-`/api/upload-url`). Remotion's CLI path also still works for local power users.
+returns an S3 URL. Media is remapped from `blob:` URLs to public S3 URLs before
+invoking — rebuilt from each asset's stored `storageKey` (uploaded in the background
+at import time via presigned PUTs from `/api/upload-url`). Remotion's CLI path also still works for local power users.
 
 > **Two separate deploy targets — easy to forget one.** Vercel deploys the Vite
 > app and `/api/*` functions on every push; it does **not** touch the Remotion
@@ -737,8 +737,21 @@ update (`{ history: false }`).
 
 **`blob:` URLs can't be rendered in Node/Lambda.** Browser-only object URLs are
 meaningless to a headless renderer on AWS. → Assets upload to S3 in the background
-at import (presigned PUT), the asset is patched with a public `storageUrl`, and the
-Export dialog remaps `blob:` → `storageUrl` before invoking Lambda.
+at import (presigned PUT), the asset is patched with its S3 key, and the Export
+dialog rebuilds a public URL from that key before invoking Lambda.
+
+**Storing the resolved asset URL froze the bucket name into the database.**
+`/api/upload-url` returned a full `https://<bucket>.s3…/<key>` and that string was
+persisted on the asset. Moving to a new AWS account made every one of them a
+permanent 403: the bucket was in project data, so no amount of reconfiguring could
+repoint it. → Persist the **key** (`<assetId>.<ext>`) and resolve the URL on read
+from the configured bucket (`lib/assetUrl.ts`), which makes a bucket change an env
+var. The client needs the bucket name to do that, so `VITE_S3_ASSETS_BUCKET` and the
+API's `S3_ASSETS_BUCKET` are two names for one bucket and must move together.
+Existing assets are migrated on project open by `healCloudCopies`, which rewrites a
+URL that still points at the current bucket and otherwise re-uploads from the
+IndexedDB bytes — the local copy survived the account move even though the remote
+one didn't.
 
 **Supabase key formats & permissions.** The new `sb_secret_` key format caused 403s
 (needed the legacy JWT format); RLS blocked even `service_role` on the `renders`
@@ -811,7 +824,7 @@ every other effect in the `Effects` map already uses.
 - **Asset bytes follow you only as far as the S3 copy got.** Project JSON syncs
   via Supabase and media blobs live in local IndexedDB, but the background
   upload also puts every file in S3 — and `rehydrateAssets` falls back to that
-  `storageUrl` when there is no local blob, so media *does* survive a move to
+  cloud copy when there is no local blob, so media *does* survive a move to
   another device once the upload has landed. A file whose upload never
   completed is local-only, and shows "Re-upload needed" elsewhere. The upload is
   fire-and-forget with no user-visible state, so there is currently no way to

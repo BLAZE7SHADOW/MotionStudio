@@ -32,6 +32,20 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: '2026-09-16',
+    title: 'Media in older projects repairs itself',
+    changes: [
+      {
+        kind: 'fixed',
+        text: 'Images, video and audio in projects made before this update could stop loading — the copy kept in cloud storage had become unreachable. Open one of those projects and the app now quietly puts your files back, using the copies already saved on this device. Nothing to click.',
+      },
+      {
+        kind: 'improved',
+        text: 'If a file can\u2019t be repaired because it isn\u2019t on this device any more, its tile now says so instead of failing silently in the middle of a Cloud Render.',
+      },
+    ],
+  },
+  {
     id: '2026-08-10',
     title: 'You can now edit entirely from the keyboard',
     changes: [

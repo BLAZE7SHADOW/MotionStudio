@@ -211,6 +211,13 @@ dragging invisible. A note on the canvas says so when it applies; press
    empty rather than breaking the project. Re-add the file, or remove the tile.
    Opening a project you made on this machine should never show this: media is
    relinked from local storage on every load.
+8. **"This file's cloud copy is gone. Re-add it to use cloud render."** is a
+   different message, and a narrower problem: the file still plays fine in the
+   editor, but its copy in cloud storage is no longer reachable, so a Cloud
+   Render would come out missing that media. If the file is still on this
+   device the app sends it up again by itself when you open the project, and
+   the message clears on its own — you only need to re-add the file if it
+   isn't.
 
 ### Stock photos & video (Pexels)
 Open the **Assets** panel → **Stock** tab. Search, toggle **Photos**/**Videos**,

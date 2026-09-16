@@ -105,6 +105,8 @@ Frontend env (`motionStudio/.env.local`):
 ```
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_S3_ASSETS_BUCKET=       # must match the API's S3_ASSETS_BUCKET below —
+                             # the client rebuilds asset URLs from it
 VITE_POSTHOG_KEY=            # optional
 VITE_POSTHOG_HOST=           # optional
 VITE_REMOTION_LICENSE_KEY=   # optional — defaults to "free-license" for the
