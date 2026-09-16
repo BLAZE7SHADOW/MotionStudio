@@ -7,6 +7,7 @@
  */
 
 import { getAccessToken } from './authToken';
+import { ASSET_BASE } from './assetUrl';
 
 interface UploadUrlResponse {
   uploadUrl: string;
@@ -96,6 +97,7 @@ async function attemptUpload(assetId: string, file: File): Promise<Attempt> {
     }
 
     ({ uploadUrl, publicUrl, key } = (await res.json()) as UploadUrlResponse);
+    warnOnBucketMismatch(uploadUrl);
   } catch (err) {
     // fetch only throws for transport-level problems, which are the retryable
     // ones by definition.
@@ -117,7 +119,7 @@ async function attemptUpload(assetId: string, file: File): Promise<Attempt> {
          been fixed. */
       return {
         ok: false,
-        message: `Upload failed (${upload.status})`,
+        message: `Upload failed (${upload.status})${describeTarget(uploadUrl)}`,
         retryable: upload.status >= 500 || upload.status === 429,
       };
     }
@@ -153,6 +155,51 @@ function pauseBeforeRetry(ms: number): Promise<void> {
     const timer = setTimeout(done, RECONNECT_TIMEOUT_MS);
     window.addEventListener('online', done);
   });
+}
+
+/**
+ * Names the bucket a failed upload was aimed at.
+ *
+ * A bare "Upload failed (403)" is what let a whole week pass with nothing
+ * reaching storage: the message was true, useless, and identical whether the
+ * bucket was misconfigured, missing, or simply not ours any more. The presigned
+ * URL's host *is* the server's configured bucket, so the client already knows
+ * which one it tried — there is no reason to make anyone guess.
+ */
+function describeTarget(uploadUrl: string): string {
+  const bucket = bucketOf(uploadUrl);
+  return bucket ? ` — bucket ${bucket}` : '';
+}
+
+/**
+ * The client builds read URLs from VITE_S3_ASSETS_BUCKET while the server
+ * presigns writes with S3_ASSETS_BUCKET. Two names for one bucket, which is the
+ * price of resolving URLs client-side — and the failure mode when they drift is
+ * silent: uploads land somewhere the app will never read from. Nothing else
+ * compares them, so this does, once.
+ */
+let mismatchReported = false;
+function warnOnBucketMismatch(uploadUrl: string): void {
+  if (mismatchReported || !ASSET_BASE) return;
+  const signed = bucketOf(uploadUrl);
+  const configured = bucketOf(ASSET_BASE);
+  if (!signed || !configured || signed === configured) return;
+
+  mismatchReported = true;
+  console.error(
+    `[assets] bucket mismatch: the API presigns uploads for "${signed}" but this ` +
+      `build reads from "${configured}". Uploaded media will not be readable. ` +
+      "Make the API's S3_ASSETS_BUCKET and VITE_S3_ASSETS_BUCKET match.",
+  );
+}
+
+function bucketOf(url: string): string | undefined {
+  try {
+    // Bucket-style hostname: <bucket>.s3.<region>.amazonaws.com
+    return new URL(url).hostname.split('.')[0] || undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function reason(err: unknown): string {
