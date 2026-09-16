@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { useAssetEngine, isUrlUsable, assetTypeFromFile, useUploadStatus } from '@/engines/asset';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
+import { useProjectStore } from '@/engines/project';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/apiClient';
 import { useFeedbackStore } from '@/lib/feedbackStore';
-import { notifyAdded } from '@/lib/noticeStore';
+import { notifyAdded, notifyUndoable } from '@/lib/noticeStore';
 import type { StockResult, StockType } from '@/lib/apiClient';
 import type { Asset, AssetType } from '@/engines/asset';
 
@@ -404,6 +405,18 @@ function StockTab({
 /* ── main component ── */
 export default function AssetsPanel() {
   const { assets, uploadFiles, removeAsset } = useAssetEngine();
+  const undo = useProjectStore((s) => s.undo);
+
+  /* Removing a file is one click with no confirmation, and it takes the media
+     out of every shot using it. The undo has always worked — `removeAsset` goes
+     through `updateProject` with history on, and the blob stays in IndexedDB
+     precisely so ⌘Z restores a working asset — but nothing said so, which for a
+     destructive single-click action is the same as it not existing. */
+  function handleRemove(id: string) {
+    const name = assets.find((a) => a.id === id)?.name ?? 'Asset';
+    removeAsset(id);
+    notifyUndoable(`${name} removed`, undo);
+  }
   const { addImage, addVideo, addAudio } = useCanvasEngine();
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
   const [search, setSearch] = useState('');
@@ -631,7 +644,7 @@ export default function AssetsPanel() {
               filtered={!!q || typeFilter !== 'all'}
               onBrowse={() => openPicker('image/*,video/*,audio/*')}
               onAdd={handleAdd}
-              onRemove={removeAsset}
+              onRemove={handleRemove}
             />
           </div>
         </TabsContent>

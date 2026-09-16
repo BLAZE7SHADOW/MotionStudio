@@ -114,3 +114,46 @@ export function notifyAdded(what: string): void {
     },
   );
 }
+
+/**
+ * An action the user can take back, with the way to take it back attached.
+ *
+ * Removing an asset already goes through `updateProject` *without*
+ * `{ history: false }` specifically so ⌘Z restores a working file — the asset
+ * engine keeps the blob in IndexedDB for exactly that reason. The undo has
+ * always worked; nothing ever said so, which for a destructive single-click
+ * action is the same as it not existing.
+ *
+ * A toast rather than `showNotice`: that store is single-slot by design, so
+ * removing three files in a row would collapse into one message and the first
+ * two would become unrecoverable in the only place that mentioned them.
+ * Deliberately not suppressible either — "don't show again" on the only route
+ * back from a destructive action is a footgun.
+ */
+export function notifyUndoable(what: string, undo: () => void): void {
+  toast(
+    ({ closeToast }) => (
+      <div className="flex items-center gap-3 p-3">
+        <p className="text-[13px] leading-relaxed text-studio-text">{what}</p>
+        <button
+          type="button"
+          onClick={() => {
+            undo();
+            closeToast();
+          }}
+          className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-studio-accent-text hover:text-studio-text"
+        >
+          Undo
+        </button>
+      </div>
+    ),
+    {
+      position: 'top-center',
+      autoClose: 6_000,
+      hideProgressBar: true,
+      closeButton: false,
+      className:
+        '!rounded-studio-lg !border !border-studio-border-strong !bg-studio-panel !shadow-lg !min-h-0',
+    },
+  );
+}
