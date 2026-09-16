@@ -740,6 +740,18 @@ meaningless to a headless renderer on AWS. → Assets upload to S3 in the backgr
 at import (presigned PUT), the asset is patched with its S3 key, and the Export
 dialog rebuilds a public URL from that key before invoking Lambda.
 
+**A single-attempt upload made one bad minute permanent.** The background upload
+tried once; on failure the asset got an `uploadError` and nothing ever retried,
+so a blip at import time left a file local-only forever. It looked fine — the
+editor plays off the IndexedDB blob — until the project was opened elsewhere or
+a render came back missing media. → Bounded retry with backoff, `online`-aware
+waiting, `HEAD` verification before `storageKey` is written (a 200 on the PUT is
+not proof the object is readable), and `healCloudCopies` re-attempting anything
+without a key on every project open. The invariant that falls out is the point:
+after a project opens, every asset with local bytes either has a `storageKey` or
+carries an error saying why not — no silent third state, which is what makes the
+tile's "no badge means it's in the cloud" honest.
+
 **Storing the resolved asset URL froze the bucket name into the database.**
 `/api/upload-url` returned a full `https://<bucket>.s3…/<key>` and that string was
 persisted on the asset. Moving to a new AWS account made every one of them a
@@ -821,14 +833,16 @@ every other effect in the `Effects` map already uses.
   render (device-tracked), signed-in users a monthly quota.
 - **Editor audio preview** is muted / browser-autoplay-dependent; the export
   is authoritative for sound and timing.
-- **Asset bytes follow you only as far as the S3 copy got.** Project JSON syncs
-  via Supabase and media blobs live in local IndexedDB, but the background
-  upload also puts every file in S3 — and `rehydrateAssets` falls back to that
-  cloud copy when there is no local blob, so media *does* survive a move to
-  another device once the upload has landed. A file whose upload never
-  completed is local-only, and shows "Re-upload needed" elsewhere. The upload is
-  fire-and-forget with no user-visible state, so there is currently no way to
-  tell which of your files are safe to leave the machine.
+- **Asset bytes follow you as far as the S3 copy got — and the app now works to
+  get it there.** Project JSON syncs via Supabase and media blobs live in local
+  IndexedDB, but the background upload also puts every file in S3, and
+  `rehydrateAssets` falls back to that cloud copy when there is no local blob, so
+  media survives a move to another device. Uploads retry with backoff, wait for
+  `online` rather than burning attempts offline, are verified with a `HEAD`
+  before the asset claims a cloud copy, and are re-attempted on every project
+  open until they land. Each tile shows which state it is in. The remaining hole
+  is a file whose bytes are on *no* device — nothing can re-upload what no longer
+  exists, and that tile says so rather than failing later in a render.
 - **No scene grouping yet** — sequencing is done by positioning clips on the timeline.
 - **Tests cover the engines, not the components** — the suite exercises the pure
   modules (`scenes`, `scale`, `beatDetect`, `transitions`, `projectLock`,

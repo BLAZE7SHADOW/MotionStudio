@@ -204,14 +204,23 @@ dragging invisible. A note on the canvas says so when it applies; press
    - **Drag** a thumbnail onto the canvas → it lands exactly where you drop it.
 5. **Audio** has no on-screen visual — it drops straight onto the timeline as a
    sound clip.
-6. Remove an asset from the library with the **×** on its thumbnail (hover).
+6. Remove an asset from the library with the **×** on its thumbnail (hover). A
+   message appears with an **Undo** button if you didn't mean it — ⌘Z works too,
+   and brings the file back intact rather than as a broken tile.
 7. **"Re-upload needed"** on a tile means the file isn't on this device *and*
    has no cloud copy to fall back on — usually because it was added on another
    machine and its background upload never finished. Elements using it render as
    empty rather than breaking the project. Re-add the file, or remove the tile.
    Opening a project you made on this machine should never show this: media is
    relinked from local storage on every load.
-8. **"This file's cloud copy is gone. Re-add it to use cloud render."** is a
+8. **The small badge in a tile's top-left corner** is its cloud status. A
+   spinner means the file is being saved to cloud storage right now; a tick
+   means it landed; an amber **"Not uploaded"** means it didn't. No badge means
+   it's safely in the cloud — the tick fades once you've seen it, and only
+   problems stay on screen. Uploads retry on their own, including when you come
+   back online and next time you open the project, so an amber badge usually
+   clears itself without you doing anything.
+9. **"This file's cloud copy is gone. Re-add it to use cloud render."** is a
    different message, and a narrower problem: the file still plays fine in the
    editor, but its copy in cloud storage is no longer reachable, so a Cloud
    Render would come out missing that media. If the file is still on this

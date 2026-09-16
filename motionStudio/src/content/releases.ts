@@ -43,6 +43,18 @@ export const RELEASES: Release[] = [
         kind: 'improved',
         text: 'If a file can\u2019t be repaired because it isn\u2019t on this device any more, its tile now says so instead of failing silently in the middle of a Cloud Render.',
       },
+      {
+        kind: 'new',
+        text: 'Every file in your library now shows whether it has reached cloud storage \u2014 a spinner while it uploads, a tick when it lands, an amber badge if it didn\u2019t. No badge means it\u2019s safely in the cloud and your project will open with its media anywhere.',
+      },
+      {
+        kind: 'improved',
+        text: 'Uploads no longer give up after one try. They retry on their own, wait for your connection to come back if you\u2019re offline, and finish next time you open the project if something interrupted them.',
+      },
+      {
+        kind: 'improved',
+        text: 'Removing a file from the library now offers an Undo, so a mis-click no longer costs you the file.',
+      },
     ],
   },
   {
