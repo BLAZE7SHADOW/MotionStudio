@@ -107,21 +107,20 @@ function AssetCard({
   }
 
   return (
+    /* A plain div, not role="button". It used to be one, with the remove
+       button nested inside — and a button may not contain another interactive
+       control. The tile is still click-to-add: the name label below is the real
+       control and its ::after covers the tile, so the click target is
+       unchanged. `draggable` stays here, on the whole tile, which is what the
+       user actually grabs. */
     <div
-      role="button"
-      tabIndex={0}
-      onClick={onAdd}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAdd(); }
-      }}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData('application/x-motionstudio-asset', asset.id);
         e.dataTransfer.effectAllowed = 'copy';
       }}
       title="Click or drag onto the canvas"
-      aria-label={`${asset.name} — add to canvas`}
-      className="group relative aspect-video rounded-studio-md overflow-hidden border border-studio-border bg-studio-surface cursor-pointer hover:border-studio-border-strong transition-colors duration-120 ease-studio focus-visible:outline focus-visible:outline-2 focus-visible:outline-studio-accent-text focus-visible:outline-offset-1"
+      className="group relative aspect-video rounded-studio-md overflow-hidden border border-studio-border bg-studio-surface cursor-pointer hover:border-studio-border-strong transition-colors duration-120 ease-studio"
     >
       {asset.type === 'image' && (
         <img src={asset.url} alt={asset.name} className="w-full h-full object-cover" />
@@ -177,18 +176,28 @@ function AssetCard({
         </div>
       ) : null}
 
-      {/* name */}
+      {/* name — and the tile's one real control. `after:inset-0` stretches its
+          hit area over the whole tile, and the focus ring draws on that same
+          pseudo-element so focus still outlines the tile rather than the label. */}
       <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-black/70 to-transparent px-1.5 py-1">
-        <span className="block text-[10px] text-white/90 truncate">{asset.name}</span>
+        <button
+          type="button"
+          onClick={onAdd}
+          aria-label={`${asset.name} — add to canvas`}
+          className="block w-full text-left text-[10px] text-white/90 truncate focus-visible:outline-none after:absolute after:inset-0 after:rounded-studio-md focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-studio-accent-text focus-visible:after:outline-offset-1"
+        >
+          {asset.name}
+        </button>
       </div>
 
-      {/* remove */}
+      {/* Above the name's stretched ::after, and last in the DOM so focus
+          reaches the asset before the control that deletes it. */}
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); onRemove(); }}
+        onClick={onRemove}
         title="Remove asset"
-        aria-label="Remove asset"
-        className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-studio-xs bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-opacity duration-120 ease-studio"
+        aria-label={`Remove ${asset.name}`}
+        className="absolute top-1 right-1 z-10 w-5 h-5 flex items-center justify-center rounded-studio-xs bg-black/50 text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:bg-black/70 transition-opacity duration-120 ease-studio"
       >
         <X className="w-3 h-3" />
       </button>

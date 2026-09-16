@@ -185,29 +185,40 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
             className="flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable]"
           >
             {ordered.map((el) => (
+              /* A plain div, not role="button". It used to be one, wrapping the
+                 two action buttons below — and a button may not contain another
+                 interactive control. The row is still selectable by clicking
+                 anywhere: the label is the real control and its ::after is
+                 stretched across the row, so the click target is unchanged and
+                 the accessibility tree gets three siblings instead of a button
+                 inside a button. */
               <div
                 key={el.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => setSelectedElement(el.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedElement(el.id); }
-                }}
                 className={[
-                  'group w-full flex items-center gap-1 px-3 border-b border-studio-border shrink-0 text-left cursor-pointer transition-colors duration-120 ease-studio',
+                  'group relative w-full flex items-center gap-1 px-3 border-b border-studio-border shrink-0 text-left cursor-pointer transition-colors duration-120 ease-studio',
                   selectedElementId === el.id
                     ? 'bg-studio-surface text-studio-text'
                     : 'text-studio-text-muted hover:bg-studio-surface/50',
                 ].join(' ')}
                 style={{ height: TRACK_ROW_H }}
               >
-                <span className="text-[11px] truncate flex-1">{clipLabel(el)}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedElement(el.id)}
+                  /* aria-current, not aria-pressed: clicking again doesn't
+                     deselect, so this marks the current item in a set rather
+                     than a toggle that is on. */
+                  aria-current={selectedElementId === el.id}
+                  className="text-[11px] truncate flex-1 text-left focus-visible:outline-none after:absolute after:inset-0 focus-visible:after:ring-1 focus-visible:after:ring-inset focus-visible:after:ring-studio-accent"
+                >
+                  {clipLabel(el)}
+                </button>
                 {/* Pin to the whole video. The control lives here rather than in
                     Properties because this row is where you notice the problem:
                     the background is missing from the shot you just made. */}
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); setElementSpan(el.id, !spansAllShots(el)); }}
+                  onClick={() => setElementSpan(el.id, !spansAllShots(el))}
                   title={spansAllShots(el)
                     ? 'Plays through the whole video — click to keep it to this shot only'
                     : 'Only in this shot — click to play it through the whole video'}
@@ -215,7 +226,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                     ? 'Plays through the whole video — click to keep it to this shot only'
                     : 'Only in this shot — click to play it through the whole video'}
                   className={[
-                    'w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs transition-all duration-120 ease-studio',
+                    'relative w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs transition-all duration-120 ease-studio',
                     spansAllShots(el)
                       ? 'text-studio-accent-text'
                       : 'text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-studio-text',
@@ -225,14 +236,13 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={() => {
                     removeElement(el.id);
                     if (selectedElementId === el.id) setSelectedElement(null);
                   }}
                   title="Delete element"
-                  aria-label="Delete element"
-                  className="w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all duration-120 ease-studio"
+                  aria-label={`Delete ${clipLabel(el)}`}
+                  className="relative w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all duration-120 ease-studio"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
