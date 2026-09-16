@@ -18,12 +18,17 @@ import type { Asset } from '@/engines/project';
 const REGION = 'us-east-1'; // matches api/upload-url.ts and api/render.ts
 
 /**
- * Must stay in step with the server's `S3_ASSETS_BUCKET`. They are two names
- * for one bucket: the server presigns the upload with its copy, the client
- * builds the read URL with this one, and Lambda fetches what the client wrote.
- * Changing the bucket means changing both, in `.env` and in Vercel.
+ * The assets bucket, injected at build time from the server's single
+ * `S3_ASSETS_BUCKET` (see vite.config.ts).
+ *
+ * Not a second env var. Vite only exposes `VITE_`-prefixed variables to the
+ * browser, so the obvious way to get this here is to declare one — but that is
+ * two names for one value, which is the same class of bug that broke every
+ * asset in the first place, and it drifts silently. Deriving it from the
+ * server's variable at build time makes a mismatch unrepresentable rather than
+ * something to police.
  */
-const BUCKET = import.meta.env.VITE_S3_ASSETS_BUCKET as string | undefined;
+const BUCKET = __ASSETS_BUCKET__ || undefined;
 
 export const ASSET_BASE = BUCKET
   ? `https://${BUCKET}.s3.${REGION}.amazonaws.com`
@@ -37,9 +42,9 @@ export const ASSET_BASE = BUCKET
    it has to announce itself. */
 if (!BUCKET) {
   console.error(
-    '[assets] VITE_S3_ASSETS_BUCKET is not set. Asset cloud URLs cannot be built, ' +
-      'so cloud renders will be missing their media. Set it in motionStudio/.env ' +
-      "(local) or the Vercel project settings, matching the API's S3_ASSETS_BUCKET.",
+    '[assets] S3_ASSETS_BUCKET was not set when this build was made. Asset cloud ' +
+      'URLs cannot be built, so cloud renders will be missing their media. Set it ' +
+      'in the repo-root .env (local) or the Vercel project settings, and rebuild.',
   );
 }
 

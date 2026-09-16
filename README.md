@@ -106,8 +106,6 @@ and gets overwritten by `vercel env pull`):
 ```
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
-VITE_S3_ASSETS_BUCKET=       # must match the API's S3_ASSETS_BUCKET below —
-                             # the client rebuilds asset URLs from it
 VITE_POSTHOG_KEY=            # optional
 VITE_POSTHOG_HOST=           # optional
 VITE_REMOTION_LICENSE_KEY=   # optional — defaults to "free-license" for the
@@ -122,6 +120,11 @@ SUPABASE_URL=              SUPABASE_SERVICE_ROLE_KEY=
 REMOTION_FUNCTION_NAME=    REMOTION_SERVE_URL=    REMOTION_BUCKET_NAME=
 S3_ASSETS_BUCKET=          PEXELS_API_KEY=
 ```
+
+`S3_ASSETS_BUCKET` is read by the API *and* baked into the client bundle at
+build time (`vite.config.ts`), so the browser can rebuild each asset's URL from
+its stored key. One variable, deliberately — two would drift, and asset URLs
+going stale is what this design exists to prevent.
 
 The editor, timeline, animation, and browser export work fully offline/local — no backend required.
 

@@ -4,6 +4,44 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import fs from 'fs'
 
+/* The API's env lives at the repo root (it is a separate npm project), so Vite
+   — rooted at motionStudio/ — never loads it. Read it here so the bucket name
+   below comes from the same variable the server uses locally, instead of a
+   parallel copy that can drift. On Vercel the variable is already in
+   process.env, so this is a no-op there. */
+function loadRootEnv(): void {
+  const file = path.resolve(__dirname, '../.env')
+  if (!fs.existsSync(file)) return
+  for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+    const match = /^([A-Z0-9_]+)=(.*)$/.exec(line.trim())
+    if (match && process.env[match[1]] === undefined) {
+      process.env[match[1]] = match[2]
+    }
+  }
+}
+loadRootEnv()
+
+/* One bucket, one variable.
+ *
+ * The client needs the assets bucket to rebuild each asset's URL from its
+ * stored key, and Vite only exposes VITE_-prefixed vars to the browser — so the
+ * first version of this shipped a second variable, VITE_S3_ASSETS_BUCKET,
+ * duplicating S3_ASSETS_BUCKET. Two names for one value is the same class of
+ * bug that broke every asset in the first place (bucket identity living
+ * somewhere it could go stale), and it drifts silently: uploads land where the
+ * app will never read from.
+ *
+ * The build already runs where the server's variable is available, so the
+ * client's copy is derived from it here rather than maintained beside it.
+ */
+const assetsBucket = process.env.S3_ASSETS_BUCKET ?? ''
+if (!assetsBucket) {
+  console.warn(
+    '[build] S3_ASSETS_BUCKET is not set — this build cannot resolve asset URLs, ' +
+      'so cloud renders will be missing their media.',
+  )
+}
+
 // Identifies this exact build so a running tab can detect a newer deploy —
 // Vercel sets this at build time; falls back to a timestamp for local builds.
 const buildId = process.env.VERCEL_GIT_COMMIT_SHA ?? String(Date.now())
@@ -26,6 +64,7 @@ function versionFilePlugin(): Plugin {
 export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(buildId),
+    __ASSETS_BUCKET__: JSON.stringify(assetsBucket),
   },
   plugins: [
     react(),

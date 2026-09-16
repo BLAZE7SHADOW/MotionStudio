@@ -197,11 +197,14 @@ function describeTarget(uploadUrl: string): string {
 }
 
 /**
- * The client builds read URLs from VITE_S3_ASSETS_BUCKET while the server
- * presigns writes with S3_ASSETS_BUCKET. Two names for one bucket, which is the
- * price of resolving URLs client-side — and the failure mode when they drift is
- * silent: uploads land somewhere the app will never read from. Nothing else
- * compares them, so this does, once.
+ * The bucket this build reads from, versus the one the server just signed a
+ * write for.
+ *
+ * These come from a single `S3_ASSETS_BUCKET` now, so they cannot disagree by
+ * misconfiguration — but they can still disagree across *time*: a tab loaded
+ * before a bucket change keeps its baked-in value while the server has moved
+ * on, and the failure is silent, with uploads landing somewhere this tab will
+ * never read from. Nothing else compares them, so this does, once.
  */
 let mismatchReported = false;
 function warnOnBucketMismatch(uploadUrl: string): void {
@@ -213,8 +216,8 @@ function warnOnBucketMismatch(uploadUrl: string): void {
   mismatchReported = true;
   console.error(
     `[assets] bucket mismatch: the API presigns uploads for "${signed}" but this ` +
-      `build reads from "${configured}". Uploaded media will not be readable. ` +
-      "Make the API's S3_ASSETS_BUCKET and VITE_S3_ASSETS_BUCKET match.",
+      `build reads from "${configured}". Uploaded media will not be readable ` +
+      'here. Reload to pick up the current build.',
   );
 }
 
