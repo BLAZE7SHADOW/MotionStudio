@@ -29,6 +29,20 @@ export const ASSET_BASE = BUCKET
   ? `https://${BUCKET}.s3.${REGION}.amazonaws.com`
   : '';
 
+/* Loud, because the silent version cost a week. With the variable missing,
+   `cloudUrl` returns undefined for every asset: media still plays locally off
+   IndexedDB, so the editor looks completely healthy while every cloud render
+   quietly ships without its media. Degrading to local-only is the right
+   behaviour — throwing here would white-screen the app over a config typo — but
+   it has to announce itself. */
+if (!BUCKET) {
+  console.error(
+    '[assets] VITE_S3_ASSETS_BUCKET is not set. Asset cloud URLs cannot be built, ' +
+      'so cloud renders will be missing their media. Set it in motionStudio/.env ' +
+      "(local) or the Vercel project settings, matching the API's S3_ASSETS_BUCKET.",
+  );
+}
+
 /** The asset's public https URL, or undefined if it has no cloud copy. */
 export function cloudUrl(asset: Asset): string | undefined {
   if (!asset.storageKey || !ASSET_BASE) return undefined;

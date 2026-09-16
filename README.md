@@ -100,7 +100,8 @@ CI (`.github/workflows/ci.yml`) runs typecheck, lint, tests and a production
 build on every push and PR, plus a separate typecheck for the `api/` functions,
 which are their own npm project and would otherwise never be compiled.
 
-Frontend env (`motionStudio/.env.local`):
+Frontend env (`motionStudio/.env` — `.env.local` is managed by the Vercel CLI
+and gets overwritten by `vercel env pull`):
 
 ```
 VITE_SUPABASE_URL=
