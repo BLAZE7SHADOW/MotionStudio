@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ImageIcon } from 'lucide-react';
+import { useInViewport } from '@/hooks/useInViewport';
 
 interface TourStep {
   title: string;
@@ -63,21 +64,10 @@ function TourMedia({ mediaPath, alt }: { mediaPath: string; alt: string }) {
 }
 
 function TourStepRow({ step, index }: { step: TourStep; index: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [revealed, setRevealed] = useState(false);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setRevealed(true);
-      },
-      { threshold: 0.3 },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
+  /* No rootMargin: this is a reveal animation, and starting it before the row
+     is on screen would mean the user scrolls to an element that has already
+     finished animating. The dashboard's use of this hook wants the opposite. */
+  const [ref, revealed] = useInViewport<HTMLDivElement>({ threshold: 0.3, rootMargin: '0px' });
 
   const reversed = index % 2 === 1;
 
