@@ -2,6 +2,7 @@ import { useProjectStore } from '../project/store';
 import { getBlob } from './blobStore';
 import { createObjectUrl, isUrlUsable } from './objectUrls';
 import { cloudUrl } from '@/lib/assetUrl';
+import { healCloudCopies } from './healCloudCopies';
 
 /**
  * After a reload, a project's persisted asset URLs are dead blob: strings.
@@ -39,4 +40,10 @@ export async function rehydrateAssets(projectId: string): Promise<void> {
 
   // silent: relinking URLs is not a user edit and must not enter undo history
   useProjectStore.getState().updateProject(projectId, { assets: refreshed }, { history: false });
+
+  /* Then repair any cloud copies the local bytes can cover. Hooked here rather
+     than at the two callers because it is meaningless before the store has been
+     read, and because both entry points (App and EditorPage) need it. Not
+     awaited: the editor is usable the moment the URLs above land. */
+  void healCloudCopies(projectId);
 }
