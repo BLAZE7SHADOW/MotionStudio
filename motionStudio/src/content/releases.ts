@@ -55,6 +55,14 @@ export const RELEASES: Release[] = [
         kind: 'improved',
         text: 'Removing a file from the library now offers an Undo, so a mis-click no longer costs you the file.',
       },
+      {
+        kind: 'fixed',
+        text: 'A cloud render no longer gives up if your connection hiccups for a few seconds while it is running. It keeps going, because the render itself was never affected.',
+      },
+      {
+        kind: 'improved',
+        text: 'When a cloud render fails, you now get a plain explanation and what to try next, instead of a wall of technical error text.',
+      },
     ],
   },
   {

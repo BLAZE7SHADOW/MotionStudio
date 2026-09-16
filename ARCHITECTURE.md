@@ -758,8 +758,11 @@ persisted on the asset. Moving to a new AWS account made every one of them a
 permanent 403: the bucket was in project data, so no amount of reconfiguring could
 repoint it. → Persist the **key** (`<assetId>.<ext>`) and resolve the URL on read
 from the configured bucket (`lib/assetUrl.ts`), which makes a bucket change an env
-var. The client needs the bucket name to do that, so `VITE_S3_ASSETS_BUCKET` and the
-API's `S3_ASSETS_BUCKET` are two names for one bucket and must move together.
+var. The client needs the bucket name to do that, and Vite only exposes
+`VITE_`-prefixed variables to the browser — so this first shipped as a second
+env var, then was consolidated: `vite.config.ts` reads the API's single
+`S3_ASSETS_BUCKET` at build time and injects it as `__ASSETS_BUCKET__`, which
+makes a client/server mismatch unrepresentable rather than something to police.
 Existing assets are migrated on project open by `healCloudCopies`, which rewrites a
 URL that still points at the current bucket and otherwise re-uploads from the
 IndexedDB bytes — the local copy survived the account move even though the remote

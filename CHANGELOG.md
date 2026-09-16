@@ -5,6 +5,57 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-09-16] — Reliability pass: nothing transient should cost the user
+
+Second entry today, kept separate because it is a different concern: the
+entry below is the AWS account move and getting assets into storage; this
+one is about what the app does when something goes wrong anyway.
+
+### Added
+- `api/_lib/renderErrors.ts` — translates AWS/Remotion failures into sentences
+  a user can act on (wait and retry, use Browser Export, shorten the video,
+  check the Assets panel), and `console.error`s the original with the
+  `renderId` and user id. Credential and bucket failures deliberately avoid
+  "check your permissions": those are *our* credentials, and telling a user to
+  fix an account they cannot reach is worse than telling them nothing.
+
+### Changed
+- **One bucket, one variable.** `VITE_S3_ASSETS_BUCKET` is gone.
+  `vite.config.ts` reads the API's `S3_ASSETS_BUCKET` at build time and injects
+  it as `__ASSETS_BUCKET__`, so a mismatch between client and server stops
+  being something to detect and becomes something that cannot be expressed. The
+  config also loads the repo-root `.env` directly — Vite is rooted at
+  `motionStudio/` and never saw it, which is exactly what let the previous bug
+  hide. The `storage.ts` mismatch check stays, reframed: the two can no longer
+  disagree by configuration, but they can across time, when a tab loaded before
+  a bucket change keeps its baked-in value.
+
+### Fixed
+- **Raw AWS stack traces were being shown to users.** `api/render.ts:77` and
+  `api/render-status.ts:43` returned `(e as Error).message` verbatim;
+  `render-status.ts:49` was worse, passing Lambda's own error straight through —
+  a JavaScript stack trace from inside the composition, complete with
+  `/var/task/index.js:80:7276` and a link to Remotion's troubleshooting docs, as
+  if our AWS account's capacity were the user's problem to solve.
+- **A single failed status poll aborted an entire cloud render.** The render
+  runs on Lambda and neither knows nor cares that one check didn't come back, so
+  a blip of wifi discarded work that was still succeeding. Now tolerates 5
+  consecutive failures (~15s — a wifi handoff or a cold function) before
+  accepting contact is lost.
+- **"Loading quota…" was shown forever when the quota request failed.**
+  `fetchedQuota === null` conflated "still loading" with "the request failed",
+  and since the render button stays enabled in that case by design, the text was
+  actively misleading about what clicking it would do.
+- **Creating a project had no double-submit guard.** `handleCreate` is fully
+  synchronous and navigates away at the end, but both events of a double-click
+  land before React re-renders, so the second ran against the still-open modal
+  and made a second project. Guarded with a ref, released when the dialog
+  reopens rather than when it closes — `handleCreate` calls `handleClose`
+  itself, so resetting there would clear the guard a moment before the second
+  click arrived.
+
+---
+
 ## [2026-09-16] — New AWS account, and assets that actually reach the cloud
 
 The project moved to a new AWS account. Everything Remotion Lambda needs was
@@ -58,10 +109,10 @@ name was in the database.
   `ProjectThumbnail`, `engines/asset/rehydrate.ts`, `engines/export/webRenderer.ts`.
 - `/api/upload-url` returns `key` alongside `publicUrl`. `publicUrl` is retained
   so a cached old bundle keeps working, but nothing persists it any more.
-- New client env var `VITE_S3_ASSETS_BUCKET`, which must track the API's
-  `S3_ASSETS_BUCKET` — two names for one bucket. The duplication is the price of
-  resolving URLs client-side; the alternative was a config round-trip on every
-  project open whose failure would break all media.
+- The client gets the bucket name from `S3_ASSETS_BUCKET`, injected into the
+  bundle at build time by `vite.config.ts` as `__ASSETS_BUCKET__`. This shipped
+  first as a second env var (`VITE_S3_ASSETS_BUCKET`) and was consolidated
+  later the same day — see the entry below.
 
 ### Fixed
 - **Uploads retry instead of giving up after one attempt.** `lib/storage.ts`
@@ -94,8 +145,8 @@ name was in the database.
   no longer ours — most of why a week passed with nothing reaching storage. The
   presigned URL's host *is* the server's bucket, so the client already knew.
   `storage.ts` also `console.error`s once if that host disagrees with
-  `ASSET_BASE`, which is the check that pays back the
-  `VITE_S3_ASSETS_BUCKET` / `S3_ASSETS_BUCKET` duplication.
+  `ASSET_BASE` — originally to police the two-variable duplication, now to catch
+  a tab loaded before a bucket change.
 - **`VITE_S3_ASSETS_BUCKET` was in the repo-root `.env`, which Vite never
   reads.** Its env dir is `motionStudio/`, so locally the variable resolved to
   `undefined`, `ASSET_BASE` became `''`, and `cloudUrl()` returned `undefined`
@@ -127,12 +178,12 @@ name was in the database.
   `uploadError` was introduced to pre-empt.
 
 ### Notes
-- A concurrency-quota increase (`L-B99A9384`, 10 → 1000) is open with AWS. Until
-  it clears, cloud renders can still fail with `Rate Exceeded`; a queue was
-  considered and rejected as infrastructure aimed at a limit that is about to
-  disappear.
-- `api/render.ts` still returns raw AWS error text to users, which remains on
-  the list to fix.
+- The concurrency-quota increase (`L-B99A9384`, 10 → 1000) was **approved** —
+  case closed 2026-08-26, and `get-account-settings` confirms 1000 concurrent
+  with 1000 unreserved. The `Rate Exceeded` failures are resolved. A queue was
+  considered and rejected as infrastructure aimed at a limit that has now
+  disappeared: at ~15 Lambdas per render, saturating 1000 needs dozens of
+  simultaneous renders, which the per-user monthly quota makes unreachable.
 
 ---
 
