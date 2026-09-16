@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getRenderProgress } from '@remotion/lambda-client';
 import { verifyToken } from './_lib/auth';
 import { recordDeviceRender } from './_lib/device';
+import { translateRenderError } from './_lib/renderErrors';
 
 const REGION = 'us-east-1';
 const FUNCTION_NAME = process.env.REMOTION_FUNCTION_NAME!;
@@ -40,14 +41,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       renderId, bucketName: BUCKET_NAME, functionName: FUNCTION_NAME, region: REGION,
     });
   } catch (e) {
-    return res.status(500).json({ error: (e as Error).message });
+    const { message, retryable } = translateRenderError(e, 'getRenderProgress', {
+      renderId,
+      userId: user.id,
+    });
+    return res.status(500).json({ error: message, retryable });
   }
 
   if (progress.fatalErrorEncountered) {
-    return res.status(200).json({
-      status: 'error',
-      error: progress.errors[0]?.message ?? 'Render failed',
-    });
+    /* Lambda's own errors are the worst of the three: they are JavaScript stack
+       traces from inside the composition, serialised across the wire and handed
+       to someone who only wanted an MP4. Same treatment — a sentence out, the
+       stack into the log. */
+    const { message, retryable } = translateRenderError(
+      progress.errors[0]?.message ?? 'Render failed',
+      'lambdaRender',
+      { renderId, userId: user.id },
+    );
+    return res.status(200).json({ status: 'error', error: message, retryable });
   }
 
   if (progress.done) {

@@ -3,6 +3,7 @@ import { renderMediaOnLambda } from '@remotion/lambda-client';
 import { verifyToken } from './_lib/auth';
 import { getRenderCount, recordRender } from './_lib/db';
 import { hasDeviceUsedFreeRender } from './_lib/device';
+import { translateRenderError } from './_lib/renderErrors';
 
 const REGION = 'us-east-1';
 const FUNCTION_NAME = process.env.REMOTION_FUNCTION_NAME!;
@@ -74,7 +75,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       downloadBehavior: { type: 'download', fileName: 'motionstudio-export.mp4' },
     }));
   } catch (e) {
-    return res.status(500).json({ error: `Lambda error: ${(e as Error).message}` });
+    const { message, retryable } = translateRenderError(e, 'startRender', { userId: user.id });
+    return res.status(500).json({ error: message, retryable });
   }
 
   // Quota is deducted when Lambda starts, not when it finishes.
