@@ -5,6 +5,60 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-09-16] — Dashboard previews mount only when they're on screen
+
+### Added
+- `motionStudio/src/hooks/useInViewport.ts` — latch-once `IntersectionObserver`
+  hook. Extracted from the inline one in `ProductTour.tsx`, which was the only
+  `IntersectionObserver` in the app and is now a consumer rather than a copy.
+  Latch-once because both callers want "has this been seen" rather than "is this
+  on screen now": the landing reveal would replay on every scroll past, and the
+  dashboard's players must not be rebuilt. Disconnects as soon as it fires, since
+  nothing can unset the flag. Takes `rootMargin` (defaulting to `200px`) so work
+  can start just before an element is visible — `ProductTour` passes `0px`,
+  because starting a reveal animation early means scrolling to something that has
+  already finished animating. Starts `true` where `IntersectionObserver` is
+  missing: rendering everything is today's behaviour, rendering nothing would turn
+  a missing optimisation into a blank page.
+
+### Changed
+- **`ProjectThumbnail` mounts its `Player` only once the card scrolls into view.**
+  `ProjectGrid` renders a card per project with no pagination, so the cost of
+  opening the dashboard scaled with the size of the user's whole library rather
+  than with what was on screen — and a preview is not cheap: `ElementRenderer`
+  turns every video element into `@remotion/media`'s `<Video>`, which decodes with
+  Mediabunny and fetches from S3. `TemplatePicker` already refuses to render one
+  preview per row and says why; the grid never got the same treatment.
+- Deliberately **never unmounted** when scrolled back out. This file's own doc
+  comment records that swapping the `Player` in and out was observed remounting
+  repeatedly and stalling playback; doing that on every scroll reversal trades one
+  problem for a worse one. This bounds the load cost to roughly a screenful, which
+  is the case that hurts. A user who scrolls their entire library in one sitting
+  still ends where they started — that is the signal poster frames are worth their
+  complexity, not this change.
+- The unseen state reuses the existing empty-project placeholder rather than
+  adding a second one, and stays flat — `index.html` argues a placeholder should
+  not grow into something that needs maintaining. No layout shift: `ProjectCard`
+  owns the fixed `aspectRatio` box, so the space is reserved regardless.
+
+### Notes
+- **Verified functionally, not at scale.** Confirmed in a real browser that an
+  unseen card renders the placeholder and that the `Player` mounts and renders
+  (4 canvases for a shader project) once the observer fires. The intended
+  before/after measurement at ~40 projects was **not** completed: seeded
+  localStorage projects are replaced by the cloud load in `App.tsx`, and the
+  automated tab runs `hidden`, where the browser produces no rendering
+  opportunities and `IntersectionObserver` never fires at all. The performance
+  claim here rests on the mechanism, not on numbers — worth measuring with a real
+  library before assuming a particular size of win.
+- Hidden tabs not firing the observer is correct behaviour rather than a problem:
+  a dashboard opened in a background tab does no preview work until it is looked
+  at, and the observer fires when it becomes visible.
+- `cloudSync.ts` still fetches every project's full JSON with no pagination. That
+  is the other half of the dashboard's scaling story and is untouched here.
+
+---
+
 ## [2026-09-16] — Reliability pass: nothing transient should cost the user
 
 Second entry today, kept separate because it is a different concern: the
