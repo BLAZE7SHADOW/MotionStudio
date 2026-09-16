@@ -5,6 +5,37 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-09-16] — A save the server fumbled is now retried
+
+### Fixed
+- **`cloudSync` classified every Supabase error as `failed`**, and `failed` was
+  documented as never retried on the grounds that "it would just refuse again".
+  That holds for a rejection and not for a 503 — the same bucket held "this row
+  is invalid" and "the database had a bad two seconds". A dropped connection was
+  already covered by the `online` listener in `App.tsx`; a 5xx arrives over a
+  working connection and fires no browser event, so nothing ever asked again and
+  the user's work stayed unsynced until their next edit. If they had just
+  finished, that was never.
+- `SaveResult` now carries `retryable`, taken from the response status: 5xx and
+  429 are the server having a bad moment, anything else is an answer. `App.tsx`
+  retries those on a 30-second timer while the status stays `failed`, stopping
+  the moment a save succeeds. Slow deliberately — one request every 30 seconds
+  costs nothing against work not reaching the cloud.
+- `saveState`'s doc comment was updated rather than left contradicting the code:
+  the old reasoning was too broad, not wrong in its conclusion.
+
+### Notes
+- Checked and found already handled, so untouched: reconnect-triggered saves
+  (`App.tsx` already listens for `online`), and silent failure patterns across
+  `src/` and `api/` — there is exactly one empty catch block in the repo and it
+  is inside `node_modules`.
+- `cloudSync.loadProjects` is still unpaginated, but measured rather than
+  assumed: a real project serialises to roughly 3.7 kB, so a hundred of them is
+  under 400 kB on a desktop-only surface. Pagination would be optimising a
+  problem that does not exist yet.
+
+---
+
 ## [2026-09-16] — No more buttons inside buttons
 
 ### Fixed
