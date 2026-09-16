@@ -60,5 +60,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 600 });
   const publicUrl = `https://${BUCKET}.s3.${REGION}.amazonaws.com/${key}`;
 
-  return res.status(200).json({ uploadUrl, publicUrl });
+  // `key` is the durable identifier — the client stores this and rebuilds the
+  // URL at read time from the configured bucket. `publicUrl` is kept for
+  // clients still running the old bundle, and is no longer persisted.
+  return res.status(200).json({ uploadUrl, publicUrl, key });
 }

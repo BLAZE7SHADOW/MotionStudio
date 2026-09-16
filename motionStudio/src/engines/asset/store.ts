@@ -112,7 +112,7 @@ export function useAssetEngine() {
     );
 
     // Background: upload each file to S3 so Lambda can reach them.
-    // Each upload patches its own asset with storageUrl when done — no undo entry.
+    // Each upload patches its own asset with storageKey when done — no undo entry.
     void Promise.all(
       pairs.map(async ({ asset, file }) => {
         // uploadAssetToStorage resolves the token itself. Reading it here via
@@ -128,7 +128,7 @@ export function useAssetEngine() {
            normal — the file plays locally — until a cloud render came back
            missing that media with no explanation. */
         const patch = result.ok
-          ? { storageUrl: result.url, uploadError: undefined }
+          ? { storageKey: result.key, uploadError: undefined }
           : { uploadError: result.message };
 
         updateProject(

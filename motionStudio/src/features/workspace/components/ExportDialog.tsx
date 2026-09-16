@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/apiClient';
 import type { QuotaResult } from '@/lib/apiClient';
 import { track } from '@/lib/analytics';
+import { cloudUrl } from '@/lib/assetUrl';
 import { useFeedbackStore } from '@/lib/feedbackStore';
 
 const RESOLUTIONS = [
@@ -105,7 +106,7 @@ export default function ExportDialog({ project }: { project: Project }) {
         .filter((e): e is Extract<typeof e, { assetId: string }> => 'assetId' in e)
         .map((e) => e.assetId),
     );
-    return project.assets.filter((a) => usedIds.has(a.id) && !a.storageUrl).length;
+    return project.assets.filter((a) => usedIds.has(a.id) && !a.storageKey).length;
   })();
 
   const dims = getCompositionDimensions(project.aspectRatio);
@@ -185,12 +186,12 @@ export default function ExportDialog({ project }: { project: Project }) {
     track.exportCloudStarted();
 
     // Remap assets: Lambda needs public https:// URLs, not browser blob: URLs.
-    // storageUrl is set by the background upload in the asset engine.
-    // If an asset is still uploading (storageUrl missing), pass url as-is —
+    // The URL is rebuilt from the storageKey the background upload recorded.
+    // If an asset is still uploading (no storageKey yet), pass url as-is —
     // Lambda will fail on that asset, which is better than blocking the render.
     const assets = project.assets.map((a) => ({
       ...a,
-      url: a.storageUrl ?? a.url,
+      url: cloudUrl(a) ?? a.url,
     }));
 
     const inputProps = {

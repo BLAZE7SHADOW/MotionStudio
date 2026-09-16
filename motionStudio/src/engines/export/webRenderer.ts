@@ -4,6 +4,7 @@ import { createObjectUrl, revokeObjectUrl, isUrlUsable } from '../asset/objectUr
 import { getCompositionDimensions } from '../project/dimensions';
 import type { Project } from '../project/types';
 import type { ExportOptions, ExportResult } from './exporter';
+import { cloudUrl } from '@/lib/assetUrl';
 
 /**
  * Client-side export via Remotion's own web renderer.
@@ -52,7 +53,8 @@ async function resolveAssetUrls(project: Project) {
         created.push(url);
         return { ...asset, url };
       }
-      if (asset.storageUrl) return { ...asset, url: asset.storageUrl };
+      const cloud = cloudUrl(asset);
+      if (cloud) return { ...asset, url: cloud };
       return asset;
     }),
   );

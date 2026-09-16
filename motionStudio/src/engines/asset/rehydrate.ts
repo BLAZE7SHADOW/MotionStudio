@@ -1,6 +1,7 @@
 import { useProjectStore } from '../project/store';
 import { getBlob } from './blobStore';
 import { createObjectUrl, isUrlUsable } from './objectUrls';
+import { cloudUrl } from '@/lib/assetUrl';
 
 /**
  * After a reload, a project's persisted asset URLs are dead blob: strings.
@@ -9,7 +10,7 @@ import { createObjectUrl, isUrlUsable } from './objectUrls';
  *
  * On a device that never had the file locally (e.g. a project synced from
  * another browser/profile), there's no local blob to read — fall back to
- * the S3 storageUrl the background upload already produced, same fallback
+ * the S3 copy the background upload already produced, same fallback
  * ExportDialog uses, instead of leaving the other device's dead blob: URL.
  */
 export async function rehydrateAssets(projectId: string): Promise<void> {
@@ -20,7 +21,8 @@ export async function rehydrateAssets(projectId: string): Promise<void> {
     project.assets.map(async (asset) => {
       const blob = await getBlob(asset.id);
       if (blob) return { ...asset, url: createObjectUrl(blob) };
-      if (asset.storageUrl) return { ...asset, url: asset.storageUrl };
+      const cloud = cloudUrl(asset);
+      if (cloud) return { ...asset, url: cloud };
 
       // Neither local bytes nor a cloud copy: the stored `blob:` URL belongs to
       // a session that ended and can never resolve. Blank it rather than

@@ -2,7 +2,8 @@
  * Asset cloud storage — uploads files directly to S3 via presigned URLs.
  * The Vercel /api/upload-url endpoint generates the presigned PUT URL;
  * the browser PUTs the file straight to S3 (no Vercel bandwidth used).
- * Returns the public S3 URL so Lambda can fetch it during cloud renders.
+ * Returns the S3 object key, which the asset persists so its public URL can be
+ * rebuilt on read for Lambda to fetch during cloud renders.
  */
 
 import { getAccessToken } from './authToken';
@@ -10,6 +11,7 @@ import { getAccessToken } from './authToken';
 interface UploadUrlResponse {
   uploadUrl: string;
   publicUrl: string;
+  key: string;
 }
 
 /**
@@ -23,7 +25,7 @@ interface UploadUrlResponse {
  * allowed: …"); they were being thrown away one line after being parsed.
  */
 export type UploadResult =
-  | { ok: true; url: string }
+  | { ok: true; url: string; key: string }
   | { ok: false; message: string };
 
 export async function uploadAssetToStorage(
@@ -55,7 +57,7 @@ export async function uploadAssetToStorage(
       return { ok: false, message: String(error) };
     }
 
-    const { uploadUrl, publicUrl } = (await res.json()) as UploadUrlResponse;
+    const { uploadUrl, publicUrl, key } = (await res.json()) as UploadUrlResponse;
 
     // Step 2 — PUT the file directly to S3 (no Vercel involved)
     const upload = await fetch(uploadUrl, {
@@ -68,7 +70,8 @@ export async function uploadAssetToStorage(
       return { ok: false, message: `Upload failed (${upload.status})` };
     }
 
-    return { ok: true, url: publicUrl };
+    // `key` is what gets persisted; `url` is returned for immediate use only.
+    return { ok: true, url: publicUrl, key };
   } catch (err) {
     return {
       ok: false,

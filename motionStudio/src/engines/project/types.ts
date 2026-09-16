@@ -17,13 +17,20 @@ export interface Asset {
   name: string;
   /** blob: URL — browser-only, valid for this session */
   url: string;
-  /** public https: URL in Supabase Storage — usable by Lambda on AWS */
+  /* The asset's S3 object key — `<id>.<ext>`, and the only durable half of its
+     cloud address. The public URL is rebuilt from it on read (see
+     lib/assetUrl.ts), because the bucket belongs in config, not in project
+     data: the previous design stored the resolved URL and an AWS account move
+     turned every one of them into a 403 nothing could repoint. */
+  storageKey?: string;
+  /** @deprecated Legacy resolved URL. Read for migration, never written —
+      `healCloudCopies` converts it to `storageKey` and clears it. */
   storageUrl?: string;
   /* Why the upload didn't happen, when it didn't. An asset with no
-     `storageUrl` works perfectly in the editor off its blob URL and only
+     `storageKey` works perfectly in the editor off its blob URL and only
      breaks in a *cloud* render, which is far too late to find out — so the
      reason is kept on the asset and shown in the library. Absent means the
-     upload succeeded or is still in flight; `storageUrl` says which. */
+     upload succeeded or is still in flight; `storageKey` says which. */
   uploadError?: string;
   width?: number;               // natural pixel size (image / video)
   height?: number;

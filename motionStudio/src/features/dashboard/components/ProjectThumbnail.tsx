@@ -4,6 +4,7 @@ import type { PlayerRef } from '@remotion/player';
 import MotionComposition from '@/engines/rendering/components/MotionComposition';
 import { getCompositionDimensions } from '@/engines/project';
 import type { Project } from '@/engines/project';
+import { cloudUrl } from '@/lib/assetUrl';
 
 /**
  * The project's card preview: a paused frame that plays while hovered.
@@ -30,7 +31,10 @@ export default function ProjectThumbnail({ project }: { project: Project }) {
       elements: project.canvas.elements,
       // Stored urls are blob: handles from the session that uploaded the file.
       // The dashboard never rehydrates, so use the S3 copy where there is one.
-      assets: project.assets.map((a) => (a.storageUrl ? { ...a, url: a.storageUrl } : a)),
+      assets: project.assets.map((a) => {
+        const cloud = cloudUrl(a);
+        return cloud ? { ...a, url: cloud } : a;
+      }),
     }),
     [project.canvas.elements, project.assets],
   );
