@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -56,8 +56,25 @@ export default function CreateProjectModal({ open, onClose }: CreateProjectModal
   const resolvedName = name.trim() || (template ? template.name : '');
   const canSubmit = resolvedName.length > 0;
 
+  /* Guards a double-click. `handleCreate` is fully synchronous and navigates
+     away at the end, but both events of a double-click land before React
+     re-renders — so the second call ran against the still-open modal and
+     created a second project, which the user then had to find and delete. A ref
+     rather than state because it has to be true for the *next* event, not the
+     next render. */
+  const submitting = useRef(false);
+
+  /* Released when the dialog reopens, not when it closes — `handleCreate`
+     calls `handleClose` itself, so resetting there would clear the guard a
+     moment before the second click of the double-click arrived, which is the
+     exact event it exists to stop. */
+  useEffect(() => {
+    if (open) submitting.current = false;
+  }, [open]);
+
   function handleCreate() {
-    if (!canSubmit) return;
+    if (!canSubmit || submitting.current) return;
+    submitting.current = true;
 
     const project = createProject({
       name: resolvedName,

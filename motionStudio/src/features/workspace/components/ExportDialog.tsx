@@ -33,6 +33,11 @@ type Tab = 'browser' | 'cloud';
 /** Client-side guard only — Lambda itself has no such limit. */
 const CLOUD_RENDER_TIMEOUT_MS = 15 * 60 * 1000;
 
+/* Consecutive failed status checks before we accept we've lost contact. At one
+   poll every 3s this rides out ~15s of bad network, which covers a wifi handoff
+   or a cold serverless function without letting a genuinely dead render hang. */
+const MAX_POLL_FAILURES = 5;
+
 export default function ExportDialog({ project }: { project: Project }) {
   const navigate = useNavigate();
   const { user, token, loading: authLoading, isAnonymous, signInWithGoogle, signInAsGuest, signOut } = useAuth();
@@ -57,6 +62,11 @@ export default function ExportDialog({ project }: { project: Project }) {
      download link. Signed-out *is* the idle state, so it is derived rather than
      restored — the raw values below are only meaningful while signed in. */
   const [fetchedQuota, setFetchedQuota] = useState<QuotaResult | null>(null);
+  /* Separate from `fetchedQuota === null`, which conflated "still loading" with
+     "the request failed" and rendered both as "Loading quota…" — so a user whose
+     quota call errored watched a spinner-less message that would never resolve,
+     with no idea whether they had renders left. */
+  const [quotaFailed, setQuotaFailed] = useState(false);
   const [rawCloudStatus, setCloudStatus] = useState<'idle' | 'rendering' | 'done' | 'error'>('idle');
   const [rawCloudProgress, setCloudProgress] = useState(0);
   // What this project contains that the canvas-based browser export can't draw.
@@ -122,8 +132,8 @@ export default function ExportDialog({ project }: { project: Project }) {
     if (!token) return;
     let cancelled = false;
     api.getQuota()
-      .then((q) => { if (!cancelled) setFetchedQuota(q); })
-      .catch(() => { if (!cancelled) setFetchedQuota(null); });
+      .then((q) => { if (!cancelled) { setFetchedQuota(q); setQuotaFailed(false); } })
+      .catch(() => { if (!cancelled) { setFetchedQuota(null); setQuotaFailed(true); } });
     return () => { cancelled = true; };
   }, [token]);
 
@@ -209,12 +219,27 @@ export default function ExportDialog({ project }: { project: Project }) {
       // serverless function gets killed at the platform timeout, which used to
       // cap renders regardless of how long Lambda was willing to work.
       const startedAt = Date.now();
+      /* A failed poll is not a failed render. The render runs on Lambda and
+         doesn't know or care that one status check didn't come back — so
+         aborting on the first error threw away work that was still succeeding,
+         and did it over a blip of wifi. Only a *run* of failures means we have
+         genuinely lost contact. */
+      let consecutiveFailures = 0;
       for (;;) {
         if (Date.now() - startedAt > CLOUD_RENDER_TIMEOUT_MS) {
           throw new Error('Render is taking unusually long — check back shortly.');
         }
         await new Promise((r) => setTimeout(r, 3000));
-        const status = await api.getRenderStatus(renderId);
+
+        let status: Awaited<ReturnType<typeof api.getRenderStatus>>;
+        try {
+          status = await api.getRenderStatus(renderId);
+          consecutiveFailures = 0;
+        } catch (pollError) {
+          consecutiveFailures += 1;
+          if (consecutiveFailures >= MAX_POLL_FAILURES) throw pollError;
+          continue;
+        }
 
         if (status.status === 'error') throw new Error(status.error);
         if (status.status === 'done') {
@@ -523,7 +548,9 @@ export default function ExportDialog({ project }: { project: Project }) {
                       <span className="text-[10px] text-studio-text-faint">
                         {quota
                           ? `${quota.remaining} of ${quota.limit} render${quota.limit > 1 ? 's' : ''} remaining this month`
-                          : 'Loading quota…'}
+                          : quotaFailed
+                            ? "Couldn't check your remaining renders — you can still try one"
+                            : 'Loading quota…'}
                       </span>
                     </div>
                     <button
