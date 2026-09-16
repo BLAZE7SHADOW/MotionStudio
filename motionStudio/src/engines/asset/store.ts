@@ -7,6 +7,7 @@ import { showNotice } from '@/lib/noticeStore';
 import { putBlob } from './blobStore';
 import { createObjectUrl } from './objectUrls';
 import { uploadAssetToStorage } from '@/lib/storage';
+import { useUploadStatus } from './uploadStatus';
 
 /**
  * Asset Engine — service layer over the project's asset library.
@@ -119,7 +120,16 @@ export function useAssetEngine() {
         // getSession() looked fresh but wasn't — getSession returns the *stored*
         // token whether or not it has expired, so a long session uploaded with a
         // dead JWT and got 401 "Invalid session".
+        useUploadStatus.getState().begin(asset.id);
         const result = await uploadAssetToStorage(asset.id, file);
+        /* `settle` is the tick, so only success earns it. A failure clears the
+           live state instead and lets the persisted `uploadError` below own the
+           tile — a "Saved" flash in front of an error badge would be a lie at
+           the one moment the user is looking. */
+        const upload = useUploadStatus.getState();
+        if (result.ok) upload.settle(asset.id);
+        else upload.clear(asset.id);
+
         const latest = useProjectStore.getState().getProject(projectId);
         if (!latest) return;
 

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Music, Upload, Search, FolderOpen, X, Play, Sparkle, Loader2, FileWarning, CloudOff } from 'lucide-react';
+import { Music, Upload, Search, FolderOpen, X, Play, Sparkle, Loader2, FileWarning, CloudOff, Check, RefreshCw } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { useAssetEngine, isUrlUsable, assetTypeFromFile } from '@/engines/asset';
+import { useAssetEngine, isUrlUsable, assetTypeFromFile, useUploadStatus } from '@/engines/asset';
 import { useCanvasEngine } from '@/engines/canvas';
 import { useEditorStore } from '@/engines/editor';
 import { useAuth } from '@/hooks/useAuth';
@@ -58,6 +58,12 @@ function AssetCard({
   // without a marker here the media would just silently vanish from the canvas
   // with no way to tell which file needs replacing.
   const missing = !isUrlUsable(asset.url);
+
+  /* Cloud status, in three states rather than one. Until now the tile drew a
+     badge only on failure, which meant "still uploading" and "safely in the
+     cloud" were pixel-identical — so the honest answer to "is my file safe?"
+     was that you couldn't tell. */
+  const uploadState = useUploadStatus((s) => s.status[asset.id]);
   const openFeedback = useFeedbackStore((s) => s.openFeedback);
 
   if (missing) {
@@ -139,15 +145,36 @@ function AssetCard({
           in the editor — it plays off the local blob — so this is a badge on a
           normal tile rather than the "Re-upload needed" placeholder above.
           What it costs you is the cloud render, and that is what it says. */}
-      {asset.uploadError && (
+      {asset.uploadError ? (
         <div
-          title={`${asset.name} — couldn't be uploaded (${asset.uploadError}). It works here, but Cloud Render won't include it. Remove and add it again to retry.`}
+          title={`${asset.name} — couldn't be uploaded (${asset.uploadError}). It works here, but Cloud Render won't include it. It will be retried automatically next time you open this project.`}
           className="absolute top-1 left-1 flex items-center gap-1 rounded-studio-xs bg-amber-500/15 border border-amber-500/40 px-1 py-0.5"
         >
           <CloudOff className="w-2.5 h-2.5 text-amber-300/90" strokeWidth={2} />
           <span className="text-[8px] font-medium text-amber-300/90 leading-none">Not uploaded</span>
         </div>
-      )}
+      ) : uploadState === 'uploading' ? (
+        <div
+          title={`${asset.name} — saving to the cloud so this project opens on any device`}
+          className="absolute top-1 left-1 flex items-center gap-1 rounded-studio-xs bg-black/50 px-1 py-0.5"
+        >
+          <RefreshCw className="w-2.5 h-2.5 text-white/80 animate-spin" strokeWidth={2} />
+          <span className="text-[8px] font-medium text-white/80 leading-none">Uploading</span>
+        </div>
+      ) : uploadState === 'done' ? (
+        /* Fades on its own after a couple of seconds, per the rule SaveIndicator
+           sets: a tick on settled work is noise, and colour belongs to live
+           state. It can be read as "no badge means it's in the cloud" only
+           because a file without a cloud copy always carries one — healing on
+           project open guarantees every asset ends up with a key or an error. */
+        <div
+          title={`${asset.name} — saved to the cloud`}
+          className="absolute top-1 left-1 flex items-center gap-1 rounded-studio-xs bg-black/50 px-1 py-0.5"
+        >
+          <Check className="w-2.5 h-2.5 text-white/80" strokeWidth={2} />
+          <span className="text-[8px] font-medium text-white/80 leading-none">Saved</span>
+        </div>
+      ) : null}
 
       {/* name */}
       <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-black/70 to-transparent px-1.5 py-1">

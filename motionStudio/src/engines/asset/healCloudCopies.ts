@@ -3,6 +3,7 @@ import type { Asset } from '../project/types';
 import { getBlob } from './blobStore';
 import { uploadAssetToStorage } from '@/lib/storage';
 import { keyFromCurrentBucketUrl } from '@/lib/assetUrl';
+import { useUploadStatus, isUploading } from './uploadStatus';
 
 /**
  * Brings a project's assets onto `storageKey`, re-uploading the ones whose
@@ -44,6 +45,12 @@ export async function healCloudCopies(projectId: string): Promise<void> {
      take the bandwidth they need for playback. The import path fans out because
      the user is waiting on it; this one nobody is waiting on. */
   for (const asset of stale) {
+    /* Skip anything the import path is already uploading. Re-opening a project
+       while its files are still going up would otherwise upload them twice —
+       harmless, since the key is the same, but it wastes the user's bandwidth
+       at the exact moment they are least likely to have it spare. */
+    if (isUploading(asset.id)) continue;
+
     const patch = await repair(asset);
     if (!patch) continue;
 
@@ -87,7 +94,11 @@ async function repair(asset: Asset): Promise<Patch | null> {
   // `uploadAssetToStorage` takes a File for its name/type/size; a Blob out of
   // IndexedDB keeps its type but carries no name.
   const file = new File([blob], asset.name, { type: blob.type });
+  useUploadStatus.getState().begin(asset.id);
   const result = await uploadAssetToStorage(asset.id, file);
+  const upload = useUploadStatus.getState();
+  if (result.ok) upload.settle(asset.id);
+  else upload.clear(asset.id);
 
   return result.ok
     ? { storageKey: result.key, storageUrl: undefined, uploadError: undefined }
