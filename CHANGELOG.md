@@ -5,6 +5,53 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-09-16] — Regression: the card overlay was swallowing hover and the cursor
+
+Self-inflicted, shipped, and caught by the user on the deployed site. Worth
+recording in full because the mistake is easy to repeat: a stretched `::after`
+is the standard way to make a whole card clickable from one accessible control,
+and it silently takes ownership of every pointer interaction underneath it.
+
+### Fixed
+- **Hovering a project stopped playing its preview.** Removing the
+  button-inside-a-button nesting made the label the real control with its
+  `::after` stretched over the card. That pseudo-element was `pointer-events:
+  auto`, so `ProjectThumbnail`'s `onMouseEnter` — on a div the overlay is not a
+  descendant of — never saw the pointer. The card looked dead until clicked.
+- **The cursor was an arrow across the whole card.** The overlay belongs to a
+  `<button>`, and the UA stylesheet's `button { cursor: default }` beat the
+  container's `cursor-pointer`. A clickable card showing a plain arrow reads as
+  not clickable.
+- The `::after` now only paints the focus ring — `after:pointer-events-none` is
+  load-bearing, not tidying. The click moved to the container so the whole card
+  is one mouse target; the label button stays the focusable, named control but
+  drops its own handler, since activating it fires a click that bubbles and one
+  handler then serves both mouse and keyboard. Action buttons get
+  `stopPropagation` back, and every interactive element now states
+  `cursor-pointer` instead of relying on inheritance a UA rule overrides.
+- Timeline rows (`TimelinePanel`) and asset tiles (`AssetsPanel`) carried the
+  same overlay and the same cursor bug, minus the hover symptom since neither
+  has JS hover handlers. Fixed identically so all three read the same.
+
+### Notes
+- Diagnosed on the live site by probing `document.elementFromPoint` over the
+  thumbnail, which returned the title `<button>` rather than the preview — the
+  whole bug in one line.
+- Verified in a browser, not by reasoning: `pointer-events` is precisely what
+  typecheck, lint and a pure-module test suite cannot see. Confirmed the
+  thumbnail resolves to the hover div, the cursor is `pointer` at thumbnail /
+  title / metadata, clicking the thumbnail navigates, a timeline row click still
+  selects, delete opens its confirm without navigating, and the card still
+  reports `role === null` with zero nested interactive elements.
+- Asset tiles could not be exercised in the browser — the test project has no
+  assets — so that surface is verified by typecheck and by being the identical
+  change, not by observation.
+- Neither the accessibility fix nor the viewport lazy-mounting was reverted.
+  The nesting was a real ARIA violation and the lazy-mounting was confirmed
+  working; the overlay's `pointer-events` was the only defect.
+
+---
+
 ## [2026-09-16] — A save the server fumbled is now retried
 
 ### Fixed
