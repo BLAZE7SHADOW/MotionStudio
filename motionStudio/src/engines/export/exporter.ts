@@ -212,3 +212,38 @@ export function downloadBlob(blob: Blob, filename: string) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+/**
+ * The same, for a file that already lives somewhere — the cloud render's S3
+ * output rather than a blob built in this tab.
+ *
+ * `download` is **ignored on cross-origin URLs**, so it does not name this file:
+ * the name and the save-instead-of-navigate behaviour both come from the
+ * `Content-Disposition` header, which `api/render.ts` asks Lambda to set via
+ * `downloadBehavior`. It is set anyway because it costs nothing and is the only
+ * hint in this file that the filename is decided elsewhere — without it the next
+ * person edits this string and wonders why the saved file is unchanged.
+ *
+ * The anchor is appended to the document before clicking: a detached one is
+ * enough in Chrome but not in every browser, and this runs at the end of a
+ * minutes-long render where a silent no-op is expensive.
+ *
+ * `target="_blank"` is the safety belt, and it is not cosmetic. If the header
+ * is ever missing the browser *navigates* to the file instead of saving it —
+ * found by accident testing against an uploaded asset, which carries no
+ * `Content-Disposition`: the tab left the editor and loaded the video. Since
+ * this fires automatically, with no click to blame, that would throw someone
+ * out of their project unprompted. With `_blank` the same failure opens a tab
+ * they can close, and their work is untouched. On the normal path no tab opens
+ * at all, because the click resolves to a download.
+ */
+export function downloadFromUrl(url: string, filename: string) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}

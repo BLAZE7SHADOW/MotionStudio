@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { getCompositionDimensions } from '@/engines/project';
-import { exportComposition, downloadBlob, isExportSupported, exportViaWebRenderer } from '@/engines/export';
+import { exportComposition, downloadBlob, downloadFromUrl, isExportSupported, exportViaWebRenderer } from '@/engines/export';
 import type { Project } from '@/engines/project';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/apiClient';
@@ -246,6 +246,13 @@ export default function ExportDialog({ project }: { project: Project }) {
           setDownloadUrl(status.url);
           setCloudProgress(1);
           setCloudStatus('done');
+          /* Hand the file over rather than revealing a second button. Nothing is
+             decided between the render finishing and the download starting — the
+             user committed when they spent one of five monthly renders — and the
+             browser export path above has always behaved this way. The link
+             below stays as a second chance, because a script-started download
+             can be refused and there is no way to find out that it was. */
+          if (status.url) downloadFromUrl(status.url, 'motionstudio-export.mp4');
           track.exportCloudCompleted();
           api.getQuota().then(setFetchedQuota).catch(() => null);
           return;
@@ -612,17 +619,35 @@ export default function ExportDialog({ project }: { project: Project }) {
                     )}
                   </Button>
 
-                  {/* Download link */}
+                  {/* The second chance, not the way out.
+                      The file is delivered the moment the render finishes, so
+                      this is only needed when the browser refused that download
+                      or the user wants another copy — which is why it is quiet
+                      now rather than the green next-step it used to be. The line
+                      above it earns its place: a refused download is invisible,
+                      and without being told one was attempted a user reads the
+                      silence as a failed render. */}
                   {cloudStatus === 'done' && downloadUrl && (
-                    <a
-                      href={downloadUrl}
-                      download="motionstudio-export.mp4"
-                      onClick={track.exportCloudDownloadClicked}
-                      className="flex items-center justify-center gap-1.5 h-9 text-[12px] font-medium bg-green-600 hover:bg-green-700 text-white rounded-studio-md"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      Download MP4
-                    </a>
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-[11px] text-studio-text-muted leading-relaxed">
+                        Your download should have started.
+                      </p>
+                      <a
+                        href={downloadUrl}
+                        download="motionstudio-export.mp4"
+                        /* Same safety belt as downloadFromUrl: without a
+                           Content-Disposition the browser navigates to the file
+                           instead of saving it, and losing the editor is a
+                           worse outcome than an extra tab. */
+                        target="_blank"
+                        rel="noopener"
+                        onClick={track.exportCloudDownloadClicked}
+                        className="flex items-center justify-center gap-1.5 h-9 text-[12px] font-medium border border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong rounded-studio-md transition-colors ease-studio"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Download again
+                      </a>
+                    </div>
                   )}
 
                   {cloudError && (
