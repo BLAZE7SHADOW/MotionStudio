@@ -85,13 +85,18 @@ two counters that never consulted each other.
   rather than a blocked save.
 
 ### Fixed
-- `downloadFromUrl` sets `target="_blank"`, which testing turned out to earn.
-  Pointed at an uploaded asset — which carries no `Content-Disposition` — the
-  browser **navigated** to the file and left the editor. Now that the download
-  fires automatically, with no click to blame, that would throw someone out of
-  their project unprompted. With `_blank` the same failure opens a tab they can
-  close; on the normal path no tab opens at all, because the click resolves to a
-  download. The fallback link gets the same treatment.
+- `downloadFromUrl` deliberately does **not** set `target="_blank"`. It did
+  briefly — added to stop a missing `Content-Disposition` navigating the tab away
+  from the editor — and that was the wrong trade, corrected the same day. A
+  `_blank` navigation that no user gesture caused is precisely what a popup
+  blocker exists to stop, and this fires minutes after the click that started the
+  render, so Chrome blocked it every time: the promised file arrived as a
+  "Pop-ups blocked" notice the user had to find and unblock by hand. The case it
+  guarded against cannot occur on this path — it was found by testing against an
+  *uploaded asset*, which legitimately has no `Content-Disposition`, while render
+  outputs always carry one because `api/render.ts` asks Lambda for it. Guarding a
+  scenario this path cannot reach, at the cost of breaking the one it always
+  reaches, is a bad trade.
 
 ### Notes
 - **`track.exportCloudDownloadClicked` has quietly changed meaning.** It stays on

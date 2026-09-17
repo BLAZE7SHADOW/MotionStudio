@@ -640,11 +640,6 @@ export default function ExportDialog({ project }: { project: Project }) {
                       <a
                         href={downloadUrl}
                         download="motionstudio-export.mp4"
-                        /* Same safety belt as downloadFromUrl: without a
-                           Content-Disposition the browser navigates to the file
-                           instead of saving it, and losing the editor is a
-                           worse outcome than an extra tab. */
-                        target="_blank"
                         rel="noopener"
                         onClick={track.exportCloudDownloadClicked}
                         className="flex items-center justify-center gap-1.5 h-9 text-[12px] font-medium border border-studio-border text-studio-text-muted hover:text-studio-text hover:border-studio-border-strong rounded-studio-md transition-colors ease-studio"

@@ -228,20 +228,24 @@ export function downloadBlob(blob: Blob, filename: string) {
  * enough in Chrome but not in every browser, and this runs at the end of a
  * minutes-long render where a silent no-op is expensive.
  *
- * `target="_blank"` is the safety belt, and it is not cosmetic. If the header
- * is ever missing the browser *navigates* to the file instead of saving it —
- * found by accident testing against an uploaded asset, which carries no
- * `Content-Disposition`: the tab left the editor and loaded the video. Since
- * this fires automatically, with no click to blame, that would throw someone
- * out of their project unprompted. With `_blank` the same failure opens a tab
- * they can close, and their work is untouched. On the normal path no tab opens
- * at all, because the click resolves to a download.
+ * Deliberately **no** `target="_blank"`. It was here briefly, to stop a missing
+ * `Content-Disposition` navigating the tab away from the editor — but a
+ * `_blank` navigation that no user gesture caused is exactly what a popup
+ * blocker exists to stop, and this fires minutes after the click that started
+ * the render. Chrome blocked it every time, so the file the user was promised
+ * arrived as a "Pop-ups blocked" notice they had to find and unblock by hand.
+ *
+ * The case it guarded against cannot happen on this path anyway: it was found
+ * by testing against an *uploaded asset*, which legitimately has no
+ * `Content-Disposition`. Render outputs always do, because `api/render.ts` asks
+ * Lambda for it (`downloadBehavior`) — verified on a real output. Guarding a
+ * scenario this path cannot reach, at the cost of breaking the one it always
+ * reaches, is a bad trade.
  */
 export function downloadFromUrl(url: string, filename: string) {
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
-  a.target = '_blank';
   a.rel = 'noopener';
   document.body.appendChild(a);
   a.click();
