@@ -620,8 +620,10 @@ Edge** — Safari doesn't support WebCodecs yet.
 
 ### Cloud Render tab (any device, quota-based)
 Renders on AWS instead of your machine — works in any browser, uses no local CPU,
-and always outputs 1080p. Click **Render in cloud**, wait for the progress to
-finish, and download the MP4 from the link.
+and always outputs 1080p. Click **Render & download** and wait for the progress
+to finish — the MP4 then downloads on its own, the same as a browser export.
+A **Download again** link stays in the dialog in case your browser blocked the
+save or you want another copy.
 
 - **Guests** get **1 free cloud render** (tracked per device).
 - **Signed-in users** get a monthly quota, shown in the dialog.

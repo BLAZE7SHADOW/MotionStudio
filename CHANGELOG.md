@@ -5,6 +5,53 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-09-16] — The cloud render hands over the file
+
+### Changed
+- **A finished cloud render now downloads by itself.** The flow ended in a step
+  that decided nothing: "Render & download" only rendered, then a separate green
+  "Download MP4" button appeared that you had to press. The label was a promise
+  it did not keep, and the click bought nothing — the user committed when they
+  spent one of five monthly renders. It was also the odd one out, since the
+  browser export path has always called `downloadBlob` the moment it finishes.
+- The mechanism was already there: `api/render.ts` asks Lambda for
+  `downloadBehavior: 'download'`, so the output carries
+  `Content-Disposition: attachment; filename="motionstudio-export.mp4"` —
+  confirmed on a real render output with `head-object`.
+- New `downloadFromUrl` in `engines/export/exporter.ts`, beside `downloadBlob`,
+  so both export paths trigger downloads from one module instead of one using a
+  helper and the other inlining an `<a>` in JSX.
+- The download link stays, demoted from the accent-coloured next step to a quiet
+  **Download again** under a line saying the download should have started. Not
+  hedging: a script-started download can be refused, there is no way to detect
+  that it was, and silence after a minutes-long render reads as a failed render
+  rather than a blocked save.
+
+### Fixed
+- `downloadFromUrl` sets `target="_blank"`, which testing turned out to earn.
+  Pointed at an uploaded asset — which carries no `Content-Disposition` — the
+  browser **navigated** to the file and left the editor. Now that the download
+  fires automatically, with no click to blame, that would throw someone out of
+  their project unprompted. With `_blank` the same failure opens a tab they can
+  close; on the normal path no tab opens at all, because the click resolves to a
+  download. The fallback link gets the same treatment.
+
+### Notes
+- **`track.exportCloudDownloadClicked` has quietly changed meaning.** It stays on
+  the manual link only, so it no longer measures "the user got the file" — that
+  is `exportCloudCompleted` — and now measures "the user needed the fallback",
+  i.e. how often the automatic delivery fails. A dashboard watching it collapse
+  toward zero should read that as success, not regression.
+- Verified without spending quota, by driving a previous render's real URL
+  through the exact code path: the file landed in Downloads as
+  `motionstudio-export.mp4` (7.9 MB), the app stayed mounted, and no stray tab
+  appeared. The first attempt used an uploaded asset instead and navigated away,
+  which is how the `target="_blank"` problem was found at all.
+- `USER_GUIDE` named the button "Render in cloud", which it has not been called
+  for some time; corrected along with the steps.
+
+---
+
 ## [2026-09-16] — Regression: the card overlay was swallowing hover and the cursor
 
 Self-inflicted, shipped, and caught by the user on the deployed site. Worth

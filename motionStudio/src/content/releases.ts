@@ -71,6 +71,10 @@ export const RELEASES: Release[] = [
         kind: 'fixed',
         text: 'Hovering a project on your dashboard plays its preview again, and cards show a hand cursor so it is obvious they open. A single click anywhere on a card takes you into the project.',
       },
+      {
+        kind: 'improved',
+        text: 'A cloud render now downloads as soon as it is ready, instead of waiting for you to press a second button. If your browser blocks the save, a Download again link is still there.',
+      },
     ],
   },
   {
