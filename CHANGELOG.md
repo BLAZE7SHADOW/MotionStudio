@@ -5,6 +5,63 @@ Format: `## [date] — Title`, with **Added / Changed / Fixed** subsections.
 
 ---
 
+## [2026-09-16] — Quota: stop charging for failures, stop promising refused renders
+
+Three faults, all hit in one guest session, and all traceable to the quota being
+two counters that never consulted each other.
+
+### Fixed
+- **The dialog offered a render the server would refuse.** `/api/quota` reported
+  `getRenderCount`, keyed on the **anonymous user id** — which is issued fresh
+  every guest session, so a returning guest always looked untouched and the
+  dialog said "1 of 1 render remaining". The gate that actually decides is keyed
+  on the **device** and survives that new identity, so the click came back with
+  "Guest render already used on this device". `/api/quota` now consults the
+  device gate for anonymous users and the client sends `deviceId`, the way
+  `startRender` already did. No new UI was needed: `ExportDialog` already
+  disables the button on `remaining <= 0` and already renders "Guest limit
+  reached", so both started working the moment the number stopped lying.
+- **A guest's free render locked the device forever.** The gate had no time
+  bound. Confirmed against the live table: the only `device_renders` row is
+  dated **2026-07-18**, and that device had been refused ever since. The check
+  is now scoped to the current month, which the schema already supported —
+  `device_renders` has carried `first_render_at` all along. Verified against
+  real data: the old query returns 1 row for that device, the new one returns 0.
+- **`recordDeviceRender` switches `ignore-duplicates` to `merge-duplicates`**,
+  which is the whole feature rather than a detail: with the check scoped to a
+  month, a row carrying an old timestamp passes it every time, so ignoring the
+  duplicate would grant that device *unlimited* renders inside the month instead
+  of one. It also gains a real response check — the previous `.catch()`-only
+  version could not see a 403 at all, since a non-2xx is a resolved promise.
+- **A render that failed inside Lambda still cost one.** `recordRender` charges
+  when Lambda accepts the job and nothing gave it back, while the device gate did
+  the opposite and recorded only a confirmed output. `render-status` now refunds
+  on an observed fatal error, and the client re-reads the quota on failure as
+  well as success so the refund is visible without a reload.
+- `startOfMonth` moved out of `db.ts`'s privacy and is shared with `device.ts`.
+  Two independently written month boundaries drifting apart is exactly the bug
+  class this quota already shipped once.
+
+### Notes
+- **Requires a one-time grant**: `GRANT UPDATE ON public.device_renders TO
+  service_role;`. `ON CONFLICT DO UPDATE` needs UPDATE on the table, which
+  `ON CONFLICT DO NOTHING` did not — Postgres returns `42501` and names the fix
+  itself. Found by running the upsert against the real database before shipping;
+  without the grant, every guest gets unlimited renders on our Lambda bill, which
+  is why the failure now logs loudly instead of passing silently.
+- **The charge deliberately stays at the start of a render**, not at completion.
+  That is what stops someone firing off five renders at once before any finishes.
+  The honest gap: close the tab mid-render and nothing observes the failure, so
+  the charge stands. That errs toward charging, which is the safe direction for a
+  resource that costs money.
+- Refunding deletes the row, losing the record that an attempt happened.
+  Acceptable — `translateRenderError` already logs every failure server-side with
+  its `renderId` and user id, which is a better home for that history.
+- `service_role` has SELECT and INSERT on `device_renders` but neither UPDATE nor
+  DELETE; it does have DELETE on `renders`, which is what makes the refund work.
+
+---
+
 ## [2026-09-16] — The cloud render hands over the file
 
 ### Changed

@@ -625,8 +625,11 @@ to finish — the MP4 then downloads on its own, the same as a browser export.
 A **Download again** link stays in the dialog in case your browser blocked the
 save or you want another copy.
 
-- **Guests** get **1 free cloud render** (tracked per device).
-- **Signed-in users** get a monthly quota, shown in the dialog.
+- **Guests** get **1 free cloud render per month** (tracked per device).
+- **Signed-in users** get a monthly quota, shown in the dialog. A render that
+  fails doesn't count against it — the allowance is given back automatically.
+  If you're already out, the Render button is disabled and says so before you
+  click, rather than failing afterwards.
 - Uploaded media is sent to cloud storage automatically in the background when you
   import it, so cloud renders include your images / video / audio.
 

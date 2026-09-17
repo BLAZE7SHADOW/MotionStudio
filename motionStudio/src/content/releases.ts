@@ -75,6 +75,14 @@ export const RELEASES: Release[] = [
         kind: 'improved',
         text: 'A cloud render now downloads as soon as it is ready, instead of waiting for you to press a second button. If your browser blocks the save, a Download again link is still there.',
       },
+      {
+        kind: 'fixed',
+        text: 'A cloud render that fails no longer uses up one of your renders \u2014 you get it back automatically.',
+      },
+      {
+        kind: 'fixed',
+        text: 'If you have no renders left, the Export dialog now tells you before you click instead of failing afterwards. Guests get one free cloud render each month, rather than only ever one.',
+      },
     ],
   },
   {
