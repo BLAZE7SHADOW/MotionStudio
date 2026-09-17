@@ -264,6 +264,11 @@ export default function ExportDialog({ project }: { project: Project }) {
       setCloudError(msg);
       setCloudStatus('error');
       track.exportCloudFailed(msg);
+      /* Re-read the quota on failure as well as on success. A render that dies
+         inside Lambda is refunded server-side, and without this the dialog goes
+         on showing the number it was charged — telling the user a failure cost
+         them one when it did not. */
+      api.getQuota().then(setFetchedQuota).catch(() => null);
     }
   }
 

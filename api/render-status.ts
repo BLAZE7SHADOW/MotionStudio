@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getRenderProgress } from '@remotion/lambda-client';
 import { verifyToken } from './_lib/auth';
 import { recordDeviceRender } from './_lib/device';
+import { refundRender } from './_lib/db';
 import { translateRenderError } from './_lib/renderErrors';
 
 const REGION = 'us-east-1';
@@ -58,6 +59,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       'lambdaRender',
       { renderId, userId: user.id },
     );
+    /* Give the render back. It was charged when Lambda accepted the job — which
+       is what stops someone starting five at once — and this is the only place
+       a failure is actually observed, so it is the only place the charge can be
+       undone. The device row needs nothing: it is written only on a confirmed
+       output below, so a failure never reached it. */
+    await refundRender(renderId);
     return res.status(200).json({ status: 'error', error: message, retryable });
   }
 
