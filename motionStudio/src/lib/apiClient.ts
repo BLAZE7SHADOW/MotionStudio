@@ -76,7 +76,12 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  getQuota: (): Promise<QuotaResult> => apiFetch('/api/quota'),
+  /* deviceId matters here, not just on startRender: a guest's allowance is
+     enforced per device, and without it this reports the per-user count, which
+     resets with every new guest identity and promises a render that /api/render
+     will refuse. */
+  getQuota: (): Promise<QuotaResult> =>
+    apiFetch(`/api/quota?deviceId=${encodeURIComponent(getDeviceId())}`),
 
   /** Queues a Lambda render and returns immediately — poll getRenderStatus. */
   startRender: (inputProps: Record<string, unknown>): Promise<RenderStarted> =>
