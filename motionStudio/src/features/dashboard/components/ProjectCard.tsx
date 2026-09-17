@@ -64,7 +64,15 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           ::after is stretched over the whole card, so the mouse target is
           unchanged while the accessibility tree gets two clean siblings —
           "My first video, button" and "Delete project, button". */}
-      <div className="group relative text-left rounded-studio-lg bg-studio-surface border border-studio-border hover:border-studio-border-strong hover:bg-studio-surface-hover transition-colors ease-studio overflow-hidden cursor-pointer">
+      <div
+        /* The click lives here, not on the title button, so the whole card is
+           one target for the mouse. The title's stretched ::after used to carry
+           it, which put an invisible <button> on top of everything — the
+           preview never saw the pointer enter, so hover stopped playing, and
+           the card showed a button's default arrow instead of a hand. */
+        onClick={() => navigate(`/editor/${project.id}`)}
+        className="group relative text-left rounded-studio-lg bg-studio-surface border border-studio-border hover:border-studio-border-strong hover:bg-studio-surface-hover transition-colors ease-studio overflow-hidden cursor-pointer"
+      >
 
         {/* Thumbnail — a real frame of the project, animating on hover.
             True aspect ratio: cards are grouped by format now, so a tall
@@ -79,14 +87,17 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
         {/* Metadata */}
         <div className="px-3 py-2.5">
-          {/* The card's one real control. `after:inset-0` stretches its hit area
-              over the whole card, and the focus ring is drawn on that same
-              pseudo-element so keyboard focus still outlines the card rather
-              than just the title text. */}
+          {/* The card's control for keyboard and screen readers. It carries no
+              onClick of its own: activating it fires a click that bubbles to
+              the container, so one handler serves both mouse and keyboard.
+
+              Its ::after spans the card purely to draw the focus ring there —
+              `pointer-events-none` is load-bearing. With the pointer enabled it
+              covered the thumbnail and the metadata, which killed hover-to-play
+              and replaced the card's cursor with a button's default arrow. */}
           <button
             type="button"
-            onClick={() => navigate(`/editor/${project.id}`)}
-            className="block w-full text-left text-[13px] font-medium text-studio-text truncate leading-snug focus-visible:outline-none after:absolute after:inset-0 after:rounded-studio-lg focus-visible:after:ring-1 focus-visible:after:ring-studio-accent"
+            className="block w-full text-left text-[13px] font-medium text-studio-text truncate leading-snug cursor-pointer focus-visible:outline-none after:absolute after:inset-0 after:rounded-studio-lg after:pointer-events-none focus-visible:after:ring-1 focus-visible:after:ring-studio-accent"
           >
             {project.name}
           </button>
@@ -102,10 +113,10 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             z-20 keeps it above the title's stretched ::after. */}
         <button
           type="button"
-          onClick={() => setConfirmOpen(true)}
+          onClick={(e) => { e.stopPropagation(); setConfirmOpen(true); }}
           title="Delete project"
           aria-label={`Delete ${project.name}`}
-          className="absolute top-2 right-2 z-20 flex items-center justify-center size-7 rounded-studio-md bg-studio-bg/80 border border-studio-border text-studio-text-faint opacity-0 group-hover:opacity-100 hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/10 transition-all focus-visible:opacity-100 ease-studio"
+          className="absolute top-2 right-2 z-20 flex items-center justify-center size-7 cursor-pointer rounded-studio-md bg-studio-bg/80 border border-studio-border text-studio-text-faint opacity-0 group-hover:opacity-100 hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/10 transition-all focus-visible:opacity-100 ease-studio"
         >
           <Trash2 className="size-3.5" />
         </button>

@@ -114,6 +114,10 @@ function AssetCard({
        unchanged. `draggable` stays here, on the whole tile, which is what the
        user actually grabs. */
     <div
+      /* The click lives on the tile, so the whole tile is one target. The
+         name's stretched ::after used to carry it and covered the artwork,
+         leaving a button's default arrow over a tile that asks for a hand. */
+      onClick={onAdd}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData('application/x-motionstudio-asset', asset.id);
@@ -180,11 +184,13 @@ function AssetCard({
           hit area over the whole tile, and the focus ring draws on that same
           pseudo-element so focus still outlines the tile rather than the label. */}
       <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-black/70 to-transparent px-1.5 py-1">
+        {/* No onClick: activating this bubbles to the tile's handler. The
+            ::after only draws the focus ring — `pointer-events-none` keeps it
+            from covering the artwork and the tile's cursor. */}
         <button
           type="button"
-          onClick={onAdd}
           aria-label={`${asset.name} — add to canvas`}
-          className="block w-full text-left text-[10px] text-white/90 truncate focus-visible:outline-none after:absolute after:inset-0 after:rounded-studio-md focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-studio-accent-text focus-visible:after:outline-offset-1"
+          className="block w-full text-left text-[10px] text-white/90 truncate cursor-pointer focus-visible:outline-none after:absolute after:inset-0 after:rounded-studio-md after:pointer-events-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-studio-accent-text focus-visible:after:outline-offset-1"
         >
           {asset.name}
         </button>
@@ -194,10 +200,10 @@ function AssetCard({
           reaches the asset before the control that deletes it. */}
       <button
         type="button"
-        onClick={onRemove}
+        onClick={(e) => { e.stopPropagation(); onRemove(); }}
         title="Remove asset"
         aria-label={`Remove ${asset.name}`}
-        className="absolute top-1 right-1 z-10 w-5 h-5 flex items-center justify-center rounded-studio-xs bg-black/50 text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:bg-black/70 transition-opacity duration-120 ease-studio"
+        className="absolute top-1 right-1 z-10 w-5 h-5 flex items-center justify-center cursor-pointer rounded-studio-xs bg-black/50 text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:bg-black/70 transition-opacity duration-120 ease-studio"
       >
         <X className="w-3 h-3" />
       </button>

@@ -194,6 +194,11 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                  inside a button. */
               <div
                 key={el.id}
+                /* The click lives on the row, so the whole row is one target.
+                   The label's stretched ::after used to carry it and sat on top
+                   of everything, which left a button's default arrow over a row
+                   whose own rule says cursor-pointer. */
+                onClick={() => setSelectedElement(el.id)}
                 className={[
                   'group relative w-full flex items-center gap-1 px-3 border-b border-studio-border shrink-0 text-left cursor-pointer transition-colors duration-120 ease-studio',
                   selectedElementId === el.id
@@ -204,12 +209,15 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
               >
                 <button
                   type="button"
-                  onClick={() => setSelectedElement(el.id)}
+                  /* No onClick: activating this bubbles to the row's handler,
+                     so one handler serves mouse and keyboard. The ::after only
+                     draws the focus ring — `pointer-events-none` keeps it from
+                     covering the row's own controls and cursor. */
                   /* aria-current, not aria-pressed: clicking again doesn't
                      deselect, so this marks the current item in a set rather
                      than a toggle that is on. */
                   aria-current={selectedElementId === el.id}
-                  className="text-[11px] truncate flex-1 text-left focus-visible:outline-none after:absolute after:inset-0 focus-visible:after:ring-1 focus-visible:after:ring-inset focus-visible:after:ring-studio-accent"
+                  className="text-[11px] truncate flex-1 text-left cursor-pointer focus-visible:outline-none after:absolute after:inset-0 after:pointer-events-none focus-visible:after:ring-1 focus-visible:after:ring-inset focus-visible:after:ring-studio-accent"
                 >
                   {clipLabel(el)}
                 </button>
@@ -218,7 +226,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                     the background is missing from the shot you just made. */}
                 <button
                   type="button"
-                  onClick={() => setElementSpan(el.id, !spansAllShots(el))}
+                  onClick={(e) => { e.stopPropagation(); setElementSpan(el.id, !spansAllShots(el)); }}
                   title={spansAllShots(el)
                     ? 'Plays through the whole video — click to keep it to this shot only'
                     : 'Only in this shot — click to play it through the whole video'}
@@ -226,7 +234,7 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                     ? 'Plays through the whole video — click to keep it to this shot only'
                     : 'Only in this shot — click to play it through the whole video'}
                   className={[
-                    'relative w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs transition-all duration-120 ease-studio',
+                    'relative w-5 h-5 shrink-0 flex items-center justify-center cursor-pointer rounded-studio-xs transition-all duration-120 ease-studio',
                     spansAllShots(el)
                       ? 'text-studio-accent-text'
                       : 'text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-studio-text',
@@ -236,13 +244,14 @@ export default function TimelinePanel({ project }: TimelinePanelProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     removeElement(el.id);
                     if (selectedElementId === el.id) setSelectedElement(null);
                   }}
                   title="Delete element"
                   aria-label={`Delete ${clipLabel(el)}`}
-                  className="relative w-5 h-5 shrink-0 flex items-center justify-center rounded-studio-xs text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all duration-120 ease-studio"
+                  className="relative w-5 h-5 shrink-0 flex items-center justify-center cursor-pointer rounded-studio-xs text-studio-text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all duration-120 ease-studio"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
